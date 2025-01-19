@@ -1,0 +1,563 @@
+[
+    {
+        "id": 1,
+        "name": "black 1",
+        "type": "black",
+        "img": "black_1.jpg",
+        "value": 21,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 2,
+        "name": "black 2",
+        "type": "black",
+        "img": "black_2.jpg",
+        "value": 22,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 3,
+        "name": "black 3",
+        "type": "black",
+        "img": "black_3.jpg",
+        "value": 23,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 4,
+        "name": "black 4",
+        "type": "black",
+        "img": "black_4.jpg",
+        "value": 24,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 5,
+        "name": "black 5",
+        "type": "black",
+        "img": "black_5.jpg",
+        "value": 25,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 6,
+        "name": "black 6",
+        "type": "black",
+        "img": "black_6.jpg",
+        "value": 26,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 7,
+        "name": "black 7",
+        "type": "black",
+        "img": "black_7.jpg",
+        "value": 27,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 8,
+        "name": "black 8",
+        "type": "black",
+        "img": "black_8.jpg",
+        "value": 28,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 9,
+        "name": "black 9",
+        "type": "black",
+        "img": "black_9.jpg",
+        "value": 29,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 10,
+        "name": "black 10",
+        "type": "black",
+        "img": "black_10.jpg",
+        "value": 30,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 11,
+        "name": "black 11",
+        "type": "black",
+        "img": "black_11.jpg",
+        "value": 31,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 12,
+        "name": "black 12",
+        "type": "black",
+        "img": "black_12.jpg",
+        "value": 32,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 13,
+        "name": "black 13",
+        "type": "black",
+        "img": "black_13.jpg",
+        "value": 33,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 14,
+        "name": "black 14",
+        "type": "black",
+        "img": "black_14.jpg",
+        "value": 34,
+        "bonus": 20,
+        "isSpecial": false
+    }, {
+        "id": 21,
+        "name": "green 1",
+        "type": "green",
+        "img": "green_1.jpg",
+        "value": 1,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 22,
+        "name": "green 2",
+        "type": "green",
+        "img": "green_2.jpg",
+        "value": 2,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 23,
+        "name": "green 3",
+        "type": "green",
+        "img": "green_3.jpg",
+        "value": 3,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 24,
+        "name": "green 4",
+        "type": "green",
+        "img": "green_4.jpg",
+        "value": 4,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 25,
+        "name": "green 5",
+        "type": "green",
+        "img": "green_5.jpg",
+        "value": 5,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 26,
+        "name": "green 6",
+        "type": "green",
+        "img": "green_6.jpg",
+        "value": 6,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 27,
+        "name": "green 7",
+        "type": "green",
+        "img": "green_7.jpg",
+        "value": 7,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 28,
+        "name": "green 8",
+        "type": "green",
+        "img": "green_8.jpg",
+        "value": 8,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 29,
+        "name": "green 9",
+        "type": "green",
+        "img": "green_9.jpg",
+        "value": 9,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 30,
+        "name": "green 10",
+        "type": "green",
+        "img": "green_10.jpg",
+        "value": 10,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 31,
+        "name": "green 11",
+        "type": "green",
+        "img": "green_11.jpg",
+        "value": 11,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 32,
+        "name": "green 12",
+        "type": "green",
+        "img": "green_12.jpg",
+        "value": 12,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 33,
+        "name": "green 13",
+        "type": "green",
+        "img": "green_13.jpg",
+        "value": 13,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 34,
+        "name": "green 14",
+        "type": "green",
+        "img": "green_14.jpg",
+        "value": 14,
+        "bonus": 10,
+        "isSpecial": false
+    }, {
+        "id": 41,
+        "name": "purple 1",
+        "type": "purple",
+        "img": "purple_1.jpg",
+        "value": 1,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 42,
+        "name": "purple 2",
+        "type": "purple",
+        "img": "purple_2.jpg",
+        "value": 2,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 43,
+        "name": "purple 3",
+        "type": "purple",
+        "img": "purple_3.jpg",
+        "value": 3,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 44,
+        "name": "purple 4",
+        "type": "purple",
+        "img": "purple_4.jpg",
+        "value": 4,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 45,
+        "name": "purple 5",
+        "type": "purple",
+        "img": "purple_5.jpg",
+        "value": 5,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 46,
+        "name": "purple 6",
+        "type": "purple",
+        "img": "purple_6.jpg",
+        "value": 6,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 47,
+        "name": "purple 7",
+        "type": "purple",
+        "img": "purple_7.jpg",
+        "value": 7,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 48,
+        "name": "purple 8",
+        "type": "purple",
+        "img": "purple_8.jpg",
+        "value": 8,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 49,
+        "name": "purple 9",
+        "type": "purple",
+        "img": "purple_9.jpg",
+        "value": 9,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 50,
+        "name": "purple 10",
+        "type": "purple",
+        "img": "purple_10.jpg",
+        "value": 10,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 51,
+        "name": "purple 11",
+        "type": "purple",
+        "img": "purple_11.jpg",
+        "value": 11,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 52,
+        "name": "purple 12",
+        "type": "purple",
+        "img": "purple_12.jpg",
+        "value": 12,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 53,
+        "name": "purple 13",
+        "type": "purple",
+        "img": "purple_13.jpg",
+        "value": 13,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 54,
+        "name": "purple 14",
+        "type": "purple",
+        "img": "purple_14.jpg",
+        "value": 14,
+        "bonus": 10,
+        "isSpecial": false
+    }, {
+        "id": 61,
+        "name": "yellow 1",
+        "type": "yellow",
+        "img": "yellow_1.jpg",
+        "value": 1,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 62,
+        "name": "yellow 2",
+        "type": "yellow",
+        "img": "yellow_2.jpg",
+        "value": 2,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 63,
+        "name": "yellow 3",
+        "type": "yellow",
+        "img": "yellow_3.jpg",
+        "value": 3,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 64,
+        "name": "yellow 4",
+        "type": "yellow",
+        "img": "yellow_4.jpg",
+        "value": 4,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 65,
+        "name": "yellow 5",
+        "type": "yellow",
+        "img": "yellow_5.jpg",
+        "value": 5,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 66,
+        "name": "yellow 6",
+        "type": "yellow",
+        "img": "yellow_6.jpg",
+        "value": 6,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 67,
+        "name": "yellow 7",
+        "type": "yellow",
+        "img": "yellow_7.jpg",
+        "value": 7,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 68,
+        "name": "yellow 8",
+        "type": "yellow",
+        "img": "yellow_8.jpg",
+        "value": 8,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 69,
+        "name": "yellow 9",
+        "type": "yellow",
+        "img": "yellow_9.jpg",
+        "value": 9,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 70,
+        "name": "yellow 10",
+        "type": "yellow",
+        "img": "yellow_10.jpg",
+        "value": 10,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 71,
+        "name": "yellow 11",
+        "type": "yellow",
+        "img": "yellow_11.jpg",
+        "value": 11,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 72,
+        "name": "yellow 12",
+        "type": "yellow",
+        "img": "yellow_12.jpg",
+        "value": 12,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 73,
+        "name": "yellow 13",
+        "type": "yellow",
+        "img": "yellow_13.jpg",
+        "value": 13,
+        "bonus": 0,
+        "isSpecial": false
+    }, {
+        "id": 74,
+        "name": "yellow 14",
+        "type": "yellow",
+        "img": "yellow_14.jpg",
+        "value": 14,
+        "bonus": 10,
+        "isSpecial": false
+    }, {
+        "id": 81,
+        "name": "evasion 1",
+        "type": "evasion",
+        "img": "evasion.jpg",
+        "value": 0,
+        "bonus": 0,
+        "isSpecial": true
+    }, {
+        "id": 82,
+        "name": "evasion 2",
+        "type": "evasion",
+        "img": "evasion.jpg",
+        "value": 0,
+        "bonus": 0,
+        "isSpecial": true
+    }, {
+        "id": 83,
+        "name": "evasion 3",
+        "type": "evasion",
+        "img": "evasion.jpg",
+        "value": 0,
+        "bonus": 0,
+        "isSpecial": true
+    }, {
+        "id": 84,
+        "name": "evasion 4",
+        "type": "evasion",
+        "img": "evasion.jpg",
+        "value": 0,
+        "bonus": 0,
+        "isSpecial": true
+    }, {
+        "id": 85,
+        "name": "evasion 5",
+        "type": "evasion",
+        "img": "evasion.jpg",
+        "value": 0,
+        "bonus": 0,
+        "isSpecial": true
+    }, {
+        "id": 91,
+        "name": "mermaid Alyra",
+        "type": "mermaid",
+        "img": "mermaid_alyra.jpg",
+        "value": 50,
+        "bonus": 20,
+        "isSpecial": true
+    }, {
+        "id": 92,
+        "name": "mermaid Circé",
+        "type": "mermaid",
+        "img": "mermaid_circe.jpg",
+        "value": 50,
+        "bonus": 20,
+        "isSpecial": true
+    }, {
+        "id": 101,
+        "name": "pirate Harray le géant",
+        "type": "pirate",
+        "img": "pirate_harry-le-geant.jpg",
+        "value": 100,
+        "bonus": 30,
+        "isSpecial": true
+    }, {
+        "id": 102,
+        "name": "pirate Juanita jade",
+        "type": "pirate",
+        "img": "pirate_juanita-jade.jpg",
+        "value": 100,
+        "bonus": 30,
+        "isSpecial": true
+    }, {
+        "id": 103,
+        "name": "pirate Rascal le flambeur",
+        "type": "pirate",
+        "img": "pirate_rascal-le-flambeur.jpg",
+        "value": 100,
+        "bonus": 30,
+        "isSpecial": true
+    }, {
+        "id": 104,
+        "name": "pirate Rosie la douce",
+        "type": "pirate",
+        "img": "pirate_rosie-la-douce.jpg",
+        "value": 100,
+        "bonus": 30,
+        "isSpecial": true
+    }, {
+        "id": 105,
+        "name": "pirate Will le bandit",
+        "type": "pirate",
+        "img": "pirate_will-le-bandit.jpg",
+        "value": 100,
+        "bonus": 30,
+        "isSpecial": true
+    }, {
+        "id": 106,
+        "name": "pirate Tigresse",
+        "type": "pirate_evasion",
+        "img": "pirate_tigresse.jpg",
+        "value": 100,
+        "bonus": 30,
+        "isSpecial": true
+    }, {
+        "id": 200,
+        "name": "pirate Tigresse",
+        "type": "skull-king",
+        "img": "skull-king.jpg",
+        "value": 200,
+        "bonus": 40,
+        "isSpecial": true
+    }
+]

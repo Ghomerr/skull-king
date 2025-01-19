@@ -1,0 +1,112 @@
+/**
+ * Style classes
+ */
+.big-text {
+    font-weight: bold;
+    font-size: 150%;
+}
+
+i.fixed-size {
+    width: 15px;
+}
+
+.lobby-container button[disabled] {
+    background-color: #685448;
+    color: #a5844f;
+}
+
+/** 
+ * Page structure
+ */
+
+html,
+body {
+    /*background: #7d5308;*/
+    background-image: url("img/wood-2.jpg");
+    background-size: cover;
+    height: 100%;
+}
+
+body {
+    position: relative;
+    min-height: 100vh;
+}
+
+main {
+    padding-bottom: 2.5rem;
+    overflow-y: auto;
+    height: calc(100% - 140px);
+}
+
+footer {
+    background-color: #010101;
+    color: #ffba44;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 2.5rem;
+    text-align: center;
+}
+
+.head-container {
+    background-color: #010101;
+    min-height: 70px;
+}
+
+/**
+ * Lobby
+ */
+ .lobby-container {
+    margin: 10px;
+    text-align: center;
+}
+
+.lobby-inputs,
+.players-list {
+    background-color: #010101;
+    color: #ffba44;
+    border-radius: 5px;
+    padding: 5px;
+    width: 400px;
+    margin: auto;
+}
+
+.lobby-inputs input,
+.lobby-inputs button {
+    background-color: #78350e;
+}
+
+#room-password-link {
+    cursor: pointer;
+}
+
+#room-password-link:hover {
+    text-decoration: underline;
+}
+
+.lobby-inputs-title,
+.rooms-list-title {
+    margin-bottom: 5px;
+}
+
+.button-container {
+    margin-top: 5px;
+}
+
+.room-id-title {
+    font-weight: bold;
+    font-size: 150%;
+}
+
+#random-room-id-btn {
+    position: absolute;
+    margin-left: 5px;
+}
+
+.info-players {
+    font-size: 75%;
+}
+
+#rooms-list {
+    margin-top: 10px;
+}
