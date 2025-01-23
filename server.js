@@ -18,13 +18,21 @@ const MAX_ROOMS = 10;
 const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 7;
 const STATUS = {
+    // client.js !
     IN_LOBBY_WAITING: 1,
-    IN_LOBBY_FULL: 2
+    IN_LOBBY_FULL: 2,
+    IN_GAME: 3
+    // client.js !
 };
 
 // Start server and expose main page
 app.get('/', (req, res) => {
     res.sendFile(path.resolve(__dirname, '.') + '/static/main.html');
+});
+app.get('/games/:roomId', (req, res) => {
+    // Check req hidden params submitted
+    console.log('req', req);
+    res.sendFile(path.resolve(__dirname, '.') + '/static/game.html');
 });
 app.use(express.static(path.resolve(__dirname, '.')));
 
@@ -109,7 +117,16 @@ io.on('connection', (Socket) => {
                         if (room.users.length === MAX_PLAYERS) {
                             room.status = STATUS.IN_LOBBY_FULL;
                         } 
-                        io.to(lobbyData.roomId).emit('players-list-changed', room); // TODO SIMPLIFIED LIST !
+
+                        io.to(lobbyData.roomId).emit('players-list-changed', {
+                            id: room.id,
+                            owner: room.owner,
+                            password: room.password,
+                            users: [...room.users.map(u => {
+                               return { id: u.id };
+                            })],
+                            canStartGame: Game.getCanStartGame(room, MIN_PLAYERS, MAX_PLAYERS)
+                        }); 
 
                     } else {
                         socket.emit('player-error', { type: 'player-already-exists', data: lobbyData.userId });

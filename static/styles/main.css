@@ -22,7 +22,7 @@ i.fixed-size {
 html,
 body {
     /*background: #7d5308;*/
-    background-image: url("img/wood-2.jpg");
+    background-image: url("../img/wood-2.jpg");
     background-size: cover;
     height: 100%;
 }
@@ -71,8 +71,7 @@ footer {
     margin: auto;
 }
 
-.lobby-inputs input,
-.lobby-inputs button {
+.primary {
     background-color: #78350e;
 }
 
@@ -103,10 +102,70 @@ footer {
     margin-left: 5px;
 }
 
+#room-password-link {
+    cursor: pointer;
+}
+
+#room-password-link:hover {
+    text-decoration: underline;
+}
+
 .info-players {
     font-size: 75%;
 }
 
 #rooms-list {
     margin-top: 10px;
+}
+
+
+.lobby-inputs-title,
+.rooms-list-title {
+    margin-bottom: 5px;
+}
+
+.room-line {
+    display: flex;
+}
+
+.room-line>div {
+    flex: 1;
+}
+
+.room-line>.room-name {
+    flex: 2;
+    font-weight: bold;
+}
+
+.room-line {
+    font-weight: bold;
+}
+
+.room-status-3>.room-name,
+.room-status-3>.room-status {
+    color: #e74c3c;
+}
+
+.room-status-2>.room-name,
+.room-status-2>.room-status {
+    color: #e67e22;
+}
+
+.room-status-1>.room-name,
+.room-status-1>.room-status {
+    color: #27ae60;
+}
+
+.room-status-1>.room-name {
+    cursor: pointer;
+}
+
+.room-status-1>.room-name:hover {
+    text-decoration: underline;
+    color: #219250;
+}
+
+.room-status-2>.room-name,
+.room-status-3>.room-name {
+    cursor: not-allowed;
 }

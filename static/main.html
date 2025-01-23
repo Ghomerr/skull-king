@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 
 <head>
-    <title>Skull King</title>
+    <title>Skull King - Lobby</title>
     <link rel="icon" href="assets/favicon.ico" />
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/smoothness/jquery-ui.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
-    <link rel="stylesheet" type="text/css" href="static/main.css">
+    <link rel="stylesheet" type="text/css" href="static/styles/main.css">
     <link rel="stylesheet" type="text/css" href="node_modules/@fortawesome/fontawesome-free/css/all.css">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.min.js"></script>
@@ -26,12 +26,12 @@
                 <div class="lobby-inputs-title big-text">Rejoindre une salle de jeu</div>
                 <div class="user-id-container">
                     <i class="fas fa-user fixed-size"></i>
-                    <input id="user-id" type="text" value="" placeholder="Utilisateur" title="Utilisateur" />
+                    <input id="user-id" class="primary" type="text" value="" placeholder="Utilisateur" title="Utilisateur" />
                 </div>
                 <div class="room-id-container">
                     <i class="fas fa-key fixed-size"></i>
-                    <input id="room-id" type="text" value="" placeholder="ID Salle de jeu" title="ID Salle de jeu" size="20" maxlength="20" />
-                    <button id="random-room-id-btn" title="Générer un ID de Salle de jeu">
+                    <input id="room-id" class="primary" type="text" value="" placeholder="ID Salle de jeu" title="ID Salle de jeu" size="20" maxlength="20" />
+                    <button id="random-room-id-btn" class="primary" title="Générer un ID de Salle de jeu">
                         <i class="fas fa-redo-alt"></i>
                     </button>
                 </div>
@@ -39,11 +39,11 @@
                     <span id="room-password-link"><i class="fas fa-lock"></i> Partie privée ?</span>
                     <div id="room-password-container" style="display: none;">
                         <i class="fas fa-lock fixed-size"></i>
-                        <input id="room-password" type="text" value="" placeholder="Mot de passe" title="Mot de passe" size="20" maxlength="20" />
+                        <input id="room-password" class="primary" type="text" value="" placeholder="Mot de passe" title="Mot de passe" size="20" maxlength="20" />
                     </div>
                 </div>
                 <div class="button-container">
-                    <button id="lobby-btn" value="Entrer" disabled>
+                    <button id="lobby-btn" class="primary" value="Entrer" disabled>
                         <i class="fas fa-sign-in-alt"></i> Entrer
                     </button>
                 </div>
@@ -53,7 +53,7 @@
                 <div class="room-id-title"></div>
                 <div class="lobby-players-list"></div>
                 <div id="start-content">
-                    <button id="start-btn" disabled style="display: none;">
+                    <button id="start-btn" class="primary" disabled style="display: none;">
                         <i class="fas fa-play"></i> Démarrer
                     </button>
                     <div class="info-players"><span> Joueur(s) </span><span id="players-counter"></span> (min 2, max 7)</div>

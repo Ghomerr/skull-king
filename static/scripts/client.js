@@ -2,12 +2,28 @@ const Socket = io();
 const Global = {};
 const Lobby = {};
 const Player = {};
+const STATUS = {
+    // server.js !
+    IN_LOBBY_WAITING: 1,
+    IN_LOBBY_FULL: 2,
+    IN_GAME: 3
+    // server.js !
+};
 
 $(document).ready(() => {
 
     //------------------------------------------------------------//
 
     Global.$simpleDialog = $('#simple-dialog');
+    Global.$simpleDialog.dialog({
+        modal: true,
+        autoOpen: false,
+        buttons: {
+            Ok: () => {
+                Global.$simpleDialog.dialog('close');
+            }
+        }
+    });
     Global.openSimpleDialog = ($dialog, title, text, width) => {
         $dialog.dialog('option', 'title', title);
         if (width) {
@@ -55,7 +71,7 @@ $(document).ready(() => {
     Lobby.$roomIdInput = $('#room-id');
     Lobby.$roomPasswordLink = $('#room-password-link');
     Lobby.$roomPasswordContainer = $('#room-password-container');
-    Lobby.$lobbyInputsContainer = $('#lobby-inputs'),
+    Lobby.$lobbyInputsContainer = $('#lobby-inputs');
     Lobby.$requiredInputs = $('#room-id, #user-id');
     Lobby.inputs = {
         $roomId: $('#room-id'),
@@ -63,6 +79,12 @@ $(document).ready(() => {
         $roomPassword: $('#room-password')
     };
     Lobby.$submitButton = $('#lobby-btn');
+    Lobby.$roomsList = $('#rooms-list');
+    Lobby.$roomsListContent = Lobby.$roomsList.find('#rooms-list-content');
+    Lobby.$playersList = $('#players-list');
+    Lobby.$playerCounter = $('#players-counter');
+    Lobby.$infoPassword = $('#info-password');
+    Lobby.$startBtn = $('#start-btn');
 
     Lobby.$randomRoomIdBtn.click(() => {
         Socket.emit('get-random-room-id');
@@ -96,6 +118,15 @@ $(document).ready(() => {
         // Send lobby event to server
         Socket.emit('start-lobby', lobbyData);
     });
+
+    // Handle quick room join button
+    Lobby.joinRoomId = (element) => {
+        if (Lobby.inputs.$userId.val()) {
+            const $roomNameElement = $(element);
+            Lobby.inputs.$roomId.val($roomNameElement.data('room-id'));
+            Lobby.$submitButton.click();
+        }
+    };
 });
 
 // Events
@@ -113,30 +144,32 @@ Socket.on('connected', (data) => {
     // Display rooms list
     const roomsList = data.roomsList;
     if (roomsList.length) {
-        $roomsListContent.text('');
+        Lobby.$roomsListContent.text('');
         for (const roomData of roomsList) {
             // Prepare displayed data
-            const roomTooltip = roomData.status === 'lobby' ?
+            const roomTooltip = roomData.status === STATUS.IN_LOBBY_WAITING ?
                 'Rejoindre cette salle de jeu' :
-                roomData.status === 'full-lobby' ?
+                roomData.status === STATUS.IN_LOBBY_FULL ?
                 'Impossible de rejoindre une salle de jeu complète' :
                 'Impossible de rejoindre une salle déjà en jeu';
-            const roomIcon = roomData.status === 'lobby' ?
+            const roomIcon = roomData.status === STATUS.IN_LOBBY_WAITING ?
                 'fa-sign-in-alt' :
                 'fa-ban';
-            const roomStatus = roomData.status === 'lobby' ? 'LOBBY' : roomData.status === 'full-lobby' ? 'COMPLÈTE' : 'EN JEU';
+            const roomStatus = roomData.status === STATUS.IN_LOBBY_WAITING ? 
+                'ATTENTE DE JOUEUR' : roomData.status === STATUS.IN_LOBBY_FULL ? 'COMPLÈTE' : 'EN JEU';
             // Create room line with room data
-            const roomsListText = '<div class="room-line ' + roomData.status + '">' +
-                '<div class="room-name" title="' + roomTooltip + '" data-room-id="' + roomData.id + '" onclick="joinRoomId(this);">' +
+            const roomsListText = '<div class="room-line room-status-' + roomData.status + '">' +
+                '<div class="room-name" title="' + roomTooltip + '" data-room-id="' + roomData.id + 
+                '" onclick="Lobby.joinRoomId(this);">' +
                 '<i class="fas ' + roomIcon + ' "></i> ' +
                 '<span>' + roomData.id + '</span>' +
                 '</div>' +
                 '<div class="room-info" title="' + roomData.usersNames + '">' + roomData.usersCount + ' joueur(s)</div>' +
                 '<div class="room-status">' + roomStatus + '</div>' +
                 '</div>';
-            //$roomsListContent.append(roomsListText);
+            Lobby.$roomsListContent.append(roomsListText);
         }
-        //$roomsList.show();
+        Lobby.$roomsList.show();
     }
 });
 
@@ -145,12 +178,11 @@ Socket.on('players-list-changed', (room) => {
     console.log('User has entered in lobby', room);
     Player.roomId = room.id;
     Lobby.$lobbyInputsContainer.hide();
+    Lobby.$roomsList.hide();
 
-    // TODO NEXT ... 
-    $roomsList.hide();
-    $playersList.show();
-    $playersList.find('.room-id-title').text(room.id);
-    const $lobbyPlayersList = $playersList.find('.lobby-players-list');
+    Lobby.$playersList.show();
+    Lobby.$playersList.find('.room-id-title').text(room.id);
+    const $lobbyPlayersList = Lobby.$playersList.find('.lobby-players-list');
     $lobbyPlayersList.text('');
 
     // Display players in the lobby
@@ -159,20 +191,20 @@ Socket.on('players-list-changed', (room) => {
         if (user.id === room.owner) {
             username = '<i class="fas fa-crown"></i>' + username;
         }
-        if (user.id === myUserId) {
+        if (user.id === Player.id) {
             username = '<strong>' + username + '</strong>';
         }
         $lobbyPlayersList.append('<div class="user">' + username + '</div>');
     });
 
     // Start conditions
-    $playerCounter.text(room.users.length);
-    if (room.owner === myUserId) {
-        $startBtn.show();
-        $startBtn.prop('disabled', room.users.length < 3 || room.users.length > 5);
+    Lobby.$playerCounter.text(room.users.length);
+    if (room.owner === Player.id) {
+        Lobby.$startBtn.show();
+        Lobby.$startBtn.prop('disabled', !room.canStartGame);
         if (room.password) {
-            $infoPassword.text('Mot de passe : ' + room.password);
-            $infoPassword.show();
+            Lobby.$infoPassword.text('Mot de passe : ' + room.password);
+            Lobby.$infoPassword.show();
         }
     }
 });
