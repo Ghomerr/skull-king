@@ -2,7 +2,7 @@
 
 <head>
     <title>Skull King - Lobby</title>
-    <link rel="icon" href="assets/favicon.ico" />
+    <link rel="icon" href="static/assets/favicon.ico" />
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/smoothness/jquery-ui.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="static/styles/main.css">
@@ -52,8 +52,10 @@
             <div id="players-list" class="players-list" style="display: none;">
                 <div class="room-id-title"></div>
                 <div class="lobby-players-list"></div>
-                <div id="start-content">
-                    <button id="start-btn" class="primary" disabled style="display: none;">
+                <form name="lobby-form" id="start-content" action="">
+                    <input type="hidden" id="formRoomId" name="formRoomId" />
+                    <input type="hidden" id="formUserId" name="formUserId" />
+                    <button id="start-btn" type="button" class="primary" disabled style="display: none;">
                         <i class="fas fa-play"></i> Démarrer
                     </button>
                     <div class="info-players"><span> Joueur(s) </span><span id="players-counter"></span> (min 2, max 7)</div>

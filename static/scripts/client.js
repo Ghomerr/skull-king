@@ -84,6 +84,9 @@ $(document).ready(() => {
     Lobby.$playersList = $('#players-list');
     Lobby.$playerCounter = $('#players-counter');
     Lobby.$infoPassword = $('#info-password');
+    Lobby.$startContentFrom = $('form#start-content');
+    Lobby.$formUserId = $('#formUserId');
+    Lobby.$formRoomId = $('#formRoomId');
     Lobby.$startBtn = $('#start-btn');
 
     Lobby.$randomRoomIdBtn.click(() => {
@@ -127,6 +130,13 @@ $(document).ready(() => {
             Lobby.$submitButton.click();
         }
     };
+
+    // Start the game
+    Lobby.$startBtn.click(() => {
+        Socket.emit('start-game', {
+           roomId: Lobby.inputs.$roomId.val()
+        });
+    });
 });
 
 // Events
@@ -179,7 +189,8 @@ Socket.on('players-list-changed', (room) => {
     Player.roomId = room.id;
     Lobby.$lobbyInputsContainer.hide();
     Lobby.$roomsList.hide();
-
+    Lobby.$formRoomId.val(Lobby.inputs.$roomId.val());
+    Lobby.$formUserId.val(Lobby.inputs.$userId.val());
     Lobby.$playersList.show();
     Lobby.$playersList.find('.room-id-title').text(room.id);
     const $lobbyPlayersList = Lobby.$playersList.find('.lobby-players-list');
@@ -207,4 +218,9 @@ Socket.on('players-list-changed', (room) => {
             Lobby.$infoPassword.show();
         }
     }
+});
+
+// Handle game started
+Socket.on('game-started', () => {
+    Lobby.$startContentFrom.trigger('submit');
 });
