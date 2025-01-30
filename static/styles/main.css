@@ -15,6 +15,10 @@ i.fixed-size {
     color: #a5844f;
 }
 
+.draggable {
+    border: 1px solid white;
+}
+
 /** 
  * Page structure
  */
