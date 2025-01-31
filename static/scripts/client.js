@@ -82,6 +82,7 @@ $(document).ready(() => {
     Lobby.$roomsList = $('#rooms-list');
     Lobby.$roomsListContent = Lobby.$roomsList.find('#rooms-list-content');
     Lobby.$playersList = $('#players-list');
+    Lobby.$lobbyPlayersList = Lobby.$playersList.find('.lobby-players-list');
     Lobby.$playerCounter = $('#players-counter');
     Lobby.$infoPassword = $('#info-password');
     Lobby.$startContentFrom = $('form#start-content');
@@ -193,47 +194,33 @@ Socket.on('players-list-changed', (room) => {
     Lobby.$formUserId.val(Lobby.inputs.$userId.val());
     Lobby.$playersList.show();
     Lobby.$playersList.find('.room-id-title').text(room.id);
-    const $lobbyPlayersList = Lobby.$playersList.find('.lobby-players-list');
-    $lobbyPlayersList.text('');
+    Lobby.$lobbyPlayersList.text('');
 
     // Display players in the lobby
     room.users.forEach((user, index) => {
         let username = user.id;
-        if (username === room.owner) {
-            username = '<i class="fas fa-crown"></i>' + username;
-        }
-        if (username === Player.id) {
+        if (user.id === Player.id) {
             username = '<strong>' + username + '</strong>';
         }
-        $lobbyPlayersList.append('<div class="user" data-player-index="' + index + '">' + username + '</div>');
+        if (user.id === room.owner) {
+            username = '<i class="fas fa-crown"></i>' + username;
+        }
+        Lobby.$lobbyPlayersList.append('<li class="user" data-player-index="' + index + '">' + username + '</li>');
     });
 
     
     if (Player.id === room.owner) {
-        $lobbyPlayersList.addClass('draggable');
-        $('.user').draggable({
-            revert: true
-        });
-        $lobbyPlayersList.droppable({
-            accept: '.user',
-            drop: (event, ui) => {
-              // console.log('event', event, 'ui', ui, 'ui.draggable', ui.draggable, '$(this)', $(this));
-              console.log('container top, left, H, W', event.target.offsetTop, event.target.offsetLeft, event.target.offsetHeight, event.target.offsetWidth);
-              console.log('draggble top, left, H, W', ui.draggable[0].offsetTop, ui.draggable[0].offsetLeft, ui.draggable[0].offsetHeight, ui.draggable[0].offsetWidth);
-              console.log('position offset', ui.position, ui.offset);
-
-              const containerHeight = event.target.offsetHeight;
-              const elementHeight = ui.draggable[0].offsetHeight;
-              const draggedElement = $(ui.draggable[0]);
-              const newIndex = Math.sign(ui.position.top) * Math.round(Math.abs(ui.position.top) / containerHeight);
-              const oldIndex = draggedElement.data('player-index');
-              if (newIndex !== 0) {
-                event.stopPropagation();
-                Socket.emit('change-players-order', {
-                  newIndex: newIndex,
-                  oldIndex: oldIndex
+        Lobby.$lobbyPlayersList.addClass('draggable');
+        Lobby.$lobbyPlayersList.sortable({
+            update: (_event, _ui) => {
+                const newUsersOrder = [];
+                Lobby.$lobbyPlayersList.children().each((_index, userNode) => {
+                    newUsersOrder.push($(userNode).text());
                 });
-              }
+                Socket.emit('change-players-order', {
+                    roomId: room.id,
+                    newUsersOrder: newUsersOrder
+                });
             }
         });
     }

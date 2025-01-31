@@ -72,6 +72,20 @@ io.on('connection', (Socket) => {
         Socket.emit('random-room-id', Utils.randomRoomId());
     });
 
+    // Handle when player asks a room id
+    Socket.on('change-players-order', (data) => {
+        const room = ROOMS[data.roomId];
+        if (room) {
+            console.log('newUsersOrder', data.newUsersOrder);
+
+            room.users.sort((u1, u2) => {
+               return data.newUsersOrder.findIndex(u => u === u1.id) - data.newUsersOrder.findIndex(u => u === u2.id);
+            });
+
+            emitPlayerListChangedEvent(room);
+        }
+    });
+
     // A player has started a lobby instance waiting other players
     Socket.on('start-lobby', (lobbyData) => {
         console.log('Handling a start lobby request', Socket.id, lobbyData);
@@ -120,15 +134,7 @@ io.on('connection', (Socket) => {
                             room.status = STATUS.IN_LOBBY_FULL;
                         } 
 
-                        io.to(lobbyData.roomId).emit('players-list-changed', {
-                            id: room.id,
-                            owner: room.owner,
-                            password: room.password,
-                            users: [...room.users.map(u => {
-                               return { id: u.id };
-                            })],
-                            canStartGame: Game.getCanStartGame(room, MIN_PLAYERS, MAX_PLAYERS)
-                        }); 
+                        emitPlayerListChangedEvent(room);
 
                     } else {
                         Socket.emit('player-error', { type: 'player-already-exists', data: lobbyData.userId });
@@ -145,9 +151,22 @@ io.on('connection', (Socket) => {
         }
     });
 
+    function emitPlayerListChangedEvent(room) {
+        io.to(room.id).emit('players-list-changed', {
+            id: room.id,
+            owner: room.owner,
+            password: room.password,
+            users: [...room.users.map(u => {
+               return { id: u.id };
+            })],
+            canStartGame: Game.getCanStartGame(room, MIN_PLAYERS, MAX_PLAYERS)
+        });
+    }
+
     // Handle the start game event, players will be redirected to the game page
     Socket.on('start-game', (lobbyData) => {
         console.log('Game started for room', lobbyData.roomId);
+        // TODO : DON'T DISCONNECT PLAYERS !!!!
         io.to(lobbyData.roomId).emit('game-started');
     });
 
