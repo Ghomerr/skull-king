@@ -205,10 +205,10 @@ Socket.on('players-list-changed', (room) => {
         if (user.id === room.owner) {
             username = '<i class="fas fa-crown"></i>' + username;
         }
-        Lobby.$lobbyPlayersList.append('<li class="user" data-player-index="' + index + '">' + username + '</li>');
+        Lobby.$lobbyPlayersList.append('<li class="user">' + username + '</li>');
     });
 
-    
+    // Owner can order players in the list
     if (Player.id === room.owner) {
         Lobby.$lobbyPlayersList.addClass('draggable');
         Lobby.$lobbyPlayersList.sortable({
