@@ -1,67 +1,50 @@
 const Socket = io();
-const Global = {};
-const Lobby = {};
 const Player = {};
 const STATUS = {
     // server.js !
+    NOT_CONNECTED: 0,
     IN_LOBBY_WAITING: 1,
     IN_LOBBY_FULL: 2,
-    IN_GAME: 3
+    GAME_STARTED_WAITING_PLAYERS: 3,
+    IN_GAME: 4
     // server.js !
+};
+const Lobby = {
+    roomStatus: STATUS.NOT_CONNECTED
 };
 
 $(document).ready(() => {
+    Socket.emit('get-rooms-list');
 
     //------------------------------------------------------------//
+    // see dialog.js -> Dialog
 
-    Global.$simpleDialog = $('#simple-dialog');
-    Global.$simpleDialog.dialog({
-        modal: true,
-        autoOpen: false,
-        buttons: {
-            Ok: () => {
-                Global.$simpleDialog.dialog('close');
-            }
-        }
-    });
-    Global.openSimpleDialog = ($dialog, title, text, width) => {
-        $dialog.dialog('option', 'title', title);
-        if (width) {
-            $dialog.dialog('option', 'width', width);
-        } else {
-            // Reset default width
-            $dialog.dialog('option', 'width', 300);
-        }
-        $dialog.find('#dialog-text').text('').append(text);
-        $dialog.dialog('open');
-    };
-    
     // Handle when player makes an error
     Socket.on('player-error', (error) => {
         switch (error.type) {
             case 'maximum-rooms-count':
-                Global.openSimpleDialog(Global.$simpleDialog, 'Erreur', 'Le nombre de rooms maximum a été atteint : ' + error.data);
+                Dialog.openSimpleDialog(Dialog.$simpleDialog, 'Erreur', 'Le nombre de rooms maximum a été atteint : ' + error.data);
                 break;
             case 'player-already-exists':
-                Global.openSimpleDialog(Global.$simpleDialog, 'Erreur', 'Le nom de joueur choisi est déjà pris dans cette room : ' + error.data);
+                Dialog.openSimpleDialog(Dialog.$simpleDialog, 'Erreur', 'Le nom de joueur choisi est déjà pris dans cette room : ' + error.data);
                 break;
             case 'already-in-game':
-                Global.openSimpleDialog(Global.$simpleDialog, 'Erreur', 'Vous ne pouvez pas rejoindre une partie déjà en cours !');
+                Dialog.openSimpleDialog(Dialog.$simpleDialog, 'Erreur', 'Vous ne pouvez pas rejoindre une partie déjà en cours !');
                 break;
             case 'full-lobby':
-                Global.openSimpleDialog(Global.$simpleDialog, 'Erreur', 'Vous ne pouvez pas rejoindre la salle de jeu ' + error.data + ', car elle est déjà complète.');
+                Dialog.openSimpleDialog(Dialog.$simpleDialog, 'Erreur', 'Vous ne pouvez pas rejoindre la salle de jeu ' + error.data + ', car elle est déjà complète.');
                 break;
             case 'password-error':
-                Global.openSimpleDialog(Global.$simpleDialog, 'Erreur', 'Le mot de passe de la Salle de jeu ' + error.data + ' est incorrect.');
+                Dialog.openSimpleDialog(Dialog.$simpleDialog, 'Erreur', 'Le mot de passe de la Salle de jeu ' + error.data + ' est incorrect.');
                 break;
             case 'wrong-type':
-                Global.openSimpleDialog(Global.$simpleDialog, 'Attention', 'Vous devez jouer une carte ' + error.data + ' !');
+                Dialog.openSimpleDialog(Dialog.$simpleDialog, 'Attention', 'Vous devez jouer une carte ' + error.data + ' !');
                 break;
             case 'cannot-play-this-card':
-                Global.openSimpleDialog(Global.$simpleDialog, 'Attention', 'Vous ne pouvez pas jouer cette carte : ' + error.data);
+                Dialog.openSimpleDialog(Dialog.$simpleDialog, 'Attention', 'Vous ne pouvez pas jouer cette carte : ' + error.data);
                 break;
             default:
-                Global.openSimpleDialog(Global.$simpleDialog, 'Erreur!', 'Erreur inconnue: ' + error.type + ' ' + error.data);
+                Dialog.openSimpleDialog(Dialog.$simpleDialog, 'Erreur!', 'Erreur inconnue: ' + error.type + ' ' + error.data);
         }
     });
 
@@ -151,10 +134,12 @@ Socket.on('connected', (data) => {
     Lobby.$roomIdInput.val(roomId);
 
     // Socket.emit('get-version');
+});
 
+Socket.on('rooms-status-changed', (data) => {
     // Display rooms list
     const roomsList = data.roomsList;
-    if (roomsList.length) {
+    if (roomsList.length && Lobby.roomStatus === STATUS.NOT_CONNECTED) {
         Lobby.$roomsListContent.text('');
         for (const roomData of roomsList) {
             // Prepare displayed data
@@ -188,6 +173,7 @@ Socket.on('connected', (data) => {
 Socket.on('players-list-changed', (room) => {
     console.log('User has entered in lobby', room);
     Player.roomId = room.id;
+    Lobby.roomStatus = room.STATUS;
     Lobby.$lobbyInputsContainer.hide();
     Lobby.$roomsList.hide();
     Lobby.$formRoomId.val(Lobby.inputs.$roomId.val());

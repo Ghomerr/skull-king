@@ -19,9 +19,11 @@ const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 7;
 const STATUS = {
     // client.js !
+    NOT_CONNECTED: 0,
     IN_LOBBY_WAITING: 1,
     IN_LOBBY_FULL: 2,
-    IN_GAME: 3
+    GAME_STARTED_WAITING_PLAYERS: 3,
+    IN_GAME: 4
     // client.js !
 };
 
@@ -47,23 +49,32 @@ app.use(express.static(path.resolve(__dirname, '.')));
 
 // #1 First socket.io native event from client.js
 io.on('connection', (Socket) => {
-    console.log('New player on the main page. Socket.id=', Socket.id);
+    console.log('Player has just connected. Socket.id=', Socket.id);
 
-     // Prepare the rooms list result
-     const roomsList = [];
-     for (const [id, room] of Object.entries(ROOMS)) {
-         roomsList.push({
-             id: id,
-             status: room.status,
-             usersCount: room.users.length,
-             usersNames: room.users.map(u => u.id).join(', ')
-         });
-     }
+    // Handle a player just being connected
+    Socket.emit('connected', {
+        roomId: Utils.randomRoomId() // suggested room id to initialize the connection form
+    });
 
-     // Handle a player just being connected
-     Socket.emit('connected', {
-        roomId: Utils.randomRoomId(), // suggested room id to initialize the connection form
-        roomsList: roomsList
+    // Prepare the rooms list result
+    function getRoomList() {
+        const roomsList = [];
+        for (const [id, room] of Object.entries(ROOMS)) {
+            roomsList.push({
+                id: id,
+                status: room.status,
+                usersCount: room.users.length,
+                usersNames: room.users.map(u => u.id).join(', ')
+            });
+        }
+        return roomsList;
+    }
+
+    // Handle a player request on the main page to receive rooms list
+    Socket.on('get-rooms-list', () => {
+        Socket.emit('rooms-status-changed', {
+           roomsList: getRoomList()
+       });
     });
 
     // Handle when player asks a room id
@@ -126,7 +137,8 @@ io.on('connection', (Socket) => {
                     if (!room.users.some(u => u.id === lobbyData.userId)) {
 
                         const newUser = {
-                            id: lobbyData.userId
+                            id: lobbyData.userId,
+                            isConnected: true
                         };
                         room.users.push(newUser);
                         Socket.join(lobbyData.roomId);
@@ -135,6 +147,9 @@ io.on('connection', (Socket) => {
                         } 
 
                         emitPlayerListChangedEvent(room);
+                        io.sockets.emit('rooms-status-changed', {
+                            roomsList: getRoomList()
+                        });
 
                     } else {
                         Socket.emit('player-error', { type: 'player-already-exists', data: lobbyData.userId });
@@ -166,8 +181,49 @@ io.on('connection', (Socket) => {
     // Handle the start game event, players will be redirected to the game page
     Socket.on('start-game', (lobbyData) => {
         console.log('Game started for room', lobbyData.roomId);
-        // TODO : DON'T DISCONNECT PLAYERS !!!!
-        io.to(lobbyData.roomId).emit('game-started');
+
+        const room = ROOMS[lobbyData.roomId];
+        if (room) {
+            room.status = STATUS.GAME_STARTED_WAITING_PLAYERS;
+            io.to(lobbyData.roomId).emit('game-started');
+            io.sockets.emit('rooms-status-changed', {
+                roomsList: getRoomList()
+            });
+        }       
+    });
+
+    // Handle when a player joins the gaming page
+    Socket.on('join-game', (data) => {
+        const room = ROOMS[data.roomId];
+        if (room) {
+            
+            const playerIndex = Utils.findIndexById(room.users, data.userId);
+            if (playerIndex >= 0) {
+
+                const player = room.users[playerIndex];
+                player.isConnected = true;
+
+                // Notifies players
+                const readyPlayersAmout = room.users.filter(user => user.isConnected).length;
+                const totalPlayers = room.users.length;
+                if (readyPlayersAmout < totalPlayers) {
+                    console.log('user', player.id, 'joined the game', room.id, 'with', readyPlayersAmout,'/', totalPlayers, 'players');
+                    io.to(room.id).emit('ready-players-amount', {
+                        readyPlayersAmout,
+                        totalPlayers
+                    });
+                } else {
+                    console.log('Last player', player.id, 'joined', 'game can start');
+                    room.status = STATUS.IN_GAME;
+                    io.to(room.id).emit('all-players-ready-to-play');
+                }
+
+            } else {
+                console.err('[join-game] Unknown room', data.userId);
+            }
+        } else {
+            console.err('[join-game] Unknown user', data.roomId);
+        }
     });
 
     // Handle player quit event
@@ -181,19 +237,27 @@ io.on('connection', (Socket) => {
                 // Search player index
                 let index = Utils.findIndexById(room.users, data.userId);
                 if (index >= 0) {
-                    console.log('[player-quit]', data.userId, 'left the room', data.roomId);
-                    // Remove player from room
-                    room.users.splice(index, 1);
-                    if (room.users.length === 0) {
-                        // Delete empty room
-                        delete ROOMS[data.roomId];
+                    if (room.status === STATUS.GAME_STARTED_WAITING_PLAYERS) {
+                        console.log('player leave the lobby to go to the game page');
+                        room.users[index].isConnected = false;
                     } else {
-                        // Update players list
-                        io.to(data.roomId).emit('players-list-changed', room);
-                        if (room.status === STATUS.IN_LOBBY_FULL && room.users.length < MAX_PLAYERS) {
-                            room.status = STATUS.IN_LOBBY_WAITING;
+                        console.log('[player-quit]', data.userId, 'left the room', data.roomId);
+                        // Remove player from room
+                        room.users.splice(index, 1);
+                        if (room.users.length === 0) {
+                            // Delete empty room
+                            delete ROOMS[data.roomId];
+                        } else {
+                            // Update players list
+                            io.to(data.roomId).emit('players-list-changed', room);
+                            if (room.status === STATUS.IN_LOBBY_FULL && room.users.length < MAX_PLAYERS) {
+                                room.status = STATUS.IN_LOBBY_WAITING;
+                            }
+                            // Other status ??
                         }
-                        // Other status ??
+                        io.sockets.emit('rooms-status-changed', {
+                            roomsList: getRoomList()
+                        });
                     }
                 } else {
                     console.log('[player-quit] user not found in room', data);
