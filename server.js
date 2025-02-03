@@ -51,11 +51,6 @@ app.use(express.static(path.resolve(__dirname, '.')));
 io.on('connection', (Socket) => {
     console.log('Player has just connected. Socket.id=', Socket.id);
 
-    // Handle a player just being connected
-    Socket.emit('connected', {
-        roomId: Utils.randomRoomId() // suggested room id to initialize the connection form
-    });
-
     // Prepare the rooms list result
     function getRoomList() {
         const roomsList = [];
@@ -111,7 +106,6 @@ io.on('connection', (Socket) => {
         if (!ROOMS[lobbyData.roomId]) {
             // Check the max rooms value
             if (Object.keys(ROOMS).length < MAX_ROOMS) {
-
                 const newRoom = {
                     id: lobbyData.roomId,
                     status: STATUS.IN_LOBBY_WAITING,
@@ -196,6 +190,8 @@ io.on('connection', (Socket) => {
     Socket.on('join-game', (data) => {
         const room = ROOMS[data.roomId];
         if (room) {
+            // Join the room again
+            Socket.join(room.id);
             
             const playerIndex = Utils.findIndexById(room.users, data.userId);
             if (playerIndex >= 0) {
@@ -230,8 +226,9 @@ io.on('connection', (Socket) => {
     Socket.on('disconnect', () => {
         const data = SOCKETS[Socket.id];
         if (data) {
-            console.log('player-quit', data);
+            console.log('player has just disconnected', data);
             delete SOCKETS[Socket.id];
+
             const room = ROOMS[data.roomId];
             if (room) {
                 // Search player index
@@ -242,6 +239,7 @@ io.on('connection', (Socket) => {
                         room.users[index].isConnected = false;
                     } else {
                         console.log('[player-quit]', data.userId, 'left the room', data.roomId);
+                        
                         // Remove player from room
                         room.users.splice(index, 1);
                         if (room.users.length === 0) {

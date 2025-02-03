@@ -13,7 +13,14 @@ const Lobby = {
     roomStatus: STATUS.NOT_CONNECTED
 };
 
+// Query params cleanup
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('formRoomId') || urlParams.get('formUserId')) {
+   window.location.href = '/';
+}
+
 $(document).ready(() => {
+    Socket.emit('get-random-room-id');
     Socket.emit('get-rooms-list');
 
     //------------------------------------------------------------//
