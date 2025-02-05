@@ -23,8 +23,18 @@ Socket.on('ready-players-amount', (data) => {
 // All players are ready, the game can be started !
 Socket.on('all-players-ready-to-play', () => {
     Dialog.$simpleDialog.dialog('close');
-    // TODO TMP TEST : 
     Dialog.openSimpleDialog(Dialog.$simpleDialog, 'START', 'Jeu en cours !');
+
+    // Request cards
+    Socket.emit('get-my-cards', {
+        roomId: roomId,
+        userId: Player.id
+    });
+});
+
+// Receiving its cards
+Socket.on('player-cards', (data) => {
+    console.log('player-cards', data);
 });
 
 $(document).ready(() => {
