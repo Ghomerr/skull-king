@@ -209,7 +209,7 @@ io.on('connection', (Socket) => {
                         totalPlayers
                     });
                 } else {
-                    console.log('Last player', player.id, 'joined', 'game can start');
+                    console.log('Last player', player.id, 'joined. Game can start !');
                     room.status = STATUS.IN_GAME;
                     Game.initializeGame(Socket, room, [...CARDS]);
                     io.to(room.id).emit('all-players-ready-to-play');

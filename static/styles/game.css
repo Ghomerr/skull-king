@@ -1,0 +1,26 @@
+#player-cards-container {
+    display: flex;
+    justify-content: center;
+    margin-left: -120px;
+}
+
+.hidden {
+    display: none;
+}
+
+.card-display {
+    width: 60px;
+    z-index: 1;
+}
+
+.card-display:hover {
+    z-index: 2;
+    zoom: 1.25;
+    position: relative;
+    margin-top: -20px;
+}
+
+.card-display > img {
+    border-radius: 15px;
+}
+
