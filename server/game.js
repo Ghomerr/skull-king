@@ -8,7 +8,7 @@ exports.getCanStartGame = (room, minPlayer, maxPlayer) => {
     return room.users.length >= minPlayer && room.users.length <= maxPlayer;
 };
 
-exports.initializeGame = (Socket, room, cards) => {
+exports.initializeGame = (room, cards) => {
     // Room needs to be initialized once only, but the socket is reset at each connection !
     if (!room.initialCards) {
         room.initialCards = cards;
@@ -19,6 +19,9 @@ exports.initializeGame = (Socket, room, cards) => {
             dispatchCards(room.turn, player, room.gameCards);
         }
     }
+};
+
+exports.setEventListeners = (Socket, room) => {
 
     // Handle player requesting its cards
     Socket.on('get-my-cards', (data) => {
