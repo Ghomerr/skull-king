@@ -188,6 +188,7 @@ io.on('connection', (Socket) => {
 
     // Handle when a player joins the gaming page
     Socket.on('join-game', (data) => {
+        console.log('join-game', data);
         const room = ROOMS[data.roomId];
         if (room) {
             // Join the room again
@@ -212,9 +213,9 @@ io.on('connection', (Socket) => {
                     console.log('Last player', player.id, 'joined. Game can start !');
                     room.status = STATUS.IN_GAME;
                     Game.initializeGame(room, [...CARDS]);
-                    Game.setEventListeners(Socket, room);
                     io.to(room.id).emit('all-players-ready-to-play');
                 }
+                Game.setEventListeners(io, Socket, room);
 
             } else {
                 console.err('[join-game] Unknown room', data.userId);

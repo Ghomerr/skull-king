@@ -16,21 +16,42 @@ exports.initializeGame = (room, cards) => {
         room.turn = 10; // TODO : RESET TO 1 AFTER TESTS
         for (let player of room.users) {
             player.cards = [];
+            player.foldBet = null;
             dispatchCards(room.turn, player, room.gameCards);
         }
     }
 };
 
-exports.setEventListeners = (Socket, room) => {
+exports.setEventListeners = (io, Socket, room) => {
 
     // Handle player requesting its cards
     Socket.on('get-my-cards', (data) => {
+        console.log('get-my-cards', data);
         if (data.roomId === room.id) {
             Socket.emit('player-cards',  {
+                turn: room.turn,
                 cards: room.users
                     .filter(u => u.id === data.userId)
                     .map(u => u.cards)[0]
             });
+        }
+    });
+
+    // Handle when a player set its fold bet
+    Socket.on('set-fold-bet', (data) => {
+        if (data.roomId === room.id) {
+            const player = room.users.filter(u => u.id === data.userId)[0];
+            if (player) {
+                console.log('set-fold-bet', data);
+                player.foldBet = data.foldBet;
+            }
+
+            // If all players have chosen their bet, display the turn start !
+            if (room.users.length === room.users.filter(u => u.foldBet !== null).length) {
+                io.to(room.id).emit('yo-ho-ho', {
+                    // todo players bets !
+                });
+            }
         }
     });
 };

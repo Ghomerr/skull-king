@@ -83,6 +83,7 @@ $(document).ready(() => {
     Lobby.$randomRoomIdBtn.click(() => {
         Socket.emit('get-random-room-id');
     });
+    
     // Handle change room id
     Socket.on('random-room-id', (roomId) => {
         Lobby.$roomIdInput.val(roomId);

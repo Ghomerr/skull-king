@@ -16,6 +16,8 @@ $(document).ready(() => {
 
     Global.$playerCardsContainer = $('#player-cards-container');
     Global.$playerCards = $('.card-display');
+    Global.$foldCountPicker = $('#fold-count-picker');
+    Global.$foldCountDisplays = $('.fold-count-display');
 });
 
 
@@ -28,30 +30,68 @@ Socket.on('ready-players-amount', (data) => {
 
 // All players are ready, the game can be started !
 Socket.on('all-players-ready-to-play', () => {
-    console.log('all-players-ready-to-play');
-    Dialog.$simpleDialog.dialog('close');
-    Dialog.openSimpleDialog(Dialog.$simpleDialog, 'START', 'Jeu en cours !');
+    console.log('START all-players-ready-to-play');
 
     // Request cards
     Socket.emit('get-my-cards', {
         roomId: roomId,
         userId: Player.id
     });
+
+    Dialog.$simpleDialog.dialog('close');
+    Dialog.openSimpleDialog(Dialog.$simpleDialog, 'START', 'Jeu en cours !');
+    console.log('END all-players-ready-to-play');
 });
 
 // Receiving its cards
 Socket.on('player-cards', (data) => {
     console.log('player-cards', data);
     Player.cards = data.cards;
-    Global.$playerCards.hide();
+
+    // Display the fold count displays
+    for (let i = 0 ; i <= data.turn ; i++) {
+        const foldCountDisplay = Global.$foldCountDisplays.eq(i);
+        foldCountDisplay.removeClass('hidden');
+    }
+    Global.$foldCountPicker.removeClass('hidden');
+
+    // Display player's cards
     data.cards.forEach((card, index) => {
         const $img = Global.$playerCards.children().eq(index);
         $img.attr('src', 'static/assets/' + card.img);
-        $img.parent().show();
+        $img.parent().removeClass('hidden');
     });
     Global.$playerCardsContainer.removeClass('hidden');
 });
 
+// Handle when all players have chosen their bet
+Socket.on('yo-ho-ho', (data) => {
+    console.log('yo-ho-ho', data);
+    Global.$foldCountPicker.addClass('hidden');
+    Global.$foldCountDisplays.addClass('hidden');
+
+    Dialog.openSimpleDialog(Dialog.$simpleDialog, 'YO HO HO', 'YO HO HO !!!!!');
+});
+
 $(document).ready(() => {
     Dialog.openSimpleDialog(Dialog.$simpleDialog, 'Attente', 'En attente des joueurs...');
+
+    // Handle click on flod count display
+    Global.$foldCountDisplays.click((event) => {
+        const $currentFoldCountDisplay = $(event.currentTarget);
+
+        // Handle event only when not hidden nor already selected
+        if (!$currentFoldCountDisplay.hasClass('hidden') && !$currentFoldCountDisplay.hasClass('selected-bet')) {
+            console.log('click event', event.currentTarget.id);
+            Global.$foldCountPicker.addClass('bet-selected');
+            Global.$foldCountDisplays.removeClass('selected-bet');
+            $currentFoldCountDisplay.addClass('selected-bet');
+    
+            Socket.emit('set-fold-bet', {
+                roomId: roomId,
+                userId: Player.id,
+                foldBet: +(event.currentTarget.id.split('-')[1])
+            });
+        }        
+    });
 });
