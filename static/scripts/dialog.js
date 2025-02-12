@@ -5,12 +5,7 @@ $(document).ready(() => {
 
     Dialog.$simpleDialog.dialog({
         modal: true,
-        autoOpen: false,
-        buttons: {
-            Ok: () => {
-                Dialog.$simpleDialog.dialog('close');
-            }
-        }
+        autoOpen: false
     });
 
     Dialog.openSimpleDialog = ($dialog, title, text, width) => {
@@ -21,6 +16,34 @@ $(document).ready(() => {
             // Reset default width
             $dialog.dialog('option', 'width', 300);
         }
+        $dialog.dialog('option', 'buttons', [{
+            text: 'Ok',
+            click: () => {
+                Dialog.$simpleDialog.dialog('close');
+            }
+        }]);
+        $dialog.find('#dialog-text').text('').append(text);
+        $dialog.dialog('open');
+    };
+
+    Dialog.openTwoChoicesDialog = ($dialog, title, text, okLabel, okCallback, cancelLabel, cancelCallback) => {
+        $dialog.dialog('option', 'title', title);
+        $dialog.dialog('option', 'width', 300);
+        $dialog.dialog('option', 'buttons', [
+            {
+                text: okLabel,
+                click: () => {
+                    okCallback();
+                    Dialog.$simpleDialog.dialog('close');
+                }
+            }, {
+                text: cancelLabel,
+                click: () => {
+                    cancelCallback();
+                    Dialog.$simpleDialog.dialog('close');
+                }
+            }, 
+        ]);
         $dialog.find('#dialog-text').text('').append(text);
         $dialog.dialog('open');
     };

@@ -14,12 +14,17 @@ $(document).ready(() => {
         userId: Player.id
     });
 
+    Global.$headTitle = $('#head-title');
+    Global.$headStatus = $('#head-status');
+
     Global.$playerCardsContainer = $('#player-cards-container');
     Global.$playerCards = $('.card-display');
     Global.$foldCountPicker = $('#fold-count-picker');
     Global.$foldCountDisplays = $('.fold-count-display');
-});
 
+    Global.$playersBetsContainer = $('#players-bets-container');
+    Global.$playersBets = $('.player-bet');
+});
 
 // Handle when a player is ready to display the waiting modal
 Socket.on('ready-players-amount', (data) => {
@@ -49,6 +54,7 @@ Socket.on('player-cards', (data) => {
     Player.cards = data.cards;
 
     // Display the fold count displays
+    // TODO : don't display this if it's not the start of the game !!
     for (let i = 0 ; i <= data.turn ; i++) {
         const foldCountDisplay = Global.$foldCountDisplays.eq(i);
         foldCountDisplay.removeClass('hidden');
@@ -64,14 +70,46 @@ Socket.on('player-cards', (data) => {
     Global.$playerCardsContainer.removeClass('hidden');
 });
 
+Socket.on('waiting-players-bets', (data) => {
+    Global.$headStatus.text(data.numberOfReadyPlayers + '/' + data.totalNumberOfPlayers + ' joueurs prêts');
+});
+
 // Handle when all players have chosen their bet
 Socket.on('yo-ho-ho', (data) => {
     console.log('yo-ho-ho', data);
+
+    // Display players bets
+    Global.$playersBetsContainer.removeClass('hidden');
+    data.bets.forEach((playerBet, index) => {
+        const $playerBet = Global.$playersBets.eq(index);
+        $playerBet.removeClass('hidden');
+        $playerBet.find('.player-name').text(playerBet.userId);
+        $playerBet.find('.bet-value > img').attr('src', 'static/assets/score_' + playerBet.foldBet + '.jpg');
+    });
+
+    // Display header title and status
+    Global.$headStatus.text(''); // TODO display the player who must play
+    Global.$headTitle.text('Manche ' + data.turn);
+
+    // Hide previous elements
     Global.$foldCountPicker.addClass('hidden');
     Global.$foldCountDisplays.addClass('hidden');
 
+    // Display yo ho ho !
     Dialog.openSimpleDialog(Dialog.$simpleDialog, 'YO HO HO', 'YO HO HO !!!!!');
 });
+
+function selectFoldCount(Socket, Global, $currentFoldCountDisplay, event) {
+    Global.$foldCountPicker.addClass('bet-selected');
+    Global.$foldCountDisplays.removeClass('selected-bet');
+    $currentFoldCountDisplay.addClass('selected-bet');
+
+    Socket.emit('set-fold-bet', {
+        roomId: roomId,
+        userId: Player.id,
+        foldBet: +(event.currentTarget.id.split('-')[1])
+    });
+}
 
 $(document).ready(() => {
     Dialog.openSimpleDialog(Dialog.$simpleDialog, 'Attente', 'En attente des joueurs...');
@@ -82,16 +120,15 @@ $(document).ready(() => {
 
         // Handle event only when not hidden nor already selected
         if (!$currentFoldCountDisplay.hasClass('hidden') && !$currentFoldCountDisplay.hasClass('selected-bet')) {
-            console.log('click event', event.currentTarget.id);
-            Global.$foldCountPicker.addClass('bet-selected');
-            Global.$foldCountDisplays.removeClass('selected-bet');
-            $currentFoldCountDisplay.addClass('selected-bet');
-    
-            Socket.emit('set-fold-bet', {
-                roomId: roomId,
-                userId: Player.id,
-                foldBet: +(event.currentTarget.id.split('-')[1])
-            });
+            console.log('$foldCountDisplays.click() event', event.currentTarget.id);
+
+            if (!Global.$foldCountDisplays.hasClass('selected-bet')) {
+                selectFoldCount(Socket, Global, $currentFoldCountDisplay, event);
+            } else {
+                Dialog.openTwoChoicesDialog(Dialog.$simpleDialog, 'Attention', 'Etes-vous sûr de vouloir changer de pari ?', 'Oui', () => {
+                    selectFoldCount(Socket, Global, $currentFoldCountDisplay, event);
+                }, 'Non', () => {});
+            }
         }        
     });
 });

@@ -1,3 +1,18 @@
+/** Head title */
+.head-title-container {
+    font-size: 30px;
+    margin: 0px;
+    padding: 5px;
+    background-color: #78350e;
+    color: #ffba44;
+    display: flex;
+}
+
+#head-title {
+    flex-grow: 1;
+}
+
+/** Cards container */
 #player-cards-container {
     display: flex;
     justify-content: center;
@@ -27,6 +42,7 @@
     border-radius: 15px;
 }
 
+/** Folds count */
 #fold-count-picker {
     display: flex;
     justify-content: center;
@@ -63,4 +79,31 @@
     zoom: 1.25;
     position: relative;
     margin-top: 0;
+}
+
+/** Players bets */
+#players-bets-container {
+    display: flex;
+    justify-content: center;
+    margin: 10px;
+}
+
+.player-bet {
+    border: 2px solid #78350e;
+    border-radius: 5px;
+    background-color: #ffba44;
+    color: #78350e;
+    width: 100px;
+    margin: 0 20px;
+    text-align: center;
+    padding-bottom: 5px;
+}
+
+.player-name {
+    font-weight: bold;
+}
+
+.player-bet > .bet-value > img {
+    width: 50px;
+    border-radius: 25px;
 }

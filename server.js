@@ -203,6 +203,8 @@ io.on('connection', (Socket) => {
                 // Notifies players
                 const readyPlayersAmout = room.users.filter(user => user.isConnected).length;
                 const totalPlayers = room.users.length;
+
+                // TODO : handle refresh after YO HO HO !!!
                 if (readyPlayersAmout < totalPlayers) {
                     console.log('user', player.id, 'joined the game', room.id, 'with', readyPlayersAmout,'/', totalPlayers, 'players');
                     io.to(room.id).emit('ready-players-amount', {
