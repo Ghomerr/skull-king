@@ -13,7 +13,14 @@ exports.initializeGame = (room, cards) => {
     if (!room.initialCards) {
         room.initialCards = cards;
         room.gameCards = Utils.shuffle(room.initialCards);
+        room.cardsById = {};
+        cards.forEach((card) => {
+            room.cardsById[card.id] = card;
+        });
+        room.cardsOfTurn = [];
         room.turn = 10; // TODO : RESET TO 1 AFTER TESTS
+        room.currentPlayerIndex = 0;
+        room.currentPlayerId = room.users[0].id;
         for (let player of room.users) {
             player.cards = [];
             player.foldBet = null;
@@ -32,7 +39,12 @@ exports.setEventListeners = (io, Socket, room) => {
                 turn: room.turn,
                 cards: room.users
                     .filter(u => u.id === data.userId)
-                    .map(u => u.cards)[0]
+                    .map(u => u.cards)[0].map(c => {
+                        return {
+                            id: c.id,
+                            img: c.img
+                        }
+                    })
             });
         }
     });
@@ -59,7 +71,8 @@ exports.setEventListeners = (io, Socket, room) => {
                             userId: player.id,
                             foldBet: player.foldBet
                         };
-                    })
+                    }),
+                    currentPlayerId: room.currentPlayerId
                 });
             } else {
                 // Notifies players of how many players are ready
@@ -67,6 +80,25 @@ exports.setEventListeners = (io, Socket, room) => {
                     numberOfReadyPlayers: numberOfReadyPlayers,
                     totalNumberOfPlayers: totalNumberOfPlayers
                 });
+            }
+        }
+    });
+
+    // Handle when a player plays a card
+    Socket.on('play-a-card', (data) => {
+        if (room.id === data.roomId) {
+            if (data.playerId === room.currentPlayerId) {
+                console.log('play-a-card', data);
+                const playedCard = room.cardsById[data.cardId];
+                console.log('playedCard', playedCard);
+
+                // TODO test if player can play this card
+
+                // If KO -> display message to player
+
+                // If OK -> remove card from player and add it to played card
+                // send message to all players with the current state of played cards
+                // send message to the player to remove its played card
             }
         }
     });

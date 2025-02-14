@@ -4,7 +4,8 @@ const Global = {};
 const urlParams = new URLSearchParams(window.location.search);
 const roomId = urlParams.get('formRoomId');
 const Player = {
-    id: urlParams.get('formUserId')
+    id: urlParams.get('formUserId'),
+    isCurrentPlayer: false
 };
 
 $(document).ready(() => {
@@ -51,7 +52,7 @@ Socket.on('all-players-ready-to-play', () => {
 // Receiving its cards
 Socket.on('player-cards', (data) => {
     console.log('player-cards', data);
-    Player.cards = data.cards;
+    Player.cards = data.cards; // useful ?
 
     // Display the fold count displays
     // TODO : don't display this if it's not the start of the game !!
@@ -65,6 +66,7 @@ Socket.on('player-cards', (data) => {
     data.cards.forEach((card, index) => {
         const $img = Global.$playerCards.children().eq(index);
         $img.attr('src', 'static/assets/' + card.img);
+        $img.parent().data('card-id', card.id);
         $img.parent().removeClass('hidden');
     });
     Global.$playerCardsContainer.removeClass('hidden');
@@ -88,7 +90,19 @@ Socket.on('yo-ho-ho', (data) => {
     });
 
     // Display header title and status
-    Global.$headStatus.text(''); // TODO display the player who must play
+    if (data.currentPlayerId === Player.id) {
+        Global.$playerCardsContainer.removeClass('not-playing');
+        Global.$playerCardsContainer.addClass('playing');
+        Global.$headStatus.text('C\'est à moi de jouer...');
+        Player.isCurrentPlayer = true;
+        // TODO add events to play a card !
+    } else {
+        Global.$playerCardsContainer.removeClass('playing');
+        Global.$playerCardsContainer.addClass('not-playing');
+        Global.$headStatus.text('C\'est à ' + data.currentPlayerId + ' de jouer...');
+        Player.isCurrentPlayer = false;
+        // TODO remove event to play a card
+    }
     Global.$headTitle.text('Manche ' + data.turn);
 
     // Hide previous elements
@@ -130,5 +144,18 @@ $(document).ready(() => {
                 }, 'Non', () => {});
             }
         }        
+    });
+
+    // Handle a click on a card when it's the current player
+    Global.$playerCards.click((event, other) => {
+        if (Player.isCurrentPlayer) {
+            console.log('current player clicked a card', event, other);
+            const $playedCard = $(event.currentTarget);
+            Socket.emit('play-a-card', {
+                roomId: roomId,
+                playerId: Player.id,
+                cardId: $playedCard.data('card-id')
+            });
+        }
     });
 });
