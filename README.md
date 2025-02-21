@@ -7,3 +7,5 @@
 
 ## Disclaimer
 Based on the real game Skull King board game. The code is inspired by the roidesnains project I've done before.
+
+test
