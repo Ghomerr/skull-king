@@ -1,7 +1,7 @@
 [
     {
         "id": 1,
-        "name": "black 1",
+        "name": "Black 1",
         "type": "black",
         "img": "black_1.jpg",
         "value": 21,
@@ -9,7 +9,7 @@
         "isSpecial": false
     }, {
         "id": 2,
-        "name": "black 2",
+        "name": "Black 2",
         "type": "black",
         "img": "black_2.jpg",
         "value": 22,
@@ -17,7 +17,7 @@
         "isSpecial": false
     }, {
         "id": 3,
-        "name": "black 3",
+        "name": "Black 3",
         "type": "black",
         "img": "black_3.jpg",
         "value": 23,
@@ -25,7 +25,7 @@
         "isSpecial": false
     }, {
         "id": 4,
-        "name": "black 4",
+        "name": "Black 4",
         "type": "black",
         "img": "black_4.jpg",
         "value": 24,
@@ -33,7 +33,7 @@
         "isSpecial": false
     }, {
         "id": 5,
-        "name": "black 5",
+        "name": "Black 5",
         "type": "black",
         "img": "black_5.jpg",
         "value": 25,
@@ -41,7 +41,7 @@
         "isSpecial": false
     }, {
         "id": 6,
-        "name": "black 6",
+        "name": "Black 6",
         "type": "black",
         "img": "black_6.jpg",
         "value": 26,
@@ -49,7 +49,7 @@
         "isSpecial": false
     }, {
         "id": 7,
-        "name": "black 7",
+        "name": "Black 7",
         "type": "black",
         "img": "black_7.jpg",
         "value": 27,
@@ -57,7 +57,7 @@
         "isSpecial": false
     }, {
         "id": 8,
-        "name": "black 8",
+        "name": "Black 8",
         "type": "black",
         "img": "black_8.jpg",
         "value": 28,
@@ -65,7 +65,7 @@
         "isSpecial": false
     }, {
         "id": 9,
-        "name": "black 9",
+        "name": "Black 9",
         "type": "black",
         "img": "black_9.jpg",
         "value": 29,
@@ -73,7 +73,7 @@
         "isSpecial": false
     }, {
         "id": 10,
-        "name": "black 10",
+        "name": "Black 10",
         "type": "black",
         "img": "black_10.jpg",
         "value": 30,
@@ -81,7 +81,7 @@
         "isSpecial": false
     }, {
         "id": 11,
-        "name": "black 11",
+        "name": "Black 11",
         "type": "black",
         "img": "black_11.jpg",
         "value": 31,
@@ -89,7 +89,7 @@
         "isSpecial": false
     }, {
         "id": 12,
-        "name": "black 12",
+        "name": "Black 12",
         "type": "black",
         "img": "black_12.jpg",
         "value": 32,
@@ -97,7 +97,7 @@
         "isSpecial": false
     }, {
         "id": 13,
-        "name": "black 13",
+        "name": "Black 13",
         "type": "black",
         "img": "black_13.jpg",
         "value": 33,
@@ -105,7 +105,7 @@
         "isSpecial": false
     }, {
         "id": 14,
-        "name": "black 14",
+        "name": "Black 14",
         "type": "black",
         "img": "black_14.jpg",
         "value": 34,
@@ -113,7 +113,7 @@
         "isSpecial": false
     }, {
         "id": 21,
-        "name": "green 1",
+        "name": "Green 1",
         "type": "green",
         "img": "green_1.jpg",
         "value": 1,
@@ -121,7 +121,7 @@
         "isSpecial": false
     }, {
         "id": 22,
-        "name": "green 2",
+        "name": "Green 2",
         "type": "green",
         "img": "green_2.jpg",
         "value": 2,
@@ -129,7 +129,7 @@
         "isSpecial": false
     }, {
         "id": 23,
-        "name": "green 3",
+        "name": "Green 3",
         "type": "green",
         "img": "green_3.jpg",
         "value": 3,
@@ -137,7 +137,7 @@
         "isSpecial": false
     }, {
         "id": 24,
-        "name": "green 4",
+        "name": "Green 4",
         "type": "green",
         "img": "green_4.jpg",
         "value": 4,
@@ -145,7 +145,7 @@
         "isSpecial": false
     }, {
         "id": 25,
-        "name": "green 5",
+        "name": "Green 5",
         "type": "green",
         "img": "green_5.jpg",
         "value": 5,
@@ -153,7 +153,7 @@
         "isSpecial": false
     }, {
         "id": 26,
-        "name": "green 6",
+        "name": "Green 6",
         "type": "green",
         "img": "green_6.jpg",
         "value": 6,
@@ -161,7 +161,7 @@
         "isSpecial": false
     }, {
         "id": 27,
-        "name": "green 7",
+        "name": "Green 7",
         "type": "green",
         "img": "green_7.jpg",
         "value": 7,
@@ -169,7 +169,7 @@
         "isSpecial": false
     }, {
         "id": 28,
-        "name": "green 8",
+        "name": "Green 8",
         "type": "green",
         "img": "green_8.jpg",
         "value": 8,
@@ -177,7 +177,7 @@
         "isSpecial": false
     }, {
         "id": 29,
-        "name": "green 9",
+        "name": "Green 9",
         "type": "green",
         "img": "green_9.jpg",
         "value": 9,
@@ -185,7 +185,7 @@
         "isSpecial": false
     }, {
         "id": 30,
-        "name": "green 10",
+        "name": "Green 10",
         "type": "green",
         "img": "green_10.jpg",
         "value": 10,
@@ -193,7 +193,7 @@
         "isSpecial": false
     }, {
         "id": 31,
-        "name": "green 11",
+        "name": "Green 11",
         "type": "green",
         "img": "green_11.jpg",
         "value": 11,
@@ -201,7 +201,7 @@
         "isSpecial": false
     }, {
         "id": 32,
-        "name": "green 12",
+        "name": "Green 12",
         "type": "green",
         "img": "green_12.jpg",
         "value": 12,
@@ -209,7 +209,7 @@
         "isSpecial": false
     }, {
         "id": 33,
-        "name": "green 13",
+        "name": "Green 13",
         "type": "green",
         "img": "green_13.jpg",
         "value": 13,
@@ -217,7 +217,7 @@
         "isSpecial": false
     }, {
         "id": 34,
-        "name": "green 14",
+        "name": "Green 14",
         "type": "green",
         "img": "green_14.jpg",
         "value": 14,
@@ -225,7 +225,7 @@
         "isSpecial": false
     }, {
         "id": 41,
-        "name": "purple 1",
+        "name": "Purple 1",
         "type": "purple",
         "img": "purple_1.jpg",
         "value": 1,
@@ -233,7 +233,7 @@
         "isSpecial": false
     }, {
         "id": 42,
-        "name": "purple 2",
+        "name": "Purple 2",
         "type": "purple",
         "img": "purple_2.jpg",
         "value": 2,
@@ -241,7 +241,7 @@
         "isSpecial": false
     }, {
         "id": 43,
-        "name": "purple 3",
+        "name": "Purple 3",
         "type": "purple",
         "img": "purple_3.jpg",
         "value": 3,
@@ -249,7 +249,7 @@
         "isSpecial": false
     }, {
         "id": 44,
-        "name": "purple 4",
+        "name": "Purple 4",
         "type": "purple",
         "img": "purple_4.jpg",
         "value": 4,
@@ -257,7 +257,7 @@
         "isSpecial": false
     }, {
         "id": 45,
-        "name": "purple 5",
+        "name": "Purple 5",
         "type": "purple",
         "img": "purple_5.jpg",
         "value": 5,
@@ -265,7 +265,7 @@
         "isSpecial": false
     }, {
         "id": 46,
-        "name": "purple 6",
+        "name": "Purple 6",
         "type": "purple",
         "img": "purple_6.jpg",
         "value": 6,
@@ -273,7 +273,7 @@
         "isSpecial": false
     }, {
         "id": 47,
-        "name": "purple 7",
+        "name": "Purple 7",
         "type": "purple",
         "img": "purple_7.jpg",
         "value": 7,
@@ -281,7 +281,7 @@
         "isSpecial": false
     }, {
         "id": 48,
-        "name": "purple 8",
+        "name": "Purple 8",
         "type": "purple",
         "img": "purple_8.jpg",
         "value": 8,
@@ -289,7 +289,7 @@
         "isSpecial": false
     }, {
         "id": 49,
-        "name": "purple 9",
+        "name": "Purple 9",
         "type": "purple",
         "img": "purple_9.jpg",
         "value": 9,
@@ -297,7 +297,7 @@
         "isSpecial": false
     }, {
         "id": 50,
-        "name": "purple 10",
+        "name": "Purple 10",
         "type": "purple",
         "img": "purple_10.jpg",
         "value": 10,
@@ -305,7 +305,7 @@
         "isSpecial": false
     }, {
         "id": 51,
-        "name": "purple 11",
+        "name": "Purple 11",
         "type": "purple",
         "img": "purple_11.jpg",
         "value": 11,
@@ -313,7 +313,7 @@
         "isSpecial": false
     }, {
         "id": 52,
-        "name": "purple 12",
+        "name": "Purple 12",
         "type": "purple",
         "img": "purple_12.jpg",
         "value": 12,
@@ -321,7 +321,7 @@
         "isSpecial": false
     }, {
         "id": 53,
-        "name": "purple 13",
+        "name": "Purple 13",
         "type": "purple",
         "img": "purple_13.jpg",
         "value": 13,
@@ -329,7 +329,7 @@
         "isSpecial": false
     }, {
         "id": 54,
-        "name": "purple 14",
+        "name": "Purple 14",
         "type": "purple",
         "img": "purple_14.jpg",
         "value": 14,
@@ -337,7 +337,7 @@
         "isSpecial": false
     }, {
         "id": 61,
-        "name": "yellow 1",
+        "name": "Yellow 1",
         "type": "yellow",
         "img": "yellow_1.jpg",
         "value": 1,
@@ -345,7 +345,7 @@
         "isSpecial": false
     }, {
         "id": 62,
-        "name": "yellow 2",
+        "name": "Yellow 2",
         "type": "yellow",
         "img": "yellow_2.jpg",
         "value": 2,
@@ -353,7 +353,7 @@
         "isSpecial": false
     }, {
         "id": 63,
-        "name": "yellow 3",
+        "name": "Yellow 3",
         "type": "yellow",
         "img": "yellow_3.jpg",
         "value": 3,
@@ -361,7 +361,7 @@
         "isSpecial": false
     }, {
         "id": 64,
-        "name": "yellow 4",
+        "name": "Yellow 4",
         "type": "yellow",
         "img": "yellow_4.jpg",
         "value": 4,
@@ -369,7 +369,7 @@
         "isSpecial": false
     }, {
         "id": 65,
-        "name": "yellow 5",
+        "name": "Yellow 5",
         "type": "yellow",
         "img": "yellow_5.jpg",
         "value": 5,
@@ -377,7 +377,7 @@
         "isSpecial": false
     }, {
         "id": 66,
-        "name": "yellow 6",
+        "name": "Yellow 6",
         "type": "yellow",
         "img": "yellow_6.jpg",
         "value": 6,
@@ -385,7 +385,7 @@
         "isSpecial": false
     }, {
         "id": 67,
-        "name": "yellow 7",
+        "name": "Yellow 7",
         "type": "yellow",
         "img": "yellow_7.jpg",
         "value": 7,
@@ -393,7 +393,7 @@
         "isSpecial": false
     }, {
         "id": 68,
-        "name": "yellow 8",
+        "name": "Yellow 8",
         "type": "yellow",
         "img": "yellow_8.jpg",
         "value": 8,
@@ -401,7 +401,7 @@
         "isSpecial": false
     }, {
         "id": 69,
-        "name": "yellow 9",
+        "name": "Yellow 9",
         "type": "yellow",
         "img": "yellow_9.jpg",
         "value": 9,
@@ -409,7 +409,7 @@
         "isSpecial": false
     }, {
         "id": 70,
-        "name": "yellow 10",
+        "name": "Yellow 10",
         "type": "yellow",
         "img": "yellow_10.jpg",
         "value": 10,
@@ -417,7 +417,7 @@
         "isSpecial": false
     }, {
         "id": 71,
-        "name": "yellow 11",
+        "name": "Yellow 11",
         "type": "yellow",
         "img": "yellow_11.jpg",
         "value": 11,
@@ -425,7 +425,7 @@
         "isSpecial": false
     }, {
         "id": 72,
-        "name": "yellow 12",
+        "name": "Yellow 12",
         "type": "yellow",
         "img": "yellow_12.jpg",
         "value": 12,
@@ -433,7 +433,7 @@
         "isSpecial": false
     }, {
         "id": 73,
-        "name": "yellow 13",
+        "name": "Yellow 13",
         "type": "yellow",
         "img": "yellow_13.jpg",
         "value": 13,
@@ -441,7 +441,7 @@
         "isSpecial": false
     }, {
         "id": 74,
-        "name": "yellow 14",
+        "name": "Yellow 14",
         "type": "yellow",
         "img": "yellow_14.jpg",
         "value": 14,
@@ -449,7 +449,7 @@
         "isSpecial": false
     }, {
         "id": 81,
-        "name": "evasion 1",
+        "name": "Evasion 1",
         "type": "evasion",
         "img": "evasion.jpg",
         "value": 0,
@@ -457,7 +457,7 @@
         "isSpecial": true
     }, {
         "id": 82,
-        "name": "evasion 2",
+        "name": "Evasion 2",
         "type": "evasion",
         "img": "evasion.jpg",
         "value": 0,
@@ -465,7 +465,7 @@
         "isSpecial": true
     }, {
         "id": 83,
-        "name": "evasion 3",
+        "name": "Evasion 3",
         "type": "evasion",
         "img": "evasion.jpg",
         "value": 0,
@@ -473,7 +473,7 @@
         "isSpecial": true
     }, {
         "id": 84,
-        "name": "evasion 4",
+        "name": "Evasion 4",
         "type": "evasion",
         "img": "evasion.jpg",
         "value": 0,
@@ -481,7 +481,7 @@
         "isSpecial": true
     }, {
         "id": 85,
-        "name": "evasion 5",
+        "name": "Evasion 5",
         "type": "evasion",
         "img": "evasion.jpg",
         "value": 0,
@@ -489,7 +489,7 @@
         "isSpecial": true
     }, {
         "id": 91,
-        "name": "mermaid Alyra",
+        "name": "Alyra",
         "type": "mermaid",
         "img": "mermaid_alyra.jpg",
         "value": 50,
@@ -497,7 +497,7 @@
         "isSpecial": true
     }, {
         "id": 92,
-        "name": "mermaid Circé",
+        "name": "Circé",
         "type": "mermaid",
         "img": "mermaid_circe.jpg",
         "value": 50,
@@ -505,7 +505,7 @@
         "isSpecial": true
     }, {
         "id": 101,
-        "name": "pirate Harray le géant",
+        "name": "Harray le géant",
         "type": "pirate",
         "img": "pirate_harry-le-geant.jpg",
         "value": 100,
@@ -513,7 +513,7 @@
         "isSpecial": true
     }, {
         "id": 102,
-        "name": "pirate Juanita jade",
+        "name": "Juanita jade",
         "type": "pirate",
         "img": "pirate_juanita-jade.jpg",
         "value": 100,
@@ -521,7 +521,7 @@
         "isSpecial": true
     }, {
         "id": 103,
-        "name": "pirate Rascal le flambeur",
+        "name": "Rascal le flambeur",
         "type": "pirate",
         "img": "pirate_rascal-le-flambeur.jpg",
         "value": 100,
@@ -529,7 +529,7 @@
         "isSpecial": true
     }, {
         "id": 104,
-        "name": "pirate Rosie la douce",
+        "name": "Rosie la douce",
         "type": "pirate",
         "img": "pirate_rosie-la-douce.jpg",
         "value": 100,
@@ -537,7 +537,7 @@
         "isSpecial": true
     }, {
         "id": 105,
-        "name": "pirate Will le bandit",
+        "name": "Will le bandit",
         "type": "pirate",
         "img": "pirate_will-le-bandit.jpg",
         "value": 100,
@@ -545,15 +545,15 @@
         "isSpecial": true
     }, {
         "id": 106,
-        "name": "pirate Tigresse",
-        "type": "pirate_evasion",
-        "img": "pirate_tigresse.jpg",
+        "name": "Tigresse",
+        "type": "choice",
+        "img": "pirate_choice.jpg",
         "value": 100,
         "bonus": 30,
         "isSpecial": true
     }, {
         "id": 200,
-        "name": "pirate Tigresse",
+        "name": "Skull King",
         "type": "skull-king",
         "img": "skull-king.jpg",
         "value": 200,
