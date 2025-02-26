@@ -1,7 +1,7 @@
 [
     {
         "id": 1,
-        "name": "Black 1",
+        "name": "Pavillon 1",
         "type": "black",
         "img": "black_1.jpg",
         "value": 21,
@@ -9,7 +9,7 @@
         "isSpecial": false
     }, {
         "id": 2,
-        "name": "Black 2",
+        "name": "Pavillon 2",
         "type": "black",
         "img": "black_2.jpg",
         "value": 22,
@@ -17,7 +17,7 @@
         "isSpecial": false
     }, {
         "id": 3,
-        "name": "Black 3",
+        "name": "Pavillon 3",
         "type": "black",
         "img": "black_3.jpg",
         "value": 23,
@@ -25,7 +25,7 @@
         "isSpecial": false
     }, {
         "id": 4,
-        "name": "Black 4",
+        "name": "Pavillon 4",
         "type": "black",
         "img": "black_4.jpg",
         "value": 24,
@@ -33,7 +33,7 @@
         "isSpecial": false
     }, {
         "id": 5,
-        "name": "Black 5",
+        "name": "Pavillon 5",
         "type": "black",
         "img": "black_5.jpg",
         "value": 25,
@@ -41,7 +41,7 @@
         "isSpecial": false
     }, {
         "id": 6,
-        "name": "Black 6",
+        "name": "Pavillon 6",
         "type": "black",
         "img": "black_6.jpg",
         "value": 26,
@@ -49,7 +49,7 @@
         "isSpecial": false
     }, {
         "id": 7,
-        "name": "Black 7",
+        "name": "Pavillon 7",
         "type": "black",
         "img": "black_7.jpg",
         "value": 27,
@@ -57,7 +57,7 @@
         "isSpecial": false
     }, {
         "id": 8,
-        "name": "Black 8",
+        "name": "Pavillon 8",
         "type": "black",
         "img": "black_8.jpg",
         "value": 28,
@@ -65,7 +65,7 @@
         "isSpecial": false
     }, {
         "id": 9,
-        "name": "Black 9",
+        "name": "Pavillon 9",
         "type": "black",
         "img": "black_9.jpg",
         "value": 29,
@@ -73,7 +73,7 @@
         "isSpecial": false
     }, {
         "id": 10,
-        "name": "Black 10",
+        "name": "Pavillon 10",
         "type": "black",
         "img": "black_10.jpg",
         "value": 30,
@@ -81,7 +81,7 @@
         "isSpecial": false
     }, {
         "id": 11,
-        "name": "Black 11",
+        "name": "Pavillon 11",
         "type": "black",
         "img": "black_11.jpg",
         "value": 31,
@@ -89,7 +89,7 @@
         "isSpecial": false
     }, {
         "id": 12,
-        "name": "Black 12",
+        "name": "Pavillon 12",
         "type": "black",
         "img": "black_12.jpg",
         "value": 32,
@@ -97,7 +97,7 @@
         "isSpecial": false
     }, {
         "id": 13,
-        "name": "Black 13",
+        "name": "Pavillon 13",
         "type": "black",
         "img": "black_13.jpg",
         "value": 33,
@@ -105,7 +105,7 @@
         "isSpecial": false
     }, {
         "id": 14,
-        "name": "Black 14",
+        "name": "Pavillon 14",
         "type": "black",
         "img": "black_14.jpg",
         "value": 34,
@@ -113,7 +113,7 @@
         "isSpecial": false
     }, {
         "id": 21,
-        "name": "Green 1",
+        "name": "Perroquet 1",
         "type": "green",
         "img": "green_1.jpg",
         "value": 1,
@@ -121,7 +121,7 @@
         "isSpecial": false
     }, {
         "id": 22,
-        "name": "Green 2",
+        "name": "Perroquet 2",
         "type": "green",
         "img": "green_2.jpg",
         "value": 2,
@@ -129,7 +129,7 @@
         "isSpecial": false
     }, {
         "id": 23,
-        "name": "Green 3",
+        "name": "Perroquet 3",
         "type": "green",
         "img": "green_3.jpg",
         "value": 3,
@@ -137,7 +137,7 @@
         "isSpecial": false
     }, {
         "id": 24,
-        "name": "Green 4",
+        "name": "Perroquet 4",
         "type": "green",
         "img": "green_4.jpg",
         "value": 4,
@@ -145,7 +145,7 @@
         "isSpecial": false
     }, {
         "id": 25,
-        "name": "Green 5",
+        "name": "Perroquet 5",
         "type": "green",
         "img": "green_5.jpg",
         "value": 5,
@@ -153,7 +153,7 @@
         "isSpecial": false
     }, {
         "id": 26,
-        "name": "Green 6",
+        "name": "Perroquet 6",
         "type": "green",
         "img": "green_6.jpg",
         "value": 6,
@@ -161,7 +161,7 @@
         "isSpecial": false
     }, {
         "id": 27,
-        "name": "Green 7",
+        "name": "Perroquet 7",
         "type": "green",
         "img": "green_7.jpg",
         "value": 7,
@@ -169,7 +169,7 @@
         "isSpecial": false
     }, {
         "id": 28,
-        "name": "Green 8",
+        "name": "Perroquet 8",
         "type": "green",
         "img": "green_8.jpg",
         "value": 8,
@@ -177,7 +177,7 @@
         "isSpecial": false
     }, {
         "id": 29,
-        "name": "Green 9",
+        "name": "Perroquet 9",
         "type": "green",
         "img": "green_9.jpg",
         "value": 9,
@@ -185,7 +185,7 @@
         "isSpecial": false
     }, {
         "id": 30,
-        "name": "Green 10",
+        "name": "Perroquet 10",
         "type": "green",
         "img": "green_10.jpg",
         "value": 10,
@@ -193,7 +193,7 @@
         "isSpecial": false
     }, {
         "id": 31,
-        "name": "Green 11",
+        "name": "Perroquet 11",
         "type": "green",
         "img": "green_11.jpg",
         "value": 11,
@@ -201,7 +201,7 @@
         "isSpecial": false
     }, {
         "id": 32,
-        "name": "Green 12",
+        "name": "Perroquet 12",
         "type": "green",
         "img": "green_12.jpg",
         "value": 12,
@@ -209,7 +209,7 @@
         "isSpecial": false
     }, {
         "id": 33,
-        "name": "Green 13",
+        "name": "Perroquet 13",
         "type": "green",
         "img": "green_13.jpg",
         "value": 13,
@@ -217,7 +217,7 @@
         "isSpecial": false
     }, {
         "id": 34,
-        "name": "Green 14",
+        "name": "Perroquet 14",
         "type": "green",
         "img": "green_14.jpg",
         "value": 14,
@@ -225,7 +225,7 @@
         "isSpecial": false
     }, {
         "id": 41,
-        "name": "Purple 1",
+        "name": "Carte 1",
         "type": "purple",
         "img": "purple_1.jpg",
         "value": 1,
@@ -233,7 +233,7 @@
         "isSpecial": false
     }, {
         "id": 42,
-        "name": "Purple 2",
+        "name": "Carte 2",
         "type": "purple",
         "img": "purple_2.jpg",
         "value": 2,
@@ -241,7 +241,7 @@
         "isSpecial": false
     }, {
         "id": 43,
-        "name": "Purple 3",
+        "name": "Carte 3",
         "type": "purple",
         "img": "purple_3.jpg",
         "value": 3,
@@ -249,7 +249,7 @@
         "isSpecial": false
     }, {
         "id": 44,
-        "name": "Purple 4",
+        "name": "Carte 4",
         "type": "purple",
         "img": "purple_4.jpg",
         "value": 4,
@@ -257,7 +257,7 @@
         "isSpecial": false
     }, {
         "id": 45,
-        "name": "Purple 5",
+        "name": "Carte 5",
         "type": "purple",
         "img": "purple_5.jpg",
         "value": 5,
@@ -265,7 +265,7 @@
         "isSpecial": false
     }, {
         "id": 46,
-        "name": "Purple 6",
+        "name": "Carte 6",
         "type": "purple",
         "img": "purple_6.jpg",
         "value": 6,
@@ -273,7 +273,7 @@
         "isSpecial": false
     }, {
         "id": 47,
-        "name": "Purple 7",
+        "name": "Carte 7",
         "type": "purple",
         "img": "purple_7.jpg",
         "value": 7,
@@ -281,7 +281,7 @@
         "isSpecial": false
     }, {
         "id": 48,
-        "name": "Purple 8",
+        "name": "Carte 8",
         "type": "purple",
         "img": "purple_8.jpg",
         "value": 8,
@@ -289,7 +289,7 @@
         "isSpecial": false
     }, {
         "id": 49,
-        "name": "Purple 9",
+        "name": "Carte 9",
         "type": "purple",
         "img": "purple_9.jpg",
         "value": 9,
@@ -297,7 +297,7 @@
         "isSpecial": false
     }, {
         "id": 50,
-        "name": "Purple 10",
+        "name": "Carte 10",
         "type": "purple",
         "img": "purple_10.jpg",
         "value": 10,
@@ -305,7 +305,7 @@
         "isSpecial": false
     }, {
         "id": 51,
-        "name": "Purple 11",
+        "name": "Carte 11",
         "type": "purple",
         "img": "purple_11.jpg",
         "value": 11,
@@ -313,7 +313,7 @@
         "isSpecial": false
     }, {
         "id": 52,
-        "name": "Purple 12",
+        "name": "Carte 12",
         "type": "purple",
         "img": "purple_12.jpg",
         "value": 12,
@@ -321,7 +321,7 @@
         "isSpecial": false
     }, {
         "id": 53,
-        "name": "Purple 13",
+        "name": "Carte 13",
         "type": "purple",
         "img": "purple_13.jpg",
         "value": 13,
@@ -329,7 +329,7 @@
         "isSpecial": false
     }, {
         "id": 54,
-        "name": "Purple 14",
+        "name": "Carte 14",
         "type": "purple",
         "img": "purple_14.jpg",
         "value": 14,
@@ -337,7 +337,7 @@
         "isSpecial": false
     }, {
         "id": 61,
-        "name": "Yellow 1",
+        "name": "Trésor 1",
         "type": "yellow",
         "img": "yellow_1.jpg",
         "value": 1,
@@ -345,7 +345,7 @@
         "isSpecial": false
     }, {
         "id": 62,
-        "name": "Yellow 2",
+        "name": "Trésor 2",
         "type": "yellow",
         "img": "yellow_2.jpg",
         "value": 2,
@@ -353,7 +353,7 @@
         "isSpecial": false
     }, {
         "id": 63,
-        "name": "Yellow 3",
+        "name": "Trésor 3",
         "type": "yellow",
         "img": "yellow_3.jpg",
         "value": 3,
@@ -361,7 +361,7 @@
         "isSpecial": false
     }, {
         "id": 64,
-        "name": "Yellow 4",
+        "name": "Trésor 4",
         "type": "yellow",
         "img": "yellow_4.jpg",
         "value": 4,
@@ -369,7 +369,7 @@
         "isSpecial": false
     }, {
         "id": 65,
-        "name": "Yellow 5",
+        "name": "Trésor 5",
         "type": "yellow",
         "img": "yellow_5.jpg",
         "value": 5,
@@ -377,7 +377,7 @@
         "isSpecial": false
     }, {
         "id": 66,
-        "name": "Yellow 6",
+        "name": "Trésor 6",
         "type": "yellow",
         "img": "yellow_6.jpg",
         "value": 6,
@@ -385,7 +385,7 @@
         "isSpecial": false
     }, {
         "id": 67,
-        "name": "Yellow 7",
+        "name": "Trésor 7",
         "type": "yellow",
         "img": "yellow_7.jpg",
         "value": 7,
@@ -393,7 +393,7 @@
         "isSpecial": false
     }, {
         "id": 68,
-        "name": "Yellow 8",
+        "name": "Trésor 8",
         "type": "yellow",
         "img": "yellow_8.jpg",
         "value": 8,
@@ -401,7 +401,7 @@
         "isSpecial": false
     }, {
         "id": 69,
-        "name": "Yellow 9",
+        "name": "Trésor 9",
         "type": "yellow",
         "img": "yellow_9.jpg",
         "value": 9,
@@ -409,7 +409,7 @@
         "isSpecial": false
     }, {
         "id": 70,
-        "name": "Yellow 10",
+        "name": "Trésor 10",
         "type": "yellow",
         "img": "yellow_10.jpg",
         "value": 10,
@@ -417,7 +417,7 @@
         "isSpecial": false
     }, {
         "id": 71,
-        "name": "Yellow 11",
+        "name": "Trésor 11",
         "type": "yellow",
         "img": "yellow_11.jpg",
         "value": 11,
@@ -425,7 +425,7 @@
         "isSpecial": false
     }, {
         "id": 72,
-        "name": "Yellow 12",
+        "name": "Trésor 12",
         "type": "yellow",
         "img": "yellow_12.jpg",
         "value": 12,
@@ -433,7 +433,7 @@
         "isSpecial": false
     }, {
         "id": 73,
-        "name": "Yellow 13",
+        "name": "Trésor 13",
         "type": "yellow",
         "img": "yellow_13.jpg",
         "value": 13,
@@ -441,7 +441,7 @@
         "isSpecial": false
     }, {
         "id": 74,
-        "name": "Yellow 14",
+        "name": "Trésor 14",
         "type": "yellow",
         "img": "yellow_14.jpg",
         "value": 14,
@@ -449,7 +449,7 @@
         "isSpecial": false
     }, {
         "id": 81,
-        "name": "Evasion 1",
+        "name": "Fuite 1",
         "type": "evasion",
         "img": "evasion.jpg",
         "value": 0,
@@ -457,7 +457,7 @@
         "isSpecial": true
     }, {
         "id": 82,
-        "name": "Evasion 2",
+        "name": "Fuite 2",
         "type": "evasion",
         "img": "evasion.jpg",
         "value": 0,
@@ -465,7 +465,7 @@
         "isSpecial": true
     }, {
         "id": 83,
-        "name": "Evasion 3",
+        "name": "Fuite 3",
         "type": "evasion",
         "img": "evasion.jpg",
         "value": 0,
@@ -473,7 +473,7 @@
         "isSpecial": true
     }, {
         "id": 84,
-        "name": "Evasion 4",
+        "name": "Fuite 4",
         "type": "evasion",
         "img": "evasion.jpg",
         "value": 0,
@@ -481,7 +481,7 @@
         "isSpecial": true
     }, {
         "id": 85,
-        "name": "Evasion 5",
+        "name": "Fuite 5",
         "type": "evasion",
         "img": "evasion.jpg",
         "value": 0,
@@ -547,7 +547,7 @@
         "id": 106,
         "name": "Tigresse",
         "type": "choice",
-        "img": "pirate_choice.jpg",
+        "img": "tigresse_choice.jpg",
         "value": 100,
         "bonus": 30,
         "isSpecial": true

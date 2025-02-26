@@ -118,7 +118,7 @@ io.on('connection', (Socket) => {
                 Game.initializeRoomGameData(newRoom);
 
             } else {
-                Socket.emit('player-error', { type: 'maximum-rooms-count', data: MAX_ROOMS });
+                Socket.emit('lobby-error', { type: 'maximum-rooms-count', data: MAX_ROOMS });
                 return;
             }
         }
@@ -146,17 +146,17 @@ io.on('connection', (Socket) => {
                         });
 
                     } else {
-                        Socket.emit('player-error', { type: 'player-already-exists', data: lobbyData.userId });
+                        Socket.emit('lobby-error', { type: 'user-already-exists', data: lobbyData.userId });
                     }
                 } else {
-                    Socket.emit('player-error', { type: 'password-error', data: lobbyData.roomId });
+                    Socket.emit('lobby-error', { type: 'password-error', data: lobbyData.roomId });
                 }
             } else {
-                Socket.emit('player-error', { type: 'full-lobby', data: lobbyData.roomId });
+                Socket.emit('lobby-error', { type: 'full-lobby', data: lobbyData.roomId });
             }
 
         } else {
-            Socket.emit('player-error', { type: 'already-in-game' });
+            Socket.emit('lobby-error', { type: 'already-in-game' });
         }
     });
 

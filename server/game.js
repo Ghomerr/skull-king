@@ -21,6 +21,12 @@ exports.initializeGame = (room, cards) => {
         room.turn = 10; // TODO : RESET TO 1 AFTER TESTS
         room.currentPlayerIndex = 0;
         room.currentPlayerId = room.users[0].id;
+
+        // TODO REMOVE THIS TEST
+        if (player.id === "Ghomerr") {
+            // ADD TIGRESSE HERE !!!
+        }
+
         for (let player of room.users) {
             player.cards = [];
             player.foldBet = null;
@@ -42,6 +48,7 @@ exports.setEventListeners = (io, Socket, room) => {
                     .map(u => u.cards)[0].map(c => {
                         return {
                             id: c.id,
+                            type: c.type,
                             img: c.img
                         }
                     })
@@ -64,7 +71,6 @@ exports.setEventListeners = (io, Socket, room) => {
             // If all players have chosen their bet, display the turn start !
             if (totalNumberOfPlayers === numberOfReadyPlayers) {
                 io.to(room.id).emit('yo-ho-ho', {
-                    // todo players bets !
                     turn: room.turn,
                     bets: room.users.map(player => {
                         return {
@@ -88,11 +94,32 @@ exports.setEventListeners = (io, Socket, room) => {
     Socket.on('play-a-card', (data) => {
         if (room.id === data.roomId) {
             if (data.playerId === room.currentPlayerId) {
-                console.log('play-a-card', data);
                 const playedCard = room.cardsById[data.cardId];
-                console.log('playedCard', playedCard);
+                if (playedCard.type === 'choice') {
+                    if (data.type === 'pirate') {
+                        playedCard.img = 'tigresse_pirate.jpg';
+                    } else if (data.type === 'evasion') {
+                        playedCard.img = 'tigresse_evasion.jpg';
+                        playedCard.value = 0;
+                        playedCard.bonus = 0;
+                    } else {
+                        // TODO : wrong choice
+                    }
+                }
+
+                console.log('play-a-card', playedCard); 
+
+                if (room.cardsOfTurn.length === 0) {
+                    // OK
+                } else {
+
+                }
 
                 // TODO test if player can play this card
+                Socket.emit('player-error',  {
+                    type: 'cannot-play-this-card',
+                    data: playedCard.name
+                });
 
                 // If KO -> display message to player
 

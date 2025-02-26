@@ -44,6 +44,10 @@
     cursor: not-allowed;
 }
 
+#player-cards-container.not-playing > .card-display:hover {
+    opacity: initial;
+}
+
 #player-cards-container.playing > .card-display:hover {
     cursor: pointer;
 }

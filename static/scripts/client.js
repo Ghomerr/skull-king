@@ -27,31 +27,25 @@ $(document).ready(() => {
     // see dialog.js -> Dialog
 
     // Handle when player makes an error
-    Socket.on('player-error', (error) => {
+    Socket.on('lobby-error', (error) => {
         switch (error.type) {
             case 'maximum-rooms-count':
-                Dialog.openSimpleDialog(Dialog.$simpleDialog, 'Erreur', 'Le nombre de rooms maximum a été atteint : ' + error.data);
+                Dialog.openSimpleDialog(Dialog.$simpleDialog, '⛔ Erreur', 'Le nombre de salles maximum a été atteint : ' + error.data);
                 break;
-            case 'player-already-exists':
-                Dialog.openSimpleDialog(Dialog.$simpleDialog, 'Erreur', 'Le nom de joueur choisi est déjà pris dans cette room : ' + error.data);
+            case 'user-already-exists':
+                Dialog.openSimpleDialog(Dialog.$simpleDialog, '⛔ Erreur', 'Le nom choisi est déjà pris dans cette salle : ' + error.data);
                 break;
             case 'already-in-game':
-                Dialog.openSimpleDialog(Dialog.$simpleDialog, 'Erreur', 'Vous ne pouvez pas rejoindre une partie déjà en cours !');
+                Dialog.openSimpleDialog(Dialog.$simpleDialog, '⛔ Erreur', 'Vous ne pouvez pas rejoindre une partie déjà en cours !');
                 break;
             case 'full-lobby':
-                Dialog.openSimpleDialog(Dialog.$simpleDialog, 'Erreur', 'Vous ne pouvez pas rejoindre la salle de jeu ' + error.data + ', car elle est déjà complète.');
+                Dialog.openSimpleDialog(Dialog.$simpleDialog, '⛔ Erreur', 'Vous ne pouvez pas rejoindre la salle de jeu ' + error.data + ', car elle est déjà complète.');
                 break;
             case 'password-error':
-                Dialog.openSimpleDialog(Dialog.$simpleDialog, 'Erreur', 'Le mot de passe de la Salle de jeu ' + error.data + ' est incorrect.');
-                break;
-            case 'wrong-type':
-                Dialog.openSimpleDialog(Dialog.$simpleDialog, 'Attention', 'Vous devez jouer une carte ' + error.data + ' !');
-                break;
-            case 'cannot-play-this-card':
-                Dialog.openSimpleDialog(Dialog.$simpleDialog, 'Attention', 'Vous ne pouvez pas jouer cette carte : ' + error.data);
+                Dialog.openSimpleDialog(Dialog.$simpleDialog, '⛔ Erreur', 'Le mot de passe de la salle de jeu ' + error.data + ' est incorrect.');
                 break;
             default:
-                Dialog.openSimpleDialog(Dialog.$simpleDialog, 'Erreur!', 'Erreur inconnue: ' + error.type + ' ' + error.data);
+                Dialog.openSimpleDialog(Dialog.$simpleDialog, '⛔ Erreur!', 'Erreur inconnue: ' + error.type + ' ' + error.data);
         }
     });
 
