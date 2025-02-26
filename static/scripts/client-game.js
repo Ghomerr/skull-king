@@ -19,7 +19,7 @@ $(document).ready(() => {
     Global.$headStatus = $('#head-status');
 
     Global.$playerCardsContainer = $('#player-cards-container');
-    Global.$playerCards = $('.card-display');
+    Global.$playerCards = Global.$playerCardsContainer.find('.card-display');
     Global.$foldCountPicker = $('#fold-count-picker');
     Global.$foldCountDisplays = $('.fold-count-display');
 
@@ -173,7 +173,7 @@ $(document).ready(() => {
 
             if (card.type === 'choice') {
                 // Display the choice dialog
-                $dialog.dialog('open');
+                Dialog.$choiceCardDialog.dialog('open');
             } else {
                 Socket.emit('play-a-card', {
                     roomId: roomId,
@@ -199,12 +199,14 @@ $(document).ready(() => {
                 cardId: 106, // tigresse
                 type: type
             });
+            Dialog.$choiceCardDialog.dialog('close');
         }
     }
 
     Dialog.$choiceCardDialog = $('#choice-card-dialog');
     Dialog.$choiceCardDialog.dialog({
         modal: true,
+        width: 400,
         autoOpen: false,
         closeOnEscape: false,
         buttons: {},

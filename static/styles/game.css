@@ -26,12 +26,12 @@
     margin-bottom: 20px;
 }
 
-.card-display {
+#player-cards-container > .card-display {
     width: 60px;
     z-index: 1;
 }
 
-.card-display:hover {
+#player-cards-container > .card-display:hover {
     z-index: 2;
     zoom: 1.25;
     position: relative;
@@ -54,6 +54,16 @@
 
 .card-display > img {
     border-radius: 15px;
+}
+
+/** Tigresse dialog */
+.tigresse-choice {
+    display: flex;
+    justify-content: center;
+}
+
+.tigresse-choice > .card-display:hover {
+    cursor: pointer;
 }
 
 /** Folds count */

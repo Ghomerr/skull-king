@@ -18,19 +18,28 @@ exports.initializeGame = (room, cards) => {
             room.cardsById[card.id] = card;
         });
         room.cardsOfTurn = [];
-        room.turn = 10; // TODO : RESET TO 1 AFTER TESTS
+        room.turn = 9; // TODO : RESET TO 1 AFTER TESTS
         room.currentPlayerIndex = 0;
         room.currentPlayerId = room.users[0].id;
-
-        // TODO REMOVE THIS TEST
-        if (player.id === "Ghomerr") {
-            // ADD TIGRESSE HERE !!!
-        }
 
         for (let player of room.users) {
             player.cards = [];
             player.foldBet = null;
             dispatchCards(room.turn, player, room.gameCards);
+
+            // TODO REMOVE THIS TEST
+            if (player.id === "Ghomerr") {
+                // ADD TIGRESSE HERE !!!
+                player.cards.push({
+                    "id": 106,
+                    "name": "FAKE Tigresse",
+                    "type": "choice",
+                    "img": "tigresse_choice.jpg",
+                    "value": 100,
+                    "bonus": 30,
+                    "isSpecial": true
+                });
+            }
         }
     }
 };
@@ -94,10 +103,14 @@ exports.setEventListeners = (io, Socket, room) => {
     Socket.on('play-a-card', (data) => {
         if (room.id === data.roomId) {
             if (data.playerId === room.currentPlayerId) {
+                console.log('play-a-card', data);
+
                 const playedCard = room.cardsById[data.cardId];
                 if (playedCard.type === 'choice') {
                     if (data.type === 'pirate') {
                         playedCard.img = 'tigresse_pirate.jpg';
+                        playedCard.value = 100;
+                        playedCard.bonus = 30;
                     } else if (data.type === 'evasion') {
                         playedCard.img = 'tigresse_evasion.jpg';
                         playedCard.value = 0;
@@ -107,12 +120,24 @@ exports.setEventListeners = (io, Socket, room) => {
                     }
                 }
 
-                console.log('play-a-card', playedCard); 
+                console.log(data.playerId, 'played the following card:', playedCard); 
 
                 if (room.cardsOfTurn.length === 0) {
-                    // OK
-                } else {
+                    // OK Card can be added to the played cards
 
+                    // Remove the card from the player cards
+                    // Send back the cards of the current player
+
+                    // Notify players with the played cards
+
+                } else {
+                    // Notify the player that its cards cannot be played
+                    /**
+                     * Socket.emit('player-error',  {
+                        type: 'cannot-play-this-card',
+                        data: playedCard.name
+                       });
+                     */
                 }
 
                 // TODO test if player can play this card
@@ -120,12 +145,6 @@ exports.setEventListeners = (io, Socket, room) => {
                     type: 'cannot-play-this-card',
                     data: playedCard.name
                 });
-
-                // If KO -> display message to player
-
-                // If OK -> remove card from player and add it to played card
-                // send message to all players with the current state of played cards
-                // send message to the player to remove its played card
             }
         }
     });
