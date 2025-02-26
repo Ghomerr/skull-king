@@ -111,10 +111,12 @@ exports.setEventListeners = (io, Socket, room) => {
                         playedCard.img = 'tigresse_pirate.jpg';
                         playedCard.value = 100;
                         playedCard.bonus = 30;
+                        playedCard.type = data.type;
                     } else if (data.type === 'evasion') {
                         playedCard.img = 'tigresse_evasion.jpg';
                         playedCard.value = 0;
                         playedCard.bonus = 0;
+                        playedCard.type = data.type;
                     } else {
                         // TODO : wrong choice
                     }

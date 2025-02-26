@@ -143,7 +143,7 @@ function selectFoldCount(Socket, Global, $currentFoldCountDisplay, event) {
 
 $(document).ready(() => {
     // TODO : only if the game hasn't started !!!!
-    Dialog.openSimpleDialog(Dialog.$simpleDialog, 'Attente', 'En attente des joueurs...');
+    Dialog.openSimpleDialog(Dialog.$simpleDialog, '⏳ Attente', 'En attente des joueurs...');
 
     // Handle click on flod count display
     Global.$foldCountDisplays.click((event) => {
@@ -156,7 +156,7 @@ $(document).ready(() => {
             if (!Global.$foldCountDisplays.hasClass('selected-bet')) {
                 selectFoldCount(Socket, Global, $currentFoldCountDisplay, event);
             } else {
-                Dialog.openTwoChoicesDialog(Dialog.$simpleDialog, 'Attention', 'Etes-vous sûr de vouloir changer de pari ?', 'Oui', () => {
+                Dialog.openTwoChoicesDialog(Dialog.$simpleDialog, '⚠️ Attention', 'Etes-vous sûr de vouloir changer de pari ?', 'Oui', () => {
                     selectFoldCount(Socket, Global, $currentFoldCountDisplay, event);
                 }, 'Non', () => {});
             }
