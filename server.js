@@ -37,9 +37,9 @@ let roomsCount = 0;
 // Start server and expose main page
 app.get('/', (req, res) => {
     // Check req hidden query params submitted
-    console.log('req.query', req.query);
     if (req.query.formRoomId && ROOMS[req.query.formRoomId] && 
             Utils.findIndexById(ROOMS[req.query.formRoomId].users, req.query.formUserId) >= 0) {
+        console.log('req.query', req.query);
         res.sendFile(path.resolve(__dirname, '.') + '/static/game.html');
     } else {
         res.sendFile(path.resolve(__dirname, '.') + '/static/main.html');
@@ -47,23 +47,23 @@ app.get('/', (req, res) => {
 });
 app.use(express.static(path.resolve(__dirname, '.')));
 
+// Prepare the rooms list result
+function getRoomList() {
+    const roomsList = [];
+    for (const [id, room] of Object.entries(ROOMS)) {
+        roomsList.push({
+            id: id,
+            status: room.status,
+            usersCount: room.users.length,
+            usersNames: room.users.map(u => u.id).join(', ')
+        });
+    }
+    return roomsList;
+}
+
 // #1 First socket.io native event from client.js
 io.on('connection', (Socket) => {
-    console.log('Player has just connected. Socket.id=', Socket.id);
-
-    // Prepare the rooms list result
-    function getRoomList() {
-        const roomsList = [];
-        for (const [id, room] of Object.entries(ROOMS)) {
-            roomsList.push({
-                id: id,
-                status: room.status,
-                usersCount: room.users.length,
-                usersNames: room.users.map(u => u.id).join(', ')
-            });
-        }
-        return roomsList;
-    }
+    console.log('Player has just connected. Socket.id=', Socket.id);  
 
     // Handle a player request on the main page to receive rooms list
     Socket.on('get-rooms-list', () => {
@@ -227,48 +227,56 @@ io.on('connection', (Socket) => {
         }
     });
 
+    Socket.on('player-disconnect', (data) => {
+        console.log('player-disconnect', data);
+        handleDisconnect(data, Socket);
+    });
+
     // Handle player quit event
     Socket.on('disconnect', () => {
         const data = SOCKETS[Socket.id];
-        if (data) {
-            console.log('player has just disconnected', data);
-            delete SOCKETS[Socket.id];
-
-            const room = ROOMS[data.roomId];
-            if (room) {
-                // Search player index
-                let index = Utils.findIndexById(room.users, data.userId);
-                if (index >= 0) {
-                    if (room.status === STATUS.GAME_STARTED_WAITING_PLAYERS) {
-                        console.log('player leave the lobby to go to the game page');
-                        room.users[index].isConnected = false;
-                    } else {
-                        console.log('[player-quit]', data.userId, 'left the room', data.roomId);
-                        
-                        // Remove player from room
-                        room.users.splice(index, 1);
-                        if (room.users.length === 0) {
-                            // Delete empty room
-                            delete ROOMS[data.roomId];
-                        } else {
-                            // Update players list
-                            io.to(data.roomId).emit('players-list-changed', room);
-                            if (room.status === STATUS.IN_LOBBY_FULL && room.users.length < MAX_PLAYERS) {
-                                room.status = STATUS.IN_LOBBY_WAITING;
-                            }
-                            // Other status ??
-                        }
-                        io.sockets.emit('rooms-status-changed', {
-                            roomsList: getRoomList()
-                        });
-                    }
-                } else {
-                    console.log('[player-quit] user not found in room', data);
-                }
-            }
-        }
+        console.log('player has just disconnected', data);
+        handleDisconnect(data, Socket);
     });
 });
+
+function handleDisconnect(data, Socket) {
+    if (data) {
+        delete SOCKETS[Socket.id];
+        const room = ROOMS[data.roomId];
+        if (room) {
+            // Search player index
+            let index = Utils.findIndexById(room.users, data.userId);
+            if (index >= 0) {
+                if (room.status === STATUS.GAME_STARTED_WAITING_PLAYERS) {
+                    console.log('player leave the lobby to go to the game page');
+                    room.users[index].isConnected = false;
+                } else {
+                    console.log('[player-quit]', data.userId, 'left the room', data.roomId);
+                    
+                    // Remove player from room
+                    room.users.splice(index, 1);
+                    if (room.users.length === 0) {
+                        // Delete empty room
+                        delete ROOMS[data.roomId];
+                    } else {
+                        // Update players list
+                        io.to(data.roomId).emit('players-list-changed', room);
+                        if (room.status === STATUS.IN_LOBBY_FULL && room.users.length < MAX_PLAYERS) {
+                            room.status = STATUS.IN_LOBBY_WAITING;
+                        }
+                        // Other status ??
+                    }
+                    io.sockets.emit('rooms-status-changed', {
+                        roomsList: getRoomList()
+                    });
+                }
+            } else {
+                console.log('[player-quit] user not found in room', data);
+            }
+        }
+    }
+}
 
 // Server start
 const port = process.env.PORT || SERVER_PORT;

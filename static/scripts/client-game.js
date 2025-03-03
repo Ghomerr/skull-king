@@ -30,6 +30,14 @@ $(document).ready(() => {
     Global.$choiceTigressePirate = $('#tigresse-pirate');
 });
 
+// Send a disconnect event when player is leaving the page
+window.addEventListener("beforeunload", () => {
+    Socket.emit('player-disconnect', {
+        roomId: roomId,
+        userId: Player.id
+    });
+});
+
 // Handle when a player is ready to display the waiting modal
 Socket.on('ready-players-amount', (data) => {
     Dialog.$simpleDialog.dialog('close');
