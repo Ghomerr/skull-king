@@ -68,7 +68,7 @@ exports.setEventListeners = (io, Socket, room) => {
     // Handle when a player set its fold bet
     Socket.on('set-fold-bet', (data) => {
         if (data.roomId === room.id) {
-            const player = room.users.filter(u => u.id === data.userId)[0];
+            const player = Utils.findElementById(room.users, data.userId);
             if (player) {
                 console.log('set-fold-bet', data);
                 player.foldBet = data.foldBet;
@@ -122,31 +122,34 @@ exports.setEventListeners = (io, Socket, room) => {
                     }
                 }
 
-                console.log(data.playerId, 'played the following card:', playedCard); 
+                const player = Utils.findElementById(room.users, room.currentPlayerId);
+                const cardIndex = Utils.findIndexById(player.cards, playedCard.id);
 
-                if (room.cardsOfTurn.length === 0) {
+                console.log(player.id, 'played the following card:', playedCard); 
+
+                // TODO : test other cases
+                if (cardIndex >= 0 && room.cardsOfTurn.length === 0) {
                     // OK Card can be added to the played cards
+                    room.cardsOfTurn.push(playedCard);
 
                     // Remove the card from the player cards
+                    player.cards.splice(cardIndex, 1);
+
                     // Send back the cards of the current player
+                    Socket.emit('remove-played-card', {
+                        playedCardId: playedCard.id
+                    });
 
                     // Notify players with the played cards
+                    // TODO
 
                 } else {
                     // Notify the player that its cards cannot be played
-                    /**
-                     * Socket.emit('player-error',  {
+                    Socket.emit('player-error',  {
                         type: 'cannot-play-this-card',
                         data: playedCard.name
-                       });
-                     */
+                    });
                 }
-
-                // TODO test if player can play this card
-                Socket.emit('player-error',  {
-                    type: 'cannot-play-this-card',
-                    data: playedCard.name
-                });
             }
         }
     });

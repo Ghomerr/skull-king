@@ -4,19 +4,12 @@ exports.randomRoomId = () => {
     });
 };
 
-function findIndex(array, attributeName, attributeValue) {
-    let searchedIndex = -1;
-    for (let i = 0; i < array.length; i++) {
-        if (array[i][attributeName] === attributeValue) {
-            searchedIndex = i;
-            break;
-        }
-    }
-    return searchedIndex;
-}
-
 exports.findIndexById = (array, id) => {
-    return findIndex(array, 'id', id);
+    return _findIndex(array, 'id', id);
+};
+
+exports.findElementById = (array, id) => {
+    return array.find(e => e.id === id);
 };
 
 exports.shuffle = (a) => {
@@ -26,3 +19,7 @@ exports.shuffle = (a) => {
     }
     return a;
 };
+
+function _findIndex(array, attributeName, attributeValue) {
+    return array.findIndex((element) => element[attributeName] === attributeValue);
+}

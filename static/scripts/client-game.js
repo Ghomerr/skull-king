@@ -63,10 +63,9 @@ Socket.on('all-players-ready-to-play', () => {
 // Receiving its cards
 Socket.on('player-cards', (data) => {
     console.log('player-cards', data);
-    Player.cards = data.cards; 
+    Player.cards = data.cards;
 
     // Display the fold count displays
-    // TODO : don't display this if it's not the start of the game !!
     for (let i = 0 ; i <= data.turn ; i++) {
         const foldCountDisplay = Global.$foldCountDisplays.eq(i);
         foldCountDisplay.removeClass('hidden');
@@ -100,19 +99,18 @@ Socket.on('yo-ho-ho', (data) => {
         $playerBet.find('.bet-value > img').attr('src', 'static/assets/score_' + playerBet.foldBet + '.jpg');
     });
 
+    // TODO : put this in a function to be called after a card has been played : 
     // Display header title and status
     if (data.currentPlayerId === Player.id) {
         Global.$playerCardsContainer.removeClass('not-playing');
         Global.$playerCardsContainer.addClass('playing');
         Global.$headStatus.text('C\'est à moi de jouer...');
         Player.isCurrentPlayer = true;
-        // TODO add events to play a card !
     } else {
         Global.$playerCardsContainer.removeClass('playing');
         Global.$playerCardsContainer.addClass('not-playing');
         Global.$headStatus.text('C\'est à ' + data.currentPlayerId + ' de jouer...');
         Player.isCurrentPlayer = false;
-        // TODO remove event to play a card
     }
     Global.$headTitle.text('Manche ' + data.turn);
 
@@ -122,6 +120,19 @@ Socket.on('yo-ho-ho', (data) => {
 
     // Display yo ho ho !
     Dialog.openSimpleDialog(Dialog.$simpleDialog, '🏴‍☠️ YO HO HO', 'YO HO HO !!!!!');
+});
+
+// Handle when a player has just played a card and it must be removed from its hand
+Socket.on('remove-played-card', (data) => {
+    Global.$playerCards.each((index, card) => {
+        // console.log('card to remove', data.playedCardId, '?', card);
+        const $playedCard = $(card);
+        if (+$playedCard.data('card-id') === data.playedCardId) {
+            $playedCard.remove();
+            const playedCardIndex = Player.cards.findIndex(card => card.id === data.playedCardId);
+            Player.cards.splice(playedCardIndex, 1);
+        }
+    });
 });
 
 Socket.on('player-error', (error) => {

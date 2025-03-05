@@ -128,8 +128,7 @@ io.on('connection', (Socket) => {
         if (room.status === STATUS.IN_LOBBY_WAITING) {
             if (room.users.length < MAX_PLAYERS) {
                 if (!room.password || lobbyData.password === room.password) {
-                    if (!room.users.some(u => u.id === lobbyData.userId)) {
-
+                    if (!Utils.findElementById(room.users, lobbyData.userId)) {
                         const newUser = {
                             id: lobbyData.userId,
                             isConnected: true
@@ -220,23 +219,28 @@ io.on('connection', (Socket) => {
                 Game.setEventListeners(io, Socket, room);
 
             } else {
-                console.err('[join-game] Unknown room', data.userId);
+                console.error('[join-game] Unknown user', data.userId);
             }
         } else {
-            console.err('[join-game] Unknown user', data.roomId);
+            console.error('[join-game] Unknown room', data.roomId);
         }
     });
 
+    // Handle player leaving the client-game page, sending a disconnect event before unload
     Socket.on('player-disconnect', (data) => {
-        console.log('player-disconnect', data);
-        handleDisconnect(data, Socket);
+        if (data) {
+            console.log('player-disconnect event from beforeunload', data);
+            handleDisconnect(data, Socket);
+        }
     });
 
-    // Handle player quit event
+    // Handle socket disconnection event
     Socket.on('disconnect', () => {
         const data = SOCKETS[Socket.id];
-        console.log('player has just disconnected', data);
-        handleDisconnect(data, Socket);
+        if (data) {
+            console.log('player has just disconnected from socket', Socket.id, data);
+            handleDisconnect(data, Socket);
+        }
     });
 });
 
