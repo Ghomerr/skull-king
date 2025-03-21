@@ -59,7 +59,7 @@ exports.setEventListeners = (io, Socket, room) => {
                             id: c.id,
                             type: c.type,
                             img: c.img
-                        }
+                        };
                     })
             });
         }
@@ -135,14 +135,42 @@ exports.setEventListeners = (io, Socket, room) => {
                     // Remove the card from the player cards
                     player.cards.splice(cardIndex, 1);
 
+                    // Update who played that card
+                    playedCard.playedBy = player.id;
+
                     // Send back the cards of the current player
                     Socket.emit('remove-played-card', {
                         playedCardId: playedCard.id
                     });
 
-                    // Notify players with the played cards
-                    // TODO
+                    // Update player turn
+                    room.currentPlayerIndex++;
 
+                    // Check if the last player played its card
+                    if (currentPlayerIndex === room.users.length) {
+                        // TODO : check who wins the fold
+
+                        // TODO : Update winner player folds with the current one
+
+                        // TODO : Display the taken fold and go to the next turn
+
+                        // TODO : Check if it's was the last turn or not to display the score board
+                    } else {
+                        // Next player to play
+                        room.currentPlayerId = room.users[room.currentPlayerIndex].id;
+
+                        // Notify players with the played cards
+                        io.to(room.id).emit('card-has-been-played', {
+                            currentPlayerId: room.currentPlayerId,
+                            playedCards: room.cardsOfTurn.map(c => { 
+                                return {
+                                    id: c.id,
+                                    img: c.img,
+                                    playedBy: c.playedBy
+                                }; 
+                            })
+                        });
+                    }
                 } else {
                     // Notify the player that its cards cannot be played
                     Socket.emit('player-error',  {

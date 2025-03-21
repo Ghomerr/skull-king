@@ -17,7 +17,23 @@
     flex-grow: 1;
 }
 
+/** Played cards container */
+#played-cards-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-left: -120px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
 /** Cards container */
+#player-hand-container {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
 #player-cards-container {
     display: flex;
     justify-content: center;

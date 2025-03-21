@@ -82,9 +82,29 @@ Socket.on('player-cards', (data) => {
     Global.$playerCardsContainer.removeClass('hidden');
 });
 
+// Handle when a player updated its bet to display that its ready to play
 Socket.on('waiting-players-bets', (data) => {
     Global.$headStatus.text(data.numberOfReadyPlayers + '/' + data.totalNumberOfPlayers + ' joueurs prêts');
 });
+
+/**
+ * Function to be called when the current player changed.
+ * It updates the playing or not-playing class to let the player to select a card or not.
+ * It also displays if it's the current player to play or someone else.
+ */
+function displayCurrentPlayer(data) {
+    if (data.currentPlayerId === Player.id) {
+        Global.$playerCardsContainer.removeClass('not-playing');
+        Global.$playerCardsContainer.addClass('playing');
+        Global.$headStatus.text('C\'est à moi de jouer...');
+        Player.isCurrentPlayer = true;
+    } else {
+        Global.$playerCardsContainer.removeClass('playing');
+        Global.$playerCardsContainer.addClass('not-playing');
+        Global.$headStatus.text('C\'est à ' + data.currentPlayerId + ' de jouer...');
+        Player.isCurrentPlayer = false;
+    }
+}
 
 // Handle when all players have chosen their bet
 Socket.on('yo-ho-ho', (data) => {
@@ -99,19 +119,7 @@ Socket.on('yo-ho-ho', (data) => {
         $playerBet.find('.bet-value > img').attr('src', 'static/assets/score_' + playerBet.foldBet + '.jpg');
     });
 
-    // TODO : put this in a function to be called after a card has been played : 
-    // Display header title and status
-    if (data.currentPlayerId === Player.id) {
-        Global.$playerCardsContainer.removeClass('not-playing');
-        Global.$playerCardsContainer.addClass('playing');
-        Global.$headStatus.text('C\'est à moi de jouer...');
-        Player.isCurrentPlayer = true;
-    } else {
-        Global.$playerCardsContainer.removeClass('playing');
-        Global.$playerCardsContainer.addClass('not-playing');
-        Global.$headStatus.text('C\'est à ' + data.currentPlayerId + ' de jouer...');
-        Player.isCurrentPlayer = false;
-    }
+    displayCurrentPlayer(data);
     Global.$headTitle.text('Manche ' + data.turn);
 
     // Hide previous elements
@@ -133,6 +141,13 @@ Socket.on('remove-played-card', (data) => {
             Player.cards.splice(playedCardIndex, 1);
         }
     });
+});
+
+// Handle when a player has played a card to display current played cards and the current player name
+Socket.on('card-has-been-played', (data) => {
+    displayCurrentPlayer(data);
+
+    
 });
 
 Socket.on('player-error', (error) => {
