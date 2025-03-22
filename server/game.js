@@ -128,7 +128,7 @@ exports.setEventListeners = (io, Socket, room) => {
                 console.log(player.id, 'played the following card:', playedCard); 
 
                 // TODO : test other cases
-                if (cardIndex >= 0 && room.cardsOfTurn.length === 0) {
+                if (cardIndex >= 0 && room.cardsOfTurn.length < room.users.length) {
                     // OK Card can be added to the played cards
                     room.cardsOfTurn.push(playedCard);
 
@@ -138,16 +138,16 @@ exports.setEventListeners = (io, Socket, room) => {
                     // Update who played that card
                     playedCard.playedBy = player.id;
 
-                    // Send back the cards of the current player
+                    // Notify the current player that its card has been removed
                     Socket.emit('remove-played-card', {
                         playedCardId: playedCard.id
                     });
 
-                    // Update player turn
+                    // Update current player turn
                     room.currentPlayerIndex++;
 
                     // Check if the last player played its card
-                    if (currentPlayerIndex === room.users.length) {
+                    if (room.currentPlayerIndex === room.users.length) {
                         // TODO : check who wins the fold
 
                         // TODO : Update winner player folds with the current one

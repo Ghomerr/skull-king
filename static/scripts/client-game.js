@@ -18,6 +18,8 @@ $(document).ready(() => {
     Global.$headTitle = $('#head-title');
     Global.$headStatus = $('#head-status');
 
+    Global.$playedCards = $('.played-card');
+
     Global.$playerCardsContainer = $('#player-cards-container');
     Global.$playerCards = Global.$playerCardsContainer.find('.card-display');
     Global.$foldCountPicker = $('#fold-count-picker');
@@ -60,6 +62,23 @@ Socket.on('all-players-ready-to-play', () => {
     console.log('END all-players-ready-to-play');
 });
 
+/**
+ * Display cards.
+ * @param cards data to be displayed
+ * @param $cards jquery elements to be updated with data to be displayed
+ */
+function displayCards(cards, $cards, addSomethingFn) {
+    cards.forEach((card, index) => {
+        const $img = $cards.children('img').eq(index);
+        $img.attr('src', 'static/assets/' + card.img);
+        $img.parent().data('card-id', card.id);
+        $img.parent().removeClass('hidden');
+        if (addSomethingFn instanceof Function) {
+            addSomethingFn(card, $img.parent());
+        }
+    });
+}
+
 // Receiving its cards
 Socket.on('player-cards', (data) => {
     console.log('player-cards', data);
@@ -71,14 +90,7 @@ Socket.on('player-cards', (data) => {
         foldCountDisplay.removeClass('hidden');
     }
     Global.$foldCountPicker.removeClass('hidden');
-
-    // Display player's cards
-    data.cards.forEach((card, index) => {
-        const $img = Global.$playerCards.children().eq(index);
-        $img.attr('src', 'static/assets/' + card.img);
-        $img.parent().data('card-id', card.id);
-        $img.parent().removeClass('hidden');
-    });
+    displayCards(data.cards, Global.$playerCards);
     Global.$playerCardsContainer.removeClass('hidden');
 });
 
@@ -146,8 +158,9 @@ Socket.on('remove-played-card', (data) => {
 // Handle when a player has played a card to display current played cards and the current player name
 Socket.on('card-has-been-played', (data) => {
     displayCurrentPlayer(data);
-
-    
+    displayCards(data.playedCards, Global.$playedCards, (cardData, $cardElement) => {
+        $cardElement.find('span').text(cardData.playedBy === Player.id ? 'Moi' : cardData.playedBy);
+    });
 });
 
 Socket.on('player-error', (error) => {
