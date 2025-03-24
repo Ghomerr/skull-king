@@ -1,5 +1,11 @@
 const Utils = require('./utils.js');
 
+const CARD_TYPE = {
+    EVASION: 'evasion',
+    PIRATE: 'pirate',
+    CHOICE: 'choice'
+};
+
 exports.initializeRoomGameData = (room) => {
     room.canStartGame = false;
 };
@@ -28,7 +34,7 @@ exports.initializeGame = (room, cards) => {
             dispatchCards(room.turn, player, room.gameCards);
 
             // TODO REMOVE THIS TEST
-            if (player.id === "Ghomerr") {
+            /*if (player.id === "Ghomerr") {
                 // ADD TIGRESSE HERE !!!
                 player.cards.push({
                     "id": 106,
@@ -39,7 +45,7 @@ exports.initializeGame = (room, cards) => {
                     "bonus": 30,
                     "isSpecial": true
                 });
-            }
+            }//*/
         }
     }
 };
@@ -106,13 +112,13 @@ exports.setEventListeners = (io, Socket, room) => {
                 console.log('play-a-card', data);
 
                 const playedCard = room.cardsById[data.cardId];
-                if (playedCard.type === 'choice') {
-                    if (data.type === 'pirate') {
+                if (playedCard.type === CARD_TYPE.CHOICE) {
+                    if (data.type === CARD_TYPE.PIRATE) {
                         playedCard.img = 'tigresse_pirate.jpg';
                         playedCard.value = 100;
                         playedCard.bonus = 30;
                         playedCard.type = data.type;
-                    } else if (data.type === 'evasion') {
+                    } else if (data.type === CARD_TYPE.EVASION) {
                         playedCard.img = 'tigresse_evasion.jpg';
                         playedCard.value = 0;
                         playedCard.bonus = 0;
@@ -125,10 +131,46 @@ exports.setEventListeners = (io, Socket, room) => {
                 const player = Utils.findElementById(room.users, room.currentPlayerId);
                 const cardIndex = Utils.findIndexById(player.cards, playedCard.id);
 
-                console.log(player.id, 'played the following card:', playedCard); 
+                console.log(player.id, 'played the following card:', playedCard);
 
-                // TODO : test other cases
-                if (cardIndex >= 0 && room.cardsOfTurn.length < room.users.length) {
+                // Search the requested type of cards for the current turn
+                let typeOfCards = null;
+                let playerHasRequestedTypeOfCards = false;
+                if (room.cardsOfTurn.length > 0) {
+                    // Examples : 
+                    // * 0=purple -> purple
+                    // * 0=evasion, 1=purple -> purple
+                    // * 0=pirate, 1=purple -> no type
+                    // * 0=evasion, 1=pirate, 2=purple -> no type
+                    const firstColorCard = room.cardsOfTurn.find(c => !c.isSpecial);
+                    if (firstColorCard) {
+                        let cardOfTurn = null;
+                        let hasBreakingTypeCard = false;
+                        for (let i = 0 ; i < room.cardsOfTurn.length ; i++) {
+                            cardOfTurn = room.cardsOfTurn[i];
+                            if (cardOfTurn.id === firstColorCard.id) {
+                                break;
+                            }
+                            if (cardOfTurn.isSpecial && cardOfTurn.type !== CARD_TYPE.EVASION) {
+                                hasBreakingTypeCard = true;
+                                break;
+                            }
+                        }
+
+                        if (!hasBreakingTypeCard) {
+                            typeOfCards = firstColorCard.type;
+                            // Search if the player has the requested type of cards
+                            playerHasRequestedTypeOfCards = player.cards.some(c => c.type === typeOfCards);
+                        }
+                    }
+                }
+                
+                // Card has been found (technical, should never happen) AND
+                // Check if it's not the last turn (should never happen)
+                if (cardIndex >= 0 && room.cardsOfTurn.length < room.users.length &&           
+                        // Check if the player can play its card
+                        (playedCard.isSpecial || !playerHasRequestedTypeOfCards || playedCard.type === typeOfCards)) {
+
                     // OK Card can be added to the played cards
                     room.cardsOfTurn.push(playedCard);
 
