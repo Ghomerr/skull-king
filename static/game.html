@@ -29,29 +29,29 @@
         </div>
 
         <div id="players-bets-container" class="hidden">
-            <div class="player-bet hidden" id="player-bet-1"><div class="player-name"></div><div class="bet-value"><img src="static/assets/score_0.jpg" /></div></div>
-            <div class="player-bet hidden" id="player-bet-2"><div class="player-name"></div><div class="bet-value"><img src="static/assets/score_0.jpg" /></div></div>
-            <div class="player-bet hidden" id="player-bet-3"><div class="player-name"></div><div class="bet-value"><img src="static/assets/score_0.jpg" /></div></div>
-            <div class="player-bet hidden" id="player-bet-4"><div class="player-name"></div><div class="bet-value"><img src="static/assets/score_0.jpg" /></div></div>
-            <div class="player-bet hidden" id="player-bet-5"><div class="player-name"></div><div class="bet-value"><img src="static/assets/score_0.jpg" /></div></div>
-            <div class="player-bet hidden" id="player-bet-6"><div class="player-name"></div><div class="bet-value"><img src="static/assets/score_0.jpg" /></div></div>
-            <div class="player-bet hidden" id="player-bet-7"><div class="player-name"></div><div class="bet-value"><img src="static/assets/score_0.jpg" /></div></div>
+            <div class="player-bet hidden" id="player-bet-1"><div class="player-name"></div><div class="bet-value hidden"><img src="static/assets/score_0.jpg" /></div></div>
+            <div class="player-bet hidden" id="player-bet-2"><div class="player-name"></div><div class="bet-value hidden"><img src="static/assets/score_0.jpg" /></div></div>
+            <div class="player-bet hidden" id="player-bet-3"><div class="player-name"></div><div class="bet-value hidden"><img src="static/assets/score_0.jpg" /></div></div>
+            <div class="player-bet hidden" id="player-bet-4"><div class="player-name"></div><div class="bet-value hidden"><img src="static/assets/score_0.jpg" /></div></div>
+            <div class="player-bet hidden" id="player-bet-5"><div class="player-name"></div><div class="bet-value hidden"><img src="static/assets/score_0.jpg" /></div></div>
+            <div class="player-bet hidden" id="player-bet-6"><div class="player-name"></div><div class="bet-value hidden"><img src="static/assets/score_0.jpg" /></div></div>
+            <div class="player-bet hidden" id="player-bet-7"><div class="player-name"></div><div class="bet-value hidden"><img src="static/assets/score_0.jpg" /></div></div>
         </div>
 
         <div id="played-cards-container">
-            <div class="played-card hidden" id="played-card-0"><img src="static/assets/back.jpg" height="250px" /><span class="player-label"></span></div>
-            <div class="played-card hidden" id="played-card-1"><img src="static/assets/back.jpg" height="250px" /><span class="player-label"></span></div>
-            <div class="played-card hidden" id="played-card-2"><img src="static/assets/back.jpg" height="250px" /><span class="player-label"></span></div>
-            <div class="played-card hidden" id="played-card-3"><img src="static/assets/back.jpg" height="250px" /><span class="player-label"></span></div>
-            <div class="played-card hidden" id="played-card-4"><img src="static/assets/back.jpg" height="250px" /><span class="player-label"></span></div>
-            <div class="played-card hidden" id="played-card-5"><img src="static/assets/back.jpg" height="250px" /><span class="player-label"></span></div>
-            <div class="played-card hidden" id="played-card-6"><img src="static/assets/back.jpg" height="250px" /><span class="player-label"></span></div>
+            <div class="played-card hidden"><img src="static/assets/back.jpg" height="250px" /><span class="player-label"></span></div>
+            <div class="played-card hidden"><img src="static/assets/back.jpg" height="250px" /><span class="player-label"></span></div>
+            <div class="played-card hidden"><img src="static/assets/back.jpg" height="250px" /><span class="player-label"></span></div>
+            <div class="played-card hidden"><img src="static/assets/back.jpg" height="250px" /><span class="player-label"></span></div>
+            <div class="played-card hidden"><img src="static/assets/back.jpg" height="250px" /><span class="player-label"></span></div>
+            <div class="played-card hidden"><img src="static/assets/back.jpg" height="250px" /><span class="player-label"></span></div>
+            <div class="played-card hidden"><img src="static/assets/back.jpg" height="250px" /><span class="player-label"></span></div>
 
-            <div id="fake-border"></div>
-            <div id="top-left-angle"><img src="static/assets/angle.png" height="50px" /></div>
-            <div id="top-right-angle"><img src="static/assets/angle.png" height="50px" /></div>
-            <div id="bottom-left-angle"><img src="static/assets/angle.png" height="50px" /></div>
-            <div id="bottom-right-angle"><img src="static/assets/angle.png" height="50px" /></div>
+            <div class="fake-border"></div>
+            <div class="top-left-angle"><img src="static/assets/angle.png" height="50px" /></div>
+            <div class="top-right-angle"><img src="static/assets/angle.png" height="50px" /></div>
+            <div class="bottom-left-angle"><img src="static/assets/angle.png" height="50px" /></div>
+            <div class="bottom-right-angle"><img src="static/assets/angle.png" height="50px" /></div>
         </div>
 
         <div id="fold-count-picker" class="hidden">
@@ -85,15 +85,28 @@
 
         <!-- Dialogs -->
         <div id="simple-dialog" title="Test dialog">
-            <div id="dialog-text">
+            <div class="dialog-text">
                 Ceci est un message.
             </div>
         </div>
         <div id="choice-card-dialog" title="🏴‍☠️ Choisir comment jouer la Tigresse">
-            <div id="dialog-text">
+            <div class="dialog-text">
                 <div class="tigresse-choice">
                     <div class="card-display" id="tigresse-evasion"><img src="static/assets/tigresse_evasion.jpg" height="200px" /></div>
                     <div class="card-display" id="tigresse-pirate"><img src="static/assets/tigresse_pirate.jpg" height="200px" /></div>
+                </div>
+            </div>
+        </div>
+        <div id="fold-display-dialog">
+            <div class="dialog-text">
+                <div class="fold-display-container">
+                    <div class="fold-card hidden"><img src="static/assets/back.jpg" height="200px" /><span class="player-label"></span></div>
+                    <div class="fold-card hidden"><img src="static/assets/back.jpg" height="200px" /><span class="player-label"></span></div>
+                    <div class="fold-card hidden"><img src="static/assets/back.jpg" height="200px" /><span class="player-label"></span></div>
+                    <div class="fold-card hidden"><img src="static/assets/back.jpg" height="200px" /><span class="player-label"></span></div>
+                    <div class="fold-card hidden"><img src="static/assets/back.jpg" height="200px" /><span class="player-label"></span></div>
+                    <div class="fold-card hidden"><img src="static/assets/back.jpg" height="200px" /><span class="player-label"></span></div>
+                    <div class="fold-card hidden"><img src="static/assets/back.jpg" height="200px" /><span class="player-label"></span></div>
                 </div>
             </div>
         </div>

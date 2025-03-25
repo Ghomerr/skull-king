@@ -214,7 +214,12 @@ io.on('connection', (Socket) => {
                     console.log('Last player', player.id, 'joined. Game can start !');
                     room.status = STATUS.IN_GAME;
                     Game.initializeGame(room, [...CARDS]);
-                    io.to(room.id).emit('all-players-ready-to-play');
+                    io.to(room.id).emit('all-players-ready-to-play', {
+                        currentPlayerId: room.currentPlayerId,
+                        playersIds: room.users.map(user => {
+                            return user.id;
+                        })
+                    });
                 }
                 Game.setEventListeners(io, Socket, room);
 

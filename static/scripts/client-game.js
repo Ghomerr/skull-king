@@ -19,6 +19,7 @@ $(document).ready(() => {
     Global.$headStatus = $('#head-status');
 
     Global.$playedCards = $('.played-card');
+    Global.$foldCards = $('.fold-card');
 
     Global.$playerCardsContainer = $('#player-cards-container');
     Global.$playerCards = Global.$playerCardsContainer.find('.card-display');
@@ -27,6 +28,7 @@ $(document).ready(() => {
 
     Global.$playersBetsContainer = $('#players-bets-container');
     Global.$playersBets = $('.player-bet');
+    Global.$playersBetsValues = Global.$playersBets.find('.bet-value');
 
     Global.$choiceTigresseEvasion = $('#tigresse-evasion');
     Global.$choiceTigressePirate = $('#tigresse-pirate');
@@ -48,8 +50,24 @@ Socket.on('ready-players-amount', (data) => {
 });
 
 // All players are ready, the game can be started !
-Socket.on('all-players-ready-to-play', () => {
+Socket.on('all-players-ready-to-play', (data) => {
     console.log('START all-players-ready-to-play');
+
+    // Dispay players names
+    data.playersIds.forEach((playerId, index) => {
+        const $playerBet = Global.$playersBets.eq(index);
+        $playerBet.removeClass('hidden');
+        
+        if (playerId === data.currentPlayerId) {
+            $playerBet.addClass('current-player');
+        } else {
+            $playerBet.removeClass('current-player');
+        }
+
+        let playerName = Player.id === playerId ? 'Moi' : playerId;
+        $playerBet.find('.player-name').text(playerName);
+    });
+    Global.$playersBetsContainer.removeClass('hidden');
 
     // Request cards
     Socket.emit('get-my-cards', {
@@ -68,6 +86,13 @@ Socket.on('all-players-ready-to-play', () => {
  * @param $cards jquery elements to be updated with data to be displayed
  */
 function displayCards(cards, $cards, addSomethingFn) {
+    // Reset previous display
+    const $allImgs = $cards.find('img');
+    $allImgs.attr('src', 'static/assets/back.jpg');
+    $allImgs.parent().removeData('card-id');
+    $allImgs.parent().addClass('hidden');
+
+    // Upate display with the given cards data only
     cards.forEach((card, index) => {
         const $img = $cards.children('img').eq(index);
         $img.attr('src', 'static/assets/' + card.img);
@@ -81,6 +106,7 @@ function displayCards(cards, $cards, addSomethingFn) {
 
 // Receiving its cards
 Socket.on('player-cards', (data) => {
+    // TODO : WHY NOT ALL CARDS ARE SHOWN ON TURN 2 ???
     console.log('player-cards', data);
     Player.cards = data.cards;
 
@@ -116,6 +142,17 @@ function displayCurrentPlayer(data) {
         Global.$headStatus.text('C\'est à ' + data.currentPlayerId + ' de jouer...');
         Player.isCurrentPlayer = false;
     }
+
+    // Refresh current-player state
+    Global.$playersBets.each((_index, playerBetNode) => {
+        const $playerBet = $(playerBetNode);
+        const playerName = $playerBet.find('.player-name').text();
+        if (playerName === 'Moi') {
+            $playerBet.addClass('current-player');
+        } else {
+            $playerBet.removeClass('current-player');
+        }
+    });
 }
 
 // Handle when all players have chosen their bet
@@ -123,12 +160,10 @@ Socket.on('yo-ho-ho', (data) => {
     console.log('yo-ho-ho', data);
 
     // Display players bets
-    Global.$playersBetsContainer.removeClass('hidden');
     data.bets.forEach((playerBet, index) => {
-        const $playerBet = Global.$playersBets.eq(index);
-        $playerBet.removeClass('hidden');
-        $playerBet.find('.player-name').text(playerBet.userId);
-        $playerBet.find('.bet-value > img').attr('src', 'static/assets/score_' + playerBet.foldBet + '.jpg');
+        const $playerBetValue = Global.$playersBetsValues.eq(index);
+        $playerBetValue.find('img').attr('src', 'static/assets/score_' + playerBet.foldBet + '.jpg');
+        $playerBetValue.removeClass('hidden');
     });
 
     displayCurrentPlayer(data);
@@ -161,6 +196,45 @@ Socket.on('card-has-been-played', (data) => {
     displayCards(data.playedCards, Global.$playedCards, (cardData, $cardElement) => {
         $cardElement.find('span').text(cardData.playedBy === Player.id ? 'Moi' : cardData.playedBy);
     });
+});
+
+function openFoldDialog(foldOwner, foldSize, hasToGetCards) {
+    // Open fold dialog
+    const dialogTitle = foldOwner === Player.id ? 'J\'ai' : foldOwner + ' a';
+    Dialog.$foldDisplayDialog.dialog('option', 'title', '🥇 ' + dialogTitle + ' remporté le pli !');
+    Dialog.$foldDisplayDialog.dialog('option', 'width', foldSize * 200);
+    // Ask cards for the next turn
+    if (hasToGetCards) {
+        Dialog.$foldDisplayDialog.dialog('option', 'close', () => {
+                Socket.emit('get-my-cards', {
+                    roomId: roomId,
+                    userId: Player.id
+                });
+        });
+    }
+    Dialog.$foldDisplayDialog.dialog('option', 'buttons', [{
+        text: 'Ok',
+        click: () => {
+            Dialog.$foldDisplayDialog.dialog('close');
+        }
+    }]);
+    Dialog.$foldDisplayDialog.dialog('open');
+}
+
+Socket.on('player-won-current-turn', (data) => {
+    // Next player will be the winner
+    displayCurrentPlayer(data);
+
+    // Remove played cards
+    displayCards([], Global.$playedCards);
+
+    // Prepare display fold dialog content
+    displayCards(data.fold, Global.$foldCards, (cardData, $cardElement) => {
+        $cardElement.find('span').text(cardData.playedBy === Player.id ? 'Moi' : cardData.playedBy);
+    });
+    openFoldDialog(data.currentPlayerId, data.fold.length, !data.isLastTurn);
+
+    // TODO : remove previous bets !!
 });
 
 Socket.on('player-error', (error) => {
@@ -260,5 +334,11 @@ $(document).ready(() => {
         open: () => {
             $('.ui-dialog[aria-describedby=choice-card-dialog] .ui-dialog-titlebar-close').hide();
         }
+    });
+
+    Dialog.$foldDisplayDialog = $('#fold-display-dialog');
+    Dialog.$foldDisplayDialog.dialog({
+        modal: true,
+        autoOpen: false,
     });
 });

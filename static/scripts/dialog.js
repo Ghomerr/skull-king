@@ -22,7 +22,7 @@ $(document).ready(() => {
                 Dialog.$simpleDialog.dialog('close');
             }
         }]);
-        $dialog.find('#dialog-text').text('').append(text);
+        $dialog.find('.dialog-text').text('').append(text);
         $dialog.dialog('open');
     };
 
@@ -44,7 +44,7 @@ $(document).ready(() => {
                 }
             }, 
         ]);
-        $dialog.find('#dialog-text').text('').append(text);
+        $dialog.find('.dialog-text').text('').append(text);
         $dialog.dialog('open');
     };
 });

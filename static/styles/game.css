@@ -27,7 +27,7 @@ main {
     background-position: center;
     background-color: black;
     background-size: contain;
-    min-height: 350px;
+    min-height: 300px;
     width: 100%;
     display: flex;
     justify-content: center;
@@ -51,34 +51,34 @@ main {
     background: #78350e;
 }
 
-#top-left-angle {
+.top-left-angle {
     position: absolute;
     top: 0;
     left: 0;
 }
 
-#top-right-angle {
+.top-right-angle {
     position: absolute;
     top: 0;
     right: 0;
     transform: rotate(90deg);
 }
 
-#bottom-right-angle {
+.bottom-right-angle {
     position: absolute;
     bottom: 0;
     right: 0;
     transform: rotate(180deg);
 }
 
-#bottom-left-angle {
+.bottom-left-angle {
     position: absolute;
     bottom: 0;
     left: 0;
     transform: rotate(-90deg);
 }
 
-#fake-border {
+.fake-border {
     position:absolute;
     top: 0;
     left: 0;
@@ -150,6 +150,8 @@ main {
     display: flex;
     justify-content: center;
     margin: 10px;
+    position: relative;
+    z-index: 2;
 }
 
 #fold-count-picker.bet-selected > .fold-count-display {
@@ -173,7 +175,7 @@ main {
 }
 
 .fold-count-display > img {
-    width: 50px;
+    width: 40px;
 }
 
 .fold-count-display.selected-bet,
@@ -202,11 +204,29 @@ main {
     padding-bottom: 5px;
 }
 
+.player-bet.current-player {
+    border-color: red;
+}
+
 .player-name {
     font-weight: bold;
 }
 
 .player-bet > .bet-value > img {
-    width: 50px;
+    width: 20px;
     border-radius: 25px;
+}
+
+/** Player fold dialog */
+.fold-display-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+}
+
+.fold-card {
+    position: relative;
 }
