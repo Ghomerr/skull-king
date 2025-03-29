@@ -8,32 +8,6 @@ const Player = {
     isCurrentPlayer: false
 };
 
-$(document).ready(() => {
-    // Join the current game
-    Socket.emit('join-game', {
-        roomId: roomId,
-        userId: Player.id
-    });
-
-    Global.$headTitle = $('#head-title');
-    Global.$headStatus = $('#head-status');
-
-    Global.$playedCards = $('.played-card');
-    Global.$foldCards = $('.fold-card');
-
-    Global.$playerCardsContainer = $('#player-cards-container');
-    Global.$playerCards = Global.$playerCardsContainer.find('.card-display');
-    Global.$foldCountPicker = $('#fold-count-picker');
-    Global.$foldCountDisplays = $('.fold-count-display');
-
-    Global.$playersBetsContainer = $('#players-bets-container');
-    Global.$playersBets = $('.player-bet');
-    Global.$playersBetsValues = Global.$playersBets.find('.bet-value');
-
-    Global.$choiceTigresseEvasion = $('#tigresse-evasion');
-    Global.$choiceTigressePirate = $('#tigresse-pirate');
-});
-
 // Send a disconnect event when player is leaving the page
 window.addEventListener("beforeunload", () => {
     Socket.emit('player-disconnect', {
@@ -92,7 +66,7 @@ function displayCards(cards, $cards, addSomethingFn) {
     $allImgs.parent().removeData('card-id');
     $allImgs.parent().addClass('hidden');
 
-    // Upate display with the given cards data only
+    // Update display with the given cards data only
     cards.forEach((card, index) => {
         const $img = $cards.children('img').eq(index);
         $img.attr('src', 'static/assets/' + card.img);
@@ -120,7 +94,7 @@ Socket.on('player-cards', (data) => {
     Global.$playerCardsContainer.removeClass('hidden');
 });
 
-// Handle when a player updated its bet to display that its ready to play
+// Handle when a player updated its bet to display that it's ready to play
 Socket.on('waiting-players-bets', (data) => {
     Global.$headStatus.text(data.numberOfReadyPlayers + '/' + data.totalNumberOfPlayers + ' joueurs prêts');
 });
@@ -147,7 +121,7 @@ function displayCurrentPlayer(data) {
     Global.$playersBets.each((_index, playerBetNode) => {
         const $playerBet = $(playerBetNode);
         const playerName = $playerBet.find('.player-name').text();
-        if (playerName === 'Moi') {
+        if (playerName === 'Moi' && Player.id === data.currentPlayerId || playerName === data.currentPlayerId) {
             $playerBet.addClass('current-player');
         } else {
             $playerBet.removeClass('current-player');
@@ -263,6 +237,30 @@ function selectFoldCount(Socket, Global, $currentFoldCountDisplay, event) {
 }
 
 $(document).ready(() => {
+    // Join the current game
+    Socket.emit('join-game', {
+        roomId: roomId,
+        userId: Player.id
+    });
+
+    Global.$headTitle = $('#head-title');
+    Global.$headStatus = $('#head-status');
+
+    Global.$playedCards = $('.played-card');
+    Global.$foldCards = $('.fold-card');
+
+    Global.$playerCardsContainer = $('#player-cards-container');
+    Global.$playerCards = Global.$playerCardsContainer.find('.card-display');
+    Global.$foldCountPicker = $('#fold-count-picker');
+    Global.$foldCountDisplays = $('.fold-count-display');
+
+    Global.$playersBetsContainer = $('#players-bets-container');
+    Global.$playersBets = $('.player-bet');
+    Global.$playersBetsValues = Global.$playersBets.find('.bet-value');
+
+    Global.$choiceTigresseEvasion = $('#tigresse-evasion');
+    Global.$choiceTigressePirate = $('#tigresse-pirate');
+
     // TODO : only if the game hasn't started !!!!
     Dialog.openSimpleDialog(Dialog.$simpleDialog, '⏳ Attente', 'En attente des joueurs...');
 
@@ -281,7 +279,7 @@ $(document).ready(() => {
                     selectFoldCount(Socket, Global, $currentFoldCountDisplay, event);
                 }, 'Non', () => {});
             }
-        }        
+        }
     });
 
     // Handle a click on a card when it's the current player
@@ -301,7 +299,7 @@ $(document).ready(() => {
                     playerId: Player.id,
                     cardId: cardId
                 });
-            }           
+            }
         }
     });
 
@@ -335,10 +333,12 @@ $(document).ready(() => {
             $('.ui-dialog[aria-describedby=choice-card-dialog] .ui-dialog-titlebar-close').hide();
         }
     });
+    Dialog.$choiceCardDialog.removeClass('hidden');
 
     Dialog.$foldDisplayDialog = $('#fold-display-dialog');
     Dialog.$foldDisplayDialog.dialog({
         modal: true,
         autoOpen: false,
     });
+    Dialog.$foldDisplayDialog.removeClass('hidden');
 });

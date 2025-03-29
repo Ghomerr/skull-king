@@ -22,18 +22,18 @@ exports.initializeGame = (room, cards) => {
         cards.forEach((card) => {
             room.cardsById[card.id] = card;
         });
-        const turn = 1, startPlayerIndex = 0;
+        const turn = 2, startPlayerIndex = 0;
         initializeNewTurn(room, turn, startPlayerIndex);
     }
 };
 
 function initializeNewTurn(room, turn, startPlayerIndex) {
     room.turn = turn;
-    room.gameCards = Utils.shuffle(room.initialCards);
+    room.gameCards = Utils.shuffle([...room.initialCards]);
     room.cardsOfTurn = [];
     room.currentPlayerIndex = startPlayerIndex;
     room.currentPlayerId = room.users[startPlayerIndex].id;
-    console.log('INITIALIZIGN A NEW TURN OF ROOM', room.id, 'TURN', turn, 'START WITH', room.currentPlayerId, 'PLAYER');
+    console.log('INITIALIZING A NEW TURN OF ROOM', room.id, 'TURN', turn, 'START WITH', room.currentPlayerId, 'PLAYER');
 
     for (let player of room.users) {
         player.cards = [];
