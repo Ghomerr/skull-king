@@ -22,17 +22,21 @@ exports.initializeGame = (room, cards) => {
         cards.forEach((card) => {
             room.cardsById[card.id] = card;
         });
-        const turn = 2, startPlayerIndex = 0;
+        const turn = 1, startPlayerIndex = 0;
         initializeNewTurn(room, turn, startPlayerIndex);
     }
 };
 
+function resetCurrentRound(room, startPlayerIndex) {
+    room.playedCards = [];
+    room.currentPlayerIndex = startPlayerIndex;
+    room.currentPlayerId = room.users[startPlayerIndex].id;
+}
+
 function initializeNewTurn(room, turn, startPlayerIndex) {
     room.turn = turn;
     room.gameCards = Utils.shuffle([...room.initialCards]);
-    room.cardsOfTurn = [];
-    room.currentPlayerIndex = startPlayerIndex;
-    room.currentPlayerId = room.users[startPlayerIndex].id;
+    resetCurrentRound(room, startPlayerIndex);
     console.log('INITIALIZING A NEW TURN OF ROOM', room.id, 'TURN', turn, 'START WITH', room.currentPlayerId, 'PLAYER');
 
     for (let player of room.users) {
@@ -143,18 +147,18 @@ exports.setEventListeners = (io, Socket, room) => {
                 // Search the requested type of cards for the current turn
                 let typeOfCards = null;
                 let playerHasRequestedTypeOfCards = false;
-                if (room.cardsOfTurn.length > 0) {
+                if (room.playedCards.length > 0) {
                     // Examples : 
                     // * 0=purple -> purple
                     // * 0=evasion, 1=purple -> purple
                     // * 0=pirate, 1=purple -> no type
                     // * 0=evasion, 1=pirate, 2=purple -> no type
-                    const firstColorCard = room.cardsOfTurn.find(c => !c.isSpecial);
+                    const firstColorCard = room.playedCards.find(c => !c.isSpecial);
                     if (firstColorCard) {
                         let cardOfTurn = null;
                         let hasBreakingTypeCard = false;
-                        for (let i = 0 ; i < room.cardsOfTurn.length ; i++) {
-                            cardOfTurn = room.cardsOfTurn[i];
+                        for (let i = 0 ; i < room.playedCards.length ; i++) {
+                            cardOfTurn = room.playedCards[i];
                             if (cardOfTurn.id === firstColorCard.id) {
                                 break;
                             }
@@ -174,12 +178,12 @@ exports.setEventListeners = (io, Socket, room) => {
                 
                 // Card has been found (technical, should never happen) AND
                 // Check if it's not the last turn (should never happen)
-                if (cardIndex >= 0 && room.cardsOfTurn.length < room.users.length &&           
+                if (cardIndex >= 0 && room.playedCards.length < room.users.length &&           
                         // Check if the player can play its card
                         (playedCard.isSpecial || !playerHasRequestedTypeOfCards || playedCard.type === typeOfCards)) {
 
                     // OK Card can be added to the played cards
-                    room.cardsOfTurn.push(playedCard);
+                    room.playedCards.push(playedCard);
 
                     // Remove the card from the player cards
                     player.cards.splice(cardIndex, 1);
@@ -199,43 +203,49 @@ exports.setEventListeners = (io, Socket, room) => {
                     }
 
                     // Check if the last player played its card, when there is the same amount of cards played than users
-                    if (room.cardsOfTurn.length === room.users.length) {
-                        console.log('last card of the turn', room.turn, 'has been played');
+                    if (room.playedCards.length === room.users.length) {
                         // Check who wins the fold
-                        let bestCardOfTurn = null;
-                        room.cardsOfTurn.forEach((card) => {
+                        let bestPlayedCard = null;
+                        room.playedCards.forEach((card) => {
                             // Best card is : first and only card or a card of high value AND
-                            if (!bestCardOfTurn || bestCardOfTurn.value < card.value && 
+                            if (!bestPlayedCard || bestPlayedCard.value < card.value &&
                                 // a type of cards doesn't exist OR it's a special card OR type exists and its the same type
                                 (!typeOfCards || card.isSpecial || card.type === typeOfCards)) {
-                                bestCardOfTurn = card;
+                                bestPlayedCard = card;
                             }
                         });
-                        console.log('best card of turn is', bestCardOfTurn, 'played by', bestCardOfTurn.playedBy);
+                        console.log('best card of round is', bestPlayedCard, 'played by', bestPlayedCard.playedBy);
 
                         // Update winner player folds with the current one
-                        const winnerOfTurn = Utils.findElementById(room.users, bestCardOfTurn.playedBy);
-                        winnerOfTurn.folds.push(...room.cardsOfTurn);
-                        const cardsOfTurn = [...room.cardsOfTurn];
-                      
-                        // Prepare next turn
+                        const foldWinner = Utils.findElementById(room.users, bestPlayedCard.playedBy);
+                        const playedCards = [...room.playedCards];
+                        foldWinner.folds.push(playedCards);
+
+                        let isLastCardPlayed = player.cards.length === 0;
                         let isLastTurn = false;
-                        if (room.turn < 10) {
-                            const startPlayerIndex = Utils.findIndexById(room.users, winnerOfTurn.id);
-                            initializeNewTurn(room, room.turn + 1, startPlayerIndex);
 
+                        // Prepare next turn when the last card has been played
+                        const startPlayerIndex = Utils.findIndexById(room.users, foldWinner.id);
+                        if (isLastCardPlayed) {
+                            console.log('last card of the turn', room.turn, 'has been played');
+                            if (room.turn < 10) {
+                                initializeNewTurn(room, room.turn + 1, startPlayerIndex);
+
+                            } else {
+                                isLastTurn = true;
+                                console.log('END OF THE GAME !');
+                                // TODO : display the board
+                            }
                         } else {
-                            isLastTurn = true;
-                            console.log('END OF THE GAME !');
-
-                            // TODO : display the board
+                            resetCurrentRound(room, startPlayerIndex);
+                            console.log('new round of turn', room.turn, 'starting with player', room.currentPlayerId);
                         }
 
-                        // Display the taken fold and go to the next turn
-                        io.to(room.id).emit('player-won-current-turn', {
-                            isLastTurn: isLastTurn,
-                            currentPlayerId: winnerOfTurn.id,
-                            fold: cardsOfTurn.map(c => {
+                        // Display the taken fold and go to the next card
+                        io.to(room.id).emit('player-won-current-fold', {
+                            hasToGetCards: !isLastTurn && isLastCardPlayed,
+                            currentPlayerId: foldWinner.id,
+                            fold: playedCards.map(c => {
                                 return {
                                     img: c.img,
                                     playedBy: c.playedBy
@@ -250,7 +260,7 @@ exports.setEventListeners = (io, Socket, room) => {
                         // Notify players with the played cards
                         io.to(room.id).emit('card-has-been-played', {
                             currentPlayerId: room.currentPlayerId,
-                            playedCards: room.cardsOfTurn.map(c => { 
+                            playedCards: room.playedCards.map(c => { 
                                 return {
                                     id: c.id,
                                     img: c.img,

@@ -8,14 +8,6 @@ const Player = {
     isCurrentPlayer: false
 };
 
-// Send a disconnect event when player is leaving the page
-window.addEventListener("beforeunload", () => {
-    Socket.emit('player-disconnect', {
-        roomId: roomId,
-        userId: Player.id
-    });
-});
-
 // Handle when a player is ready to display the waiting modal
 Socket.on('ready-players-amount', (data) => {
     Dialog.$simpleDialog.dialog('close');
@@ -27,7 +19,7 @@ Socket.on('ready-players-amount', (data) => {
 Socket.on('all-players-ready-to-play', (data) => {
     console.log('START all-players-ready-to-play');
 
-    // Dispay players names
+    // Display players names
     data.playersIds.forEach((playerId, index) => {
         const $playerBet = Global.$playersBets.eq(index);
         $playerBet.removeClass('hidden');
@@ -83,6 +75,7 @@ Socket.on('player-cards', (data) => {
     // TODO : WHY NOT ALL CARDS ARE SHOWN ON TURN 2 ???
     console.log('player-cards', data);
     Player.cards = data.cards;
+    Player.isCurrentPlayer = false;
 
     // Display the fold count displays
     for (let i = 0 ; i <= data.turn ; i++) {
@@ -92,6 +85,13 @@ Socket.on('player-cards', (data) => {
     Global.$foldCountPicker.removeClass('hidden');
     displayCards(data.cards, Global.$playerCards);
     Global.$playerCardsContainer.removeClass('hidden');
+
+    // Reset these classes because the players aren't playing but selecting a new bet for this new turn
+    Global.$playerCardsContainer.removeClass('not-playing');
+    Global.$playerCardsContainer.removeClass('playing');
+    Global.$foldCountPicker.removeClass('bet-selected');
+    Global.$foldCountDisplays.removeClass('selected-bet');
+    Global.$playersBetsValues.addClass('hidden');
 });
 
 // Handle when a player updated its bet to display that it's ready to play
@@ -154,10 +154,9 @@ Socket.on('yo-ho-ho', (data) => {
 // Handle when a player has just played a card and it must be removed from its hand
 Socket.on('remove-played-card', (data) => {
     Global.$playerCards.each((index, card) => {
-        // console.log('card to remove', data.playedCardId, '?', card);
         const $playedCard = $(card);
         if (+$playedCard.data('card-id') === data.playedCardId) {
-            $playedCard.remove();
+            $playedCard.addClass('hidden');
             const playedCardIndex = Player.cards.findIndex(card => card.id === data.playedCardId);
             Player.cards.splice(playedCardIndex, 1);
         }
@@ -178,14 +177,14 @@ function openFoldDialog(foldOwner, foldSize, hasToGetCards) {
     Dialog.$foldDisplayDialog.dialog('option', 'title', '🥇 ' + dialogTitle + ' remporté le pli !');
     Dialog.$foldDisplayDialog.dialog('option', 'width', foldSize * 200);
     // Ask cards for the next turn
-    if (hasToGetCards) {
-        Dialog.$foldDisplayDialog.dialog('option', 'close', () => {
-                Socket.emit('get-my-cards', {
-                    roomId: roomId,
-                    userId: Player.id
-                });
-        });
-    }
+    Dialog.$foldDisplayDialog.dialog('option', 'close', () => {
+        if (hasToGetCards) {
+            Socket.emit('get-my-cards', {
+                roomId: roomId,
+                userId: Player.id
+            });
+        }
+    });
     Dialog.$foldDisplayDialog.dialog('option', 'buttons', [{
         text: 'Ok',
         click: () => {
@@ -195,7 +194,7 @@ function openFoldDialog(foldOwner, foldSize, hasToGetCards) {
     Dialog.$foldDisplayDialog.dialog('open');
 }
 
-Socket.on('player-won-current-turn', (data) => {
+Socket.on('player-won-current-fold', (data) => {
     // Next player will be the winner
     displayCurrentPlayer(data);
 
@@ -206,9 +205,7 @@ Socket.on('player-won-current-turn', (data) => {
     displayCards(data.fold, Global.$foldCards, (cardData, $cardElement) => {
         $cardElement.find('span').text(cardData.playedBy === Player.id ? 'Moi' : cardData.playedBy);
     });
-    openFoldDialog(data.currentPlayerId, data.fold.length, !data.isLastTurn);
-
-    // TODO : remove previous bets !!
+    openFoldDialog(data.currentPlayerId, data.fold.length, data.hasToGetCards);
 });
 
 Socket.on('player-error', (error) => {
@@ -236,7 +233,28 @@ function selectFoldCount(Socket, Global, $currentFoldCountDisplay, event) {
     });
 }
 
+function doChoiceTigresse(event, type) {
+    if (Player.isCurrentPlayer) {
+        console.log('current player choosed to play a Tigresse as', type, event);
+        Socket.emit('play-a-card', {
+            roomId: roomId,
+            playerId: Player.id,
+            cardId: 106, // tigresse
+            type: type
+        });
+        Dialog.$choiceCardDialog.dialog('close');
+    }
+}
+
 $(document).ready(() => {
+    // Send a disconnect event when player is leaving the page
+    window.addEventListener("beforeunload", () => {
+        Socket.emit('player-disconnect', {
+            roomId: roomId,
+            userId: Player.id
+        });
+    });
+
     // Join the current game
     Socket.emit('join-game', {
         roomId: roomId,
@@ -264,7 +282,7 @@ $(document).ready(() => {
     // TODO : only if the game hasn't started !!!!
     Dialog.openSimpleDialog(Dialog.$simpleDialog, '⏳ Attente', 'En attente des joueurs...');
 
-    // Handle click on flod count display
+    // Handle click on fold count display
     Global.$foldCountDisplays.click((event) => {
         const $currentFoldCountDisplay = $(event.currentTarget);
 
@@ -309,18 +327,6 @@ $(document).ready(() => {
     Global.$choiceTigressePirate.click((event) =>  {
         doChoiceTigresse(event, 'pirate');
     });
-    function doChoiceTigresse(event, type) {
-        if (Player.isCurrentPlayer) {
-            console.log('current player choosed to play a Tigresse as', type, event);
-            Socket.emit('play-a-card', {
-                roomId: roomId,
-                playerId: Player.id,
-                cardId: 106, // tigresse
-                type: type
-            });
-            Dialog.$choiceCardDialog.dialog('close');
-        }
-    }
 
     Dialog.$choiceCardDialog = $('#choice-card-dialog');
     Dialog.$choiceCardDialog.dialog({
