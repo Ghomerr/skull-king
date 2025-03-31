@@ -19,10 +19,12 @@ $(document).ready(() => {
         $dialog.dialog('option', 'buttons', [{
             text: 'Ok',
             click: () => {
-                Dialog.$simpleDialog.dialog('close');
+                $dialog.dialog('close');
             }
         }]);
-        $dialog.find('.dialog-text').text('').append(text);
+        if (text) {
+            $dialog.find('.dialog-text').text('').append(text);
+        }
         $dialog.dialog('open');
     };
 

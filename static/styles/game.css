@@ -205,7 +205,9 @@ main {
 }
 
 .player-bet.current-player {
-    border-color: red;
+    border-color: #ffba44;
+    background-color: #b36e32;
+    color: #ffba44;
 }
 
 .player-name {
@@ -229,4 +231,27 @@ main {
 
 .fold-card {
     position: relative;
+}
+
+/**  Help */
+.help-button-container {
+    position: fixed;
+    bottom: 50px;
+    left: 25px;
+}
+
+#help-display-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+#help-button {
+    border-radius: 25px;
+    border: 3px outset #78350e;
+}
+#help-button:hover {
+    border-style: inset;
+    border-color: #ffba44;
 }

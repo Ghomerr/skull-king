@@ -22,7 +22,7 @@
     </header>
 
     <main>
-        <div class="lobby-container">
+        <form class="lobby-container">
             <div id="lobby-inputs" class="lobby-inputs">
                 <div class="lobby-inputs-title big-text">Rejoindre une salle de jeu</div>
                 <div class="user-id-container">
@@ -50,7 +50,7 @@
                 </div>
             </div>
 
-            <div id="players-list" class="players-list" style="display: none;">
+            <form id="players-list" class="players-list" style="display: none;">
                 <div class="room-id-title"></div>
                 <ol class="lobby-players-list"></ol>
                 <form name="lobby-form" id="start-content" action="">
@@ -61,18 +61,16 @@
                     </button>
                     <div class="info-players"><span> Joueur(s) </span><span id="players-counter"></span> (min 2, max 7)</div>
                     <div class="info-players" id="info-password" style="display: none;"></div>
-                </div>
-            </div>
+                </form>
+            </form>
 
             <div id="rooms-list" class="players-list" style="display: none;">
                 <div class="rooms-list-title big-text">Liste des salles de jeu</div>
                 <div id="rooms-list-content">
                 </div>
             </div>
-        </div>
+        </form>
 
-        
-        
         <div id="simple-dialog" title="Test dialog">
             <div class="dialog-text">
                 Ceci est un message.
@@ -82,7 +80,7 @@
 
     <footer id="footer">
         <span><i class="fas fa-skull-crossbones"></i></span>
-        <span class="version">Skull-king v0.2025.03.29</span>
+        <span class="version">Skull-king v0.2025.03.31</span>
         <span> - </span>
         <span class="rules">
             <a href="https://www.play-in.com/pdf/rules_games/skull_king_regles_fr.pdf"><i class="fas fa-book"></i> Règles du jeu</a>

@@ -279,6 +279,9 @@ $(document).ready(() => {
     Global.$choiceTigresseEvasion = $('#tigresse-evasion');
     Global.$choiceTigressePirate = $('#tigresse-pirate');
 
+    Global.$helpButton = $('#help-button');
+    Global.$helpDialog = $('#help-display-dialog');
+
     // TODO : only if the game hasn't started !!!!
     Dialog.openSimpleDialog(Dialog.$simpleDialog, '⏳ Attente', 'En attente des joueurs...');
 
@@ -321,13 +324,13 @@ $(document).ready(() => {
         }
     });
 
+    // Tigresse choice dialog
     Global.$choiceTigresseEvasion.click((event) =>  {
         doChoiceTigresse(event, 'evasion');
     });
     Global.$choiceTigressePirate.click((event) =>  {
         doChoiceTigresse(event, 'pirate');
     });
-
     Dialog.$choiceCardDialog = $('#choice-card-dialog');
     Dialog.$choiceCardDialog.dialog({
         modal: true,
@@ -341,10 +344,21 @@ $(document).ready(() => {
     });
     Dialog.$choiceCardDialog.removeClass('hidden');
 
+    // Fold dialog
     Dialog.$foldDisplayDialog = $('#fold-display-dialog');
     Dialog.$foldDisplayDialog.dialog({
         modal: true,
         autoOpen: false,
     });
     Dialog.$foldDisplayDialog.removeClass('hidden');
+
+    // Help dialog
+    Global.$helpDialog.dialog({
+        modal: true,
+        autoOpen: false
+    });
+    Global.$helpButton.click((event) => {
+        Global.$helpDialog.removeClass('hidden');
+        Dialog.openSimpleDialog(Global.$helpDialog, 'ℹ️ Aide', null, 600);
+    });
 });
