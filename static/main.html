@@ -22,7 +22,7 @@
     </header>
 
     <main>
-        <form class="lobby-container">
+        <div class="lobby-container">
             <div id="lobby-inputs" class="lobby-inputs">
                 <div class="lobby-inputs-title big-text">Rejoindre une salle de jeu</div>
                 <div class="user-id-container">
@@ -50,7 +50,7 @@
                 </div>
             </div>
 
-            <form id="players-list" class="players-list" style="display: none;">
+            <div id="players-list" class="players-list" style="display: none;">
                 <div class="room-id-title"></div>
                 <ol class="lobby-players-list"></ol>
                 <form name="lobby-form" id="start-content" action="">
@@ -62,14 +62,14 @@
                     <div class="info-players"><span> Joueur(s) </span><span id="players-counter"></span> (min 2, max 7)</div>
                     <div class="info-players" id="info-password" style="display: none;"></div>
                 </form>
-            </form>
+            </div>
 
             <div id="rooms-list" class="players-list" style="display: none;">
                 <div class="rooms-list-title big-text">Liste des salles de jeu</div>
                 <div id="rooms-list-content">
                 </div>
             </div>
-        </form>
+        </div>
 
         <div id="simple-dialog" title="Test dialog">
             <div class="dialog-text">

@@ -2,7 +2,9 @@ const Utils = require('./utils.js');
 
 const CARD_TYPE = {
     EVASION: 'evasion',
+    SKULL_KING: 'skull-king',
     PIRATE: 'pirate',
+    MERMAID: 'mermaid',
     CHOICE: 'choice'
 };
 
@@ -43,21 +45,18 @@ function initializeNewTurn(room, turn, startPlayerIndex) {
         player.cards = [];
         player.folds = [];
         player.foldBet = null;
-        dispatchCards(room.turn, player, room.gameCards);
 
-        // TODO REMOVE THIS TEST
-        /*if (player.id === "Ghomerr") {
-            // ADD TIGRESSE HERE !!!
-            player.cards.push({
-                "id": 106,
-                "name": "FAKE Tigresse",
-                "type": "choice",
-                "img": "tigresse_choice.jpg",
-                "value": 100,
-                "bonus": 30,
-                "isSpecial": true
-            });
-        }//*/
+        // For tests only
+        if (player.id === "Joueur1") {
+            dispatchCardsOfList(room.cardsById, room.turn, player, room.gameCards,
+              [200, 105, 104, 92]);
+        } else if (player.id === "Joueur2") {
+            dispatchCardsOfList(room.cardsById, room.turn, player, room.gameCards,
+              [103, 102, 101, 91]);
+        } else {
+            // DEFAULT CARDS DISPATCH
+            dispatchCards(room.turn, player, room.gameCards);
+        }
     }
 }
 
@@ -206,6 +205,8 @@ exports.setEventListeners = (io, Socket, room) => {
                     if (room.playedCards.length === room.users.length) {
                         // Check who wins the fold
                         let bestPlayedCard = null;
+                        let hasMermaid = false;
+                        let firstMermaid = null;
                         room.playedCards.forEach((card) => {
                             // Best card is : first and only card or a card of high value AND
                             if (!bestPlayedCard || bestPlayedCard.value < card.value &&
@@ -213,7 +214,17 @@ exports.setEventListeners = (io, Socket, room) => {
                                 (!typeOfCards || card.isSpecial || card.type === typeOfCards)) {
                                 bestPlayedCard = card;
                             }
+                            if (!hasMermaid && card.type === CARD_TYPE.MERMAID) {
+                                hasMermaid = true;
+                                firstMermaid = card;
+                            }
                         });
+
+                        // If a mermaid has been played with the Skull king, the first one wins !
+                        if (bestPlayedCard.type === CARD_TYPE.SKULL_KING && hasMermaid) {
+                            bestPlayedCard = firstMermaid;
+                        }
+
                         console.log('best card of round is', bestPlayedCard, 'played by', bestPlayedCard.playedBy);
 
                         // Update winner player folds with the current one
@@ -280,6 +291,16 @@ exports.setEventListeners = (io, Socket, room) => {
         }
     });
 };
+
+function dispatchCardsOfList(cardsById, turn, player, gameCards, list) {
+    for (let i = 0; i < turn; i++) {
+        const cardToAdd = i < list.length ? cardsById[list[i]] : gameCards.pop();
+        const cardIndex = Utils.findIndexById(gameCards, cardToAdd.id);
+        gameCards.slice(cardIndex, 1);
+        player.cards.push(cardToAdd);
+    }
+    sortPlayerCards(player.cards);
+}
 
 function dispatchCards(turn, player, gameCards) {
     for (let i = 1; i <= turn; i++) {
