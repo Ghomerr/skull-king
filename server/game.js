@@ -47,10 +47,10 @@ function initializeNewTurn(room, turn, startPlayerIndex) {
         player.foldBet = null;
 
         // For tests only
-        if (player.id === "Joueur1") {
+        if (player.id === "Test1") {
             dispatchCardsOfList(room.cardsById, room.turn, player, room.gameCards,
               [200, 105, 104, 92]);
-        } else if (player.id === "Joueur2") {
+        } else if (player.id === "Test2") {
             dispatchCardsOfList(room.cardsById, room.turn, player, room.gameCards,
               [103, 102, 101, 91]);
         } else {

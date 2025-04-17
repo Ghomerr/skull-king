@@ -14,7 +14,28 @@
 }
 
 #head-title {
-    flex-grow: 1;
+    text-align: left;
+}
+
+#head-status {
+    text-align: right;
+}
+
+#head-title,
+#head-status {
+    flex: 1; /* Tous les deux prennent la même largeur */
+}
+
+#buttons-container {
+    flex: 0; /* Espace occupé uniquement en fonction des dimensions de l'image */
+    display: flex;
+    justify-content: center; /* Centre horizontalement le contenu si nécessaire */
+    align-items: center; /* Centre verticalement l'image */
+    text-align: center; /* Alignement du contenu */
+}
+
+#head-status {
+    text-align: right;
 }
 
 main {
