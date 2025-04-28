@@ -74,7 +74,8 @@ exports.setEventListeners = (io, Socket, room) => {
                         return {
                             id: c.id,
                             type: c.type,
-                            img: c.img
+                            img: c.img,
+                            value: c.value
                         };
                     })
             });
@@ -208,9 +209,10 @@ exports.setEventListeners = (io, Socket, room) => {
                         let hasMermaid = false;
                         let firstMermaid = null;
                         room.playedCards.forEach((card) => {
-                            // Best card is : first and only card or a card of high value AND
+                            // Best card is: first and only card or a card of high value AND
                             if (!bestPlayedCard || bestPlayedCard.value < card.value &&
-                                // a type of cards doesn't exist OR it's a special card OR type exists and its the same type
+                                // a type of cards doesn't exist, OR it's a special card, OR type exists and its the
+                              // same type
                                 (!typeOfCards || card.isSpecial || card.type === typeOfCards)) {
                                 bestPlayedCard = card;
                             }
@@ -235,7 +237,7 @@ exports.setEventListeners = (io, Socket, room) => {
                         let isLastCardPlayed = player.cards.length === 0;
                         let isLastTurn = false;
 
-                        // Prepare next turn when the last card has been played
+                        // Prepare the next turn when the last card has been played
                         const startPlayerIndex = Utils.findIndexById(room.users, foldWinner.id);
                         if (isLastCardPlayed) {
                             console.log('last card of the turn', room.turn, 'has been played');

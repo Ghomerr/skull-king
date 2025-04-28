@@ -5,7 +5,9 @@ const urlParams = new URLSearchParams(window.location.search);
 const roomId = urlParams.get('formRoomId');
 const Player = {
     id: urlParams.get('formUserId'),
-    isCurrentPlayer: false
+    cards: [],
+    isCurrentPlayer: false,
+    isBot: false
 };
 
 // Handle when a player is ready to display the waiting modal
@@ -282,6 +284,8 @@ $(document).ready(() => {
     Global.$helpButton = $('#help-button');
     Global.$helpDialog = $('#help-display-dialog');
 
+    Global.$botButton = $('#bot-button');
+
     // TODO : only if the game hasn't started !!!!
     Dialog.openSimpleDialog(Dialog.$simpleDialog, '⏳ Attente', 'En attente des joueurs...');
 
@@ -296,7 +300,8 @@ $(document).ready(() => {
             if (!Global.$foldCountDisplays.hasClass('selected-bet')) {
                 selectFoldCount(Socket, Global, $currentFoldCountDisplay, event);
             } else {
-                Dialog.openTwoChoicesDialog(Dialog.$simpleDialog, '⚠️ Attention', 'Etes-vous sûr de vouloir changer de pari ?', 'Oui', () => {
+                Dialog.openTwoChoicesDialog(Dialog.$simpleDialog, '⚠️ Attention', 'Êtes-vous sûr de vouloir changer' +
+                  ' de pari ?', 'Oui', () => {
                     selectFoldCount(Socket, Global, $currentFoldCountDisplay, event);
                 }, 'Non', () => {});
             }
@@ -357,8 +362,27 @@ $(document).ready(() => {
         modal: true,
         autoOpen: false
     });
-    Global.$helpButton.click((event) => {
+    Global.$helpButton.click((_) => {
         Global.$helpDialog.removeClass('hidden');
         Dialog.openSimpleDialog(Global.$helpDialog, 'ℹ️ Aide', null, 600);
+    });
+
+    // Bot button
+    Global.$botButton.click((_) => {
+        Player.isBot = !Player.isBot;
+        if (Player.isBot) {
+            Global.$botButton.addClass('active');
+        } else {
+            Global.$botButton.removeClass('active');
+        }
+
+        // Fold bet picker is visible, choose a bet
+        if (!Global.$foldCountPicker.hasClass('hidden')) {
+            const betValue = Player.cards.filter(card => card.value >= 30).length;
+            Global.$foldCountDisplays.find('#fold-' + betValue).click();
+            // TODO fix this ! Global.$foldCountDisplays doesn't work
+        } else {
+            // TODO Play a card
+        }
     });
 });

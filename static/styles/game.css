@@ -34,6 +34,21 @@
     text-align: center; /* Alignement du contenu */
 }
 
+#bot-button {
+    opacity: 0.5;
+    cursor: pointer;
+    border: outset 3px #78350e;
+    border-radius: 25px;
+}
+
+#bot-button:hover {
+    border: inset 3px #ffba44;
+}
+
+#bot-button.active {
+    opacity: 1;
+}
+
 #head-status {
     text-align: right;
 }
@@ -272,6 +287,7 @@ main {
     border-radius: 25px;
     border: 3px outset #78350e;
 }
+
 #help-button:hover {
     border-style: inset;
     border-color: #ffba44;
