@@ -72,9 +72,26 @@ function displayCards(cards, $cards, addSomethingFn) {
     });
 }
 
+function autoPlay() {
+    Player.isBot = !Player.isBot;
+    if (Player.isBot) {
+        Global.$botButton.addClass('active');
+        // Fold bet picker is visible, choose a bet
+        if (!Global.$foldCountPicker.hasClass('hidden')) {
+            const betValue = Player.cards.filter(card => card.value >= 30).length;
+            Global.$foldCountPicker.find('#fold-' + betValue).click();
+        } else {
+            if (Player.isCurrentPlayer) {
+                // TODO Play a card
+            }
+        }
+    } else {
+        Global.$botButton.removeClass('active');
+    }
+}
+
 // Receiving its cards
 Socket.on('player-cards', (data) => {
-    // TODO : WHY NOT ALL CARDS ARE SHOWN ON TURN 2 ???
     console.log('player-cards', data);
     Player.cards = data.cards;
     Player.isCurrentPlayer = false;
@@ -94,6 +111,8 @@ Socket.on('player-cards', (data) => {
     Global.$foldCountPicker.removeClass('bet-selected');
     Global.$foldCountDisplays.removeClass('selected-bet');
     Global.$playersBetsValues.addClass('hidden');
+
+    autoPlay();
 });
 
 // Handle when a player updated its bet to display that it's ready to play
@@ -150,10 +169,12 @@ Socket.on('yo-ho-ho', (data) => {
     Global.$foldCountDisplays.addClass('hidden');
 
     // Display yo ho ho !
-    Dialog.openSimpleDialog(Dialog.$simpleDialog, '🏴‍☠️ YO HO HO', 'YO HO HO !!!!!');
+    if (!Player.isBot) {
+        Dialog.openSimpleDialog(Dialog.$simpleDialog, '🏴‍☠️ YO HO HO', 'YO HO HO !!!!!');
+    }
 });
 
-// Handle when a player has just played a card and it must be removed from its hand
+// Handle when a player has just played a card, and it must be removed from its hand
 Socket.on('remove-played-card', (data) => {
     Global.$playerCards.each((index, card) => {
         const $playedCard = $(card);
@@ -171,6 +192,7 @@ Socket.on('card-has-been-played', (data) => {
     displayCards(data.playedCards, Global.$playedCards, (cardData, $cardElement) => {
         $cardElement.find('span').text(cardData.playedBy === Player.id ? 'Moi' : cardData.playedBy);
     });
+    autoPlay();
 });
 
 function openFoldDialog(foldOwner, foldSize, hasToGetCards) {
@@ -369,20 +391,6 @@ $(document).ready(() => {
 
     // Bot button
     Global.$botButton.click((_) => {
-        Player.isBot = !Player.isBot;
-        if (Player.isBot) {
-            Global.$botButton.addClass('active');
-        } else {
-            Global.$botButton.removeClass('active');
-        }
-
-        // Fold bet picker is visible, choose a bet
-        if (!Global.$foldCountPicker.hasClass('hidden')) {
-            const betValue = Player.cards.filter(card => card.value >= 30).length;
-            Global.$foldCountDisplays.find('#fold-' + betValue).click();
-            // TODO fix this ! Global.$foldCountDisplays doesn't work
-        } else {
-            // TODO Play a card
-        }
+        autoPlay();
     });
 });
