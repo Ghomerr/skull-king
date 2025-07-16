@@ -2,7 +2,10 @@ const Socket = io();
 const Global = {};
 
 const urlParams = new URLSearchParams(window.location.search);
-const roomId = urlParams.get('formRoomId');
+const Room = {
+    id: urlParams.get('formRoomId'),
+    playedCards: []
+};
 const Player = {
     id: urlParams.get('formUserId'),
     cards: [],
@@ -39,7 +42,7 @@ Socket.on('all-players-ready-to-play', (data) => {
 
     // Request cards
     Socket.emit('get-my-cards', {
-        roomId: roomId,
+        roomId: Room.id,
         userId: Player.id
     });
 
@@ -82,7 +85,28 @@ function autoPlay() {
             Global.$foldCountPicker.find('#fold-' + betValue).click();
         } else {
             if (Player.isCurrentPlayer) {
-                // TODO Play a card
+                // Find the first played card color
+                const noPlayedCards = Room.playedCards.length === 0;
+                const firstColorCard = noPlayedCards ? null : Room.playedCards.find(c => !c.isSpecial);
+                const indexOfPlayedCardType = firstColorCard ? Player.cards.findIndex(c => c.type === firstColorCard.type) : -1;
+
+                // No played card yet, or no color played, or no card of played type, play the first card
+                if (indexOfPlayedCardType === -1) {
+                    Socket.emit('play-a-card', {
+                        roomId: Room.id,
+                        playerId: Player.id,
+                        cardId: Player.cards[0].id
+                    });
+                } else {
+                    // Play the first card of the played type (handle the tigresse choice)
+                    const cardToBePlayed = Player.cards[indexOfPlayedCardType];
+                    Socket.emit('play-a-card', {
+                        roomId: Room.id,
+                        playerId: Player.id,
+                        cardId: cardToBePlayed.id,
+                        type: cardToBePlayed.type !== 'choice' ?? 'evasion'
+                    });
+                }
             }
         }
     } else {
@@ -188,6 +212,7 @@ Socket.on('remove-played-card', (data) => {
 
 // Handle when a player has played a card to display current played cards and the current player name
 Socket.on('card-has-been-played', (data) => {
+    Room.playedCards = data.playedCards;
     displayCurrentPlayer(data);
     displayCards(data.playedCards, Global.$playedCards, (cardData, $cardElement) => {
         $cardElement.find('span').text(cardData.playedBy === Player.id ? 'Moi' : cardData.playedBy);
@@ -204,7 +229,7 @@ function openFoldDialog(foldOwner, foldSize, hasToGetCards) {
     Dialog.$foldDisplayDialog.dialog('option', 'close', () => {
         if (hasToGetCards) {
             Socket.emit('get-my-cards', {
-                roomId: roomId,
+                roomId: Room.id,
                 userId: Player.id
             });
         }
@@ -223,13 +248,22 @@ Socket.on('player-won-current-fold', (data) => {
     displayCurrentPlayer(data);
 
     // Remove played cards
+    Room.playedCards = [];
     displayCards([], Global.$playedCards);
 
     // Prepare display fold dialog content
     displayCards(data.fold, Global.$foldCards, (cardData, $cardElement) => {
         $cardElement.find('span').text(cardData.playedBy === Player.id ? 'Moi' : cardData.playedBy);
     });
-    openFoldDialog(data.currentPlayerId, data.fold.length, data.hasToGetCards);
+
+    if (!Player.isBot) {
+        openFoldDialog(data.currentPlayerId, data.fold.length, data.hasToGetCards);
+    } else if (data.hasToGetCards) {
+        Socket.emit('get-my-cards', {
+            roomId: Room.id,
+            userId: Player.id
+        });
+    }
 });
 
 Socket.on('player-error', (error) => {
@@ -251,7 +285,7 @@ function selectFoldCount(Socket, Global, $currentFoldCountDisplay, event) {
     $currentFoldCountDisplay.addClass('selected-bet');
 
     Socket.emit('set-fold-bet', {
-        roomId: roomId,
+        roomId: Room.id,
         userId: Player.id,
         foldBet: +(event.currentTarget.id.split('-')[1])
     });
@@ -261,7 +295,7 @@ function doChoiceTigresse(event, type) {
     if (Player.isCurrentPlayer) {
         console.log('current player choosed to play a Tigresse as', type, event);
         Socket.emit('play-a-card', {
-            roomId: roomId,
+            roomId: Room.id,
             playerId: Player.id,
             cardId: 106, // tigresse
             type: type
@@ -274,14 +308,14 @@ $(document).ready(() => {
     // Send a disconnect event when player is leaving the page
     window.addEventListener("beforeunload", () => {
         Socket.emit('player-disconnect', {
-            roomId: roomId,
+            roomId: Room.id,
             userId: Player.id
         });
     });
 
     // Join the current game
     Socket.emit('join-game', {
-        roomId: roomId,
+        roomId: Room.id,
         userId: Player.id
     });
 
@@ -343,7 +377,7 @@ $(document).ready(() => {
                 Dialog.$choiceCardDialog.dialog('open');
             } else {
                 Socket.emit('play-a-card', {
-                    roomId: roomId,
+                    roomId: Room.id,
                     playerId: Player.id,
                     cardId: cardId
                 });

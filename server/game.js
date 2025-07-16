@@ -136,6 +136,7 @@ exports.setEventListeners = (io, Socket, room) => {
                         playedCard.type = data.type;
                     } else {
                         // TODO : wrong choice
+                        console.log('wrong choice', data.type);
                     }
                 }
 
