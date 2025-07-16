@@ -277,6 +277,7 @@ exports.setEventListeners = (io, Socket, room) => {
                             playedCards: room.playedCards.map(c => { 
                                 return {
                                     id: c.id,
+                                    type: c.type,
                                     img: c.img,
                                     playedBy: c.playedBy
                                 }; 

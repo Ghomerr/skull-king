@@ -4,6 +4,10 @@
 }
 
 /** Head title */
+.game-title img {
+    cursor: pointer;
+}
+
 .head-title-container {
     font-size: 30px;
     margin: 0px;

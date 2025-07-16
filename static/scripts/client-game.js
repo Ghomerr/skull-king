@@ -76,7 +76,6 @@ function displayCards(cards, $cards, addSomethingFn) {
 }
 
 function autoPlay() {
-    Player.isBot = !Player.isBot;
     if (Player.isBot) {
         Global.$botButton.addClass('active');
         // Fold bet picker is visible, choose a bet
@@ -195,6 +194,8 @@ Socket.on('yo-ho-ho', (data) => {
     // Display yo ho ho !
     if (!Player.isBot) {
         Dialog.openSimpleDialog(Dialog.$simpleDialog, '🏴‍☠️ YO HO HO', 'YO HO HO !!!!!');
+    } else {
+        autoPlay();
     }
 });
 
@@ -222,8 +223,8 @@ Socket.on('card-has-been-played', (data) => {
 
 function openFoldDialog(foldOwner, foldSize, hasToGetCards) {
     // Open fold dialog
-    const dialogTitle = foldOwner === Player.id ? 'J\'ai' : foldOwner + ' a';
-    Dialog.$foldDisplayDialog.dialog('option', 'title', '🥇 ' + dialogTitle + ' remporté le pli !');
+    const dialogTitle = foldOwner === Player.id ? '🥇 J\'ai' :  '🏳 ' + foldOwner + ' a';
+    Dialog.$foldDisplayDialog.dialog('option', 'title', dialogTitle + ' remporté le pli !');
     Dialog.$foldDisplayDialog.dialog('option', 'width', foldSize * 200);
     // Ask cards for the next turn
     Dialog.$foldDisplayDialog.dialog('option', 'close', () => {
@@ -263,6 +264,8 @@ Socket.on('player-won-current-fold', (data) => {
             roomId: Room.id,
             userId: Player.id
         });
+    } else {
+        autoPlay();
     }
 });
 
@@ -425,6 +428,7 @@ $(document).ready(() => {
 
     // Bot button
     Global.$botButton.click((_) => {
+        Player.isBot = !Player.isBot;
         autoPlay();
     });
 });
