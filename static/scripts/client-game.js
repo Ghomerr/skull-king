@@ -134,6 +134,7 @@ Socket.on('player-cards', (data) => {
     Global.$foldCountPicker.removeClass('bet-selected');
     Global.$foldCountDisplays.removeClass('selected-bet');
     Global.$playersBetsValues.addClass('hidden');
+    Global.$foldCounterContainer.addClass('hidden');
 
     autoPlay();
 });
@@ -182,7 +183,10 @@ Socket.on('yo-ho-ho', (data) => {
         const $playerBetValue = Global.$playersBetsValues.eq(index);
         $playerBetValue.find('img').attr('src', 'static/assets/score_' + playerBet.foldBet + '.jpg');
         $playerBetValue.removeClass('hidden');
+
+        // TODO : RESET FOLD COUNTER FOR EACH PLAYER TO ZERO
     });
+    Global.$foldCounterContainer.removeClass('hidden');
 
     displayCurrentPlayer(data);
     Global.$headTitle.text('Manche ' + data.turn);
@@ -247,6 +251,8 @@ function openFoldDialog(foldOwner, foldSize, hasToGetCards) {
 Socket.on('player-won-current-fold', (data) => {
     // Next player will be the winner
     displayCurrentPlayer(data);
+
+    // TODO : UPDATE THE FOLD COUNTER OF THE PLAYER WHO WON THE FOLD
 
     // Remove played cards
     Room.playedCards = [];
@@ -336,14 +342,14 @@ $(document).ready(() => {
     Global.$playersBetsContainer = $('#players-bets-container');
     Global.$playersBets = $('.player-bet');
     Global.$playersBetsValues = Global.$playersBets.find('.bet-value');
+    Global.$foldCounterContainer = Global.$playersBets.find('.fold-counter-container');
 
     Global.$choiceTigresseEvasion = $('#tigresse-evasion');
     Global.$choiceTigressePirate = $('#tigresse-pirate');
 
     Global.$helpButton = $('#help-button');
-    Global.$helpDialog = $('#help-display-dialog');
-
     Global.$botButton = $('#bot-button');
+    Global.$scoresButton = $('#scores-button');
 
     // TODO : only if the game hasn't started !!!!
     Dialog.openSimpleDialog(Dialog.$simpleDialog, '⏳ Attente', 'En attente des joueurs...');
@@ -417,18 +423,32 @@ $(document).ready(() => {
     Dialog.$foldDisplayDialog.removeClass('hidden');
 
     // Help dialog
-    Global.$helpDialog.dialog({
+    Dialog.$helpDialog = $('#help-display-dialog');
+    Dialog.$helpDialog.dialog({
         modal: true,
         autoOpen: false
     });
     Global.$helpButton.click((_) => {
-        Global.$helpDialog.removeClass('hidden');
-        Dialog.openSimpleDialog(Global.$helpDialog, 'ℹ️ Aide', null, 600);
+        Dialog.$helpDialog.removeClass('hidden');
+        Dialog.openSimpleDialog(Dialog.$helpDialog, 'ℹ️ Aide', null, 600);
     });
 
     // Bot button
     Global.$botButton.click((_) => {
         Player.isBot = !Player.isBot;
+        const buttonTitle = Player.isBot ? 'Désactiver mode Auto' : 'Activer mode Auto';
+        Global.$botButton.attr('title', buttonTitle);
         autoPlay();
+    });
+
+    // Scores button
+    Dialog.$scoresDisplayDialog = $('#scores-display-dialog');
+    Dialog.$scoresDisplayDialog.dialog({
+        modal: true,
+        autoOpen: false,
+    });
+    Global.$scoresButton.click((_) => {
+        Dialog.$scoresDisplayDialog.removeClass('hidden');
+        Dialog.openSimpleDialog(Dialog.$scoresDisplayDialog, '🏆 Scores', null, 600);
     });
 });

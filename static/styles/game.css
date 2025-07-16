@@ -233,6 +233,15 @@ main {
     margin: 10px;
 }
 
+.bet-and-fold-container {
+    display: flex;
+    flex-direction: row;
+}
+
+.bet-and-fold-container div {
+    flex: 1;
+}
+
 .player-bet {
     border: 2px solid #78350e;
     border-radius: 5px;
@@ -254,9 +263,13 @@ main {
     font-weight: bold;
 }
 
-.player-bet > .bet-value > img {
+.player-bet .bet-value  img {
     width: 20px;
     border-radius: 25px;
+}
+
+.fold-counter-container span {
+    font-weight: bold;
 }
 
 /** Player fold dialog */
@@ -288,6 +301,7 @@ main {
 }
 
 #help-button {
+    cursor: pointer;
     border-radius: 25px;
     border: 3px outset #78350e;
 }
@@ -295,4 +309,21 @@ main {
 #help-button:hover {
     border-style: inset;
     border-color: #ffba44;
+}
+
+/** Score button */
+.scores-button-container {
+    position: fixed;
+    bottom: 50px;
+    right: 25px;
+}
+
+#scores-button {
+    cursor: pointer;
+    border: outset 3px #78350e;
+    border-radius: 25px;
+}
+
+#scores-button:hover {
+    border: inset 3px #ffba44;
 }
