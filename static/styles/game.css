@@ -327,3 +327,12 @@ main {
 #scores-button:hover {
     border: inset 3px #ffba44;
 }
+
+.scores-table {
+    font-size: small;
+}
+
+.scores-table table, .scores-table th, .scores-table td {
+    border: 1px black solid;
+    border-collapse: collapse;
+}

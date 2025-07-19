@@ -1,6 +1,7 @@
 const Utils = require('./utils.js');
 
 const CARD_TYPE = {
+    BLACK: 'black',
     EVASION: 'evasion',
     SKULL_KING: 'skull-king',
     PIRATE: 'pirate',
@@ -21,9 +22,7 @@ exports.initializeGame = (room, cards) => {
     if (!room.initialCards) {
         room.initialCards = cards;
         room.cardsById = {};
-        cards.forEach((card) => {
-            room.cardsById[card.id] = card;
-        });
+        room.firstPlayerIndex = 0;
         const turn = 1, startPlayerIndex = 0;
         initializeNewTurn(room, turn, startPlayerIndex);
     }
@@ -35,13 +34,80 @@ function resetCurrentRound(room, startPlayerIndex) {
     room.currentPlayerId = room.users[startPlayerIndex].id;
 }
 
+// Compute player score
+function computePlayerScore(player, previousTurn) {
+    if (previousTurn >= 1) {
+        let bonus = 0;
+        for (let fold of player.folds) {
+            const bestCardOfFold = fold.find(c => c.isBestCard);
+            for (let card of fold) {
+                if (card.bonus > 0) {
+                    // Other cards always give their bonus 
+                    // A special card gives bonus only if the bestCard has a higher value
+                    if (!card.isSpecial || bestCardOfFold.value > card.value) {
+                        bonus += card.bonus;
+                    }
+                }
+            }
+        }
+
+        let score = {
+            bet: player.foldBet,
+            folds: player.folds.length,
+            value: -1,
+            bonus: bonus,
+            total: -1
+        };
+
+        // Player succeeded in doing its bet
+        if (player.foldBet === player.folds.length) {
+            if (player.foldBet === 0) {
+                score.value = previousTurn * 10;
+            } else {
+                score.value = player.folds.length * 20;
+            }
+        } else {
+            if (player.foldBet === 0) {
+                score.value = previousTurn * -10;
+            } else {
+                // Player failed to do its bet and loose points for each missed fold
+                score.value = Math.abs(player.folds.length - player.foldBet) * -10;
+            }
+        }
+
+        // Compute total for the previous turn
+        score.total = score.value + score.bonus;
+        if (!player.scores) {
+            player.scores = [];
+        }
+        player.scores.push(score);
+
+        // Compute global player score here to be displayed
+        let totalScore = 0;
+        for (let s of player.scores) {
+            totalScore += s.total;
+        }
+        player.totalScore = totalScore;
+
+        console.log('Player', player.id, 'scores for the turn', previousTurn, score);
+    }
+}
+
 function initializeNewTurn(room, turn, startPlayerIndex) {
     room.turn = turn;
-    room.gameCards = Utils.shuffle([...room.initialCards]);
+    room.gameCards = Utils.deepCopy(Utils.shuffle([...room.initialCards]));
+    room.cardsById = {};
+    room.gameCards.forEach((card) => {
+        room.cardsById[card.id] = card;
+    });
     resetCurrentRound(room, startPlayerIndex);
     console.log('INITIALIZING A NEW TURN OF ROOM', room.id, 'TURN', turn, 'START WITH', room.currentPlayerId, 'PLAYER');
 
     for (let player of room.users) {
+        // Compute previous turn players scores
+        computePlayerScore(player, room.turn - 1);
+
+        // Init or reset player turn data
         player.cards = [];
         player.folds = [];
         player.foldBet = null;
@@ -49,10 +115,10 @@ function initializeNewTurn(room, turn, startPlayerIndex) {
         // For tests only
         if (player.id === "Test1") {
             dispatchCardsOfList(room.cardsById, room.turn, player, room.gameCards,
-              [200, 105, 104, 92]);
+              [34]);
         } else if (player.id === "Test2") {
             dispatchCardsOfList(room.cardsById, room.turn, player, room.gameCards,
-              [103, 102, 101, 91]);
+              [1]);
         } else {
             // DEFAULT CARDS DISPATCH
             dispatchCards(room.turn, player, room.gameCards);
@@ -163,6 +229,7 @@ exports.setEventListeners = (io, Socket, room) => {
                             if (cardOfTurn.id === firstColorCard.id) {
                                 break;
                             }
+                            // A Special card in first position makes no type of card for this turn
                             if (cardOfTurn.isSpecial && cardOfTurn.type !== CARD_TYPE.EVASION) {
                                 hasBreakingTypeCard = true;
                                 break;
@@ -180,7 +247,9 @@ exports.setEventListeners = (io, Socket, room) => {
                 // Card has been found (technical, should never happen) AND
                 // Check if it's not the last turn (should never happen)
                 if (cardIndex >= 0 && room.playedCards.length < room.users.length &&           
-                        // Check if the player can play its card
+                        // Check if the player can play its card : played card is special 
+                        // OR player has no card of the played type 
+                        // OR played card is of the right card type for this turn
                         (playedCard.isSpecial || !playerHasRequestedTypeOfCards || playedCard.type === typeOfCards)) {
 
                     // OK Card can be added to the played cards
@@ -212,9 +281,10 @@ exports.setEventListeners = (io, Socket, room) => {
                         room.playedCards.forEach((card) => {
                             // Best card is: first and only card or a card of high value AND
                             if (!bestPlayedCard || bestPlayedCard.value < card.value &&
-                                // a type of cards doesn't exist, OR it's a special card, OR type exists and its the
-                              // same type
-                                (!typeOfCards || card.isSpecial || card.type === typeOfCards)) {
+                                // it's a special card, OR a type of cards doesn't exist, OR type exists and its the
+                                // same type OR the type of card is numerical card and the played card is a black card
+                                (card.isSpecial || !typeOfCards || card.type === typeOfCards 
+                                    || bestPlayedCard.value < 20 && card.type === CARD_TYPE.BLACK)) {
                                 bestPlayedCard = card;
                             }
                             if (!hasMermaid && card.type === CARD_TYPE.MERMAID) {
@@ -226,12 +296,16 @@ exports.setEventListeners = (io, Socket, room) => {
                         // If a mermaid has been played with the Skull king, the first one wins !
                         if (bestPlayedCard.type === CARD_TYPE.SKULL_KING && hasMermaid) {
                             bestPlayedCard = firstMermaid;
+                            bestPlayedCard.value = 1000;
+                            // Pirates won't have bonuses
+                            room.playedCards.filter(c => c.type === CARD_TYPE.PIRATE).forEach(c => c.bonus = 0);
                         }
 
                         console.log('best card of round is', bestPlayedCard, 'played by', bestPlayedCard.playedBy);
 
                         // Update winner player folds with the current one
                         const foldWinner = Utils.findElementById(room.users, bestPlayedCard.playedBy);
+                        bestPlayedCard.isBestCard = true;
                         const playedCards = [...room.playedCards];
                         foldWinner.folds.push(playedCards);
 
@@ -240,15 +314,52 @@ exports.setEventListeners = (io, Socket, room) => {
 
                         // Prepare the next turn when the last card has been played
                         const startPlayerIndex = Utils.findIndexById(room.users, foldWinner.id);
+                        const foldWinnerAmount = foldWinner.folds.length;
                         if (isLastCardPlayed) {
                             console.log('last card of the turn', room.turn, 'has been played');
+                                                       
                             if (room.turn < 10) {
-                                initializeNewTurn(room, room.turn + 1, startPlayerIndex);
+                                // Next first player
+                                room.firstPlayerIndex++;
+                                if (room.firstPlayerIndex === room.users.length) {
+                                    room.firstPlayerIndex = 0;
+                                }
+                                initializeNewTurn(room, room.turn + 1, room.firstPlayerIndex);
+
+                                // Dispatch player score
+                                io.to(room.id).emit('players-scores', {
+                                    endOfGame: false,
+                                    turn: room.turn - 1,
+                                    playerScores: room.users.map(player => {
+                                        return {
+                                            id: player.id,
+                                            totalScore: player.totalScore,
+                                            scores: player.scores
+                                        };
+                                    })
+                                });
 
                             } else {
                                 isLastTurn = true;
                                 console.log('END OF THE GAME !');
-                                // TODO : display the board
+
+                                // Compute final scores for each players
+                                room.users.forEach(player => {
+                                    computePlayerScore(player, room.turn);
+                                })
+                                
+                                // Dispatch player score
+                                io.to(room.id).emit('players-scores', {
+                                    endOfGame: true,
+                                    turn: room.turn,
+                                    playerScores: room.users.map(player => {
+                                        return {
+                                            id: player.id,
+                                            totalScore: player.totalScore,
+                                            scores: player.scores
+                                        };
+                                    })
+                                });
                             }
                         } else {
                             resetCurrentRound(room, startPlayerIndex);
@@ -259,6 +370,8 @@ exports.setEventListeners = (io, Socket, room) => {
                         io.to(room.id).emit('player-won-current-fold', {
                             hasToGetCards: !isLastTurn && isLastCardPlayed,
                             currentPlayerId: foldWinner.id,
+                            foldWinnerPosition: startPlayerIndex + 1,
+                            foldWinnerAmount: foldWinnerAmount,
                             fold: playedCards.map(c => {
                                 return {
                                     img: c.img,

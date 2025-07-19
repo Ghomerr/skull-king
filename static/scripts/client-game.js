@@ -136,6 +136,12 @@ Socket.on('player-cards', (data) => {
     Global.$playersBetsValues.addClass('hidden');
     Global.$foldCounterContainer.addClass('hidden');
 
+    // Display the scores between each turn
+    if (!Player.isBot && data.turn > 1) {
+        Dialog.$scoresDisplayDialog.removeClass('hidden');
+        Dialog.openSimpleDialog(Dialog.$scoresDisplayDialog, '🏆 Scores', null, 600);
+    }
+
     autoPlay();
 });
 
@@ -183,9 +189,8 @@ Socket.on('yo-ho-ho', (data) => {
         const $playerBetValue = Global.$playersBetsValues.eq(index);
         $playerBetValue.find('img').attr('src', 'static/assets/score_' + playerBet.foldBet + '.jpg');
         $playerBetValue.removeClass('hidden');
-
-        // TODO : RESET FOLD COUNTER FOR EACH PLAYER TO ZERO
     });
+    Global.$foldCounterContainer.find('span').text('0');
     Global.$foldCounterContainer.removeClass('hidden');
 
     displayCurrentPlayer(data);
@@ -252,7 +257,9 @@ Socket.on('player-won-current-fold', (data) => {
     // Next player will be the winner
     displayCurrentPlayer(data);
 
-    // TODO : UPDATE THE FOLD COUNTER OF THE PLAYER WHO WON THE FOLD
+    // Increment the fold counter value of the fold winner Player
+    const $foldCounterValue = Global.$foldCounterContainer.find('#fold-counter-value-' + data.foldWinnerPosition);
+    $foldCounterValue.text(data.foldWinnerAmount);   
 
     // Remove played cards
     Room.playedCards = [];
@@ -264,14 +271,55 @@ Socket.on('player-won-current-fold', (data) => {
     });
 
     if (!Player.isBot) {
+        // Display who won the fold
         openFoldDialog(data.currentPlayerId, data.fold.length, data.hasToGetCards);
     } else if (data.hasToGetCards) {
+        // Player is a bot and it was the last fold of the turn, get new cards
         Socket.emit('get-my-cards', {
             roomId: Room.id,
             userId: Player.id
         });
     } else {
+        // Player is a bot and must auto play
         autoPlay();
+    }
+});
+
+Socket.on('players-scores', (data) => {
+    console.log('players-scores', data);
+    Global.$scoresDisplayContainer.text('');
+    const $tableNode = $('<table/>');
+    $tableNode.addClass('scores-table');
+    const $tableHeader = $('<tr/>');
+    $tableHeader.append($('<th/>').text('Joueur'));
+    for (let i = 1 ; i <= data.turn ; i++) {
+        $tableHeader.append($('<td/>').text('Manche ' + i));
+    }
+    $tableNode.append($tableHeader);
+
+    data.playerScores.forEach((playerScore) => {
+        const $playerScoreLine = $('<tr/>');
+        const $playerHeader = $('<th/>');
+        $playerHeader.append($('<div/>').text(playerScore.id === Player.id ? 'Moi' : playerScore.id));
+        $playerHeader.append($('<div/>').text(playerScore.totalScore));
+        $playerScoreLine.append($playerHeader);
+        playerScore.scores.forEach(score => {
+            const $scoreCell = $('<td/>');
+            $scoreCell.append($('<div/>').text('Pari: ' + score.bet));
+            $scoreCell.append($('<div/>').text('Plis: ' + score.folds));
+            $scoreCell.append($('<div/>').text('Score: ' + score.value));
+            $scoreCell.append($('<div/>').text('Bonus: ' + score.bonus));
+            $scoreCell.append($('<div/>').text('Total: ' + score.total));
+            $playerScoreLine.append($scoreCell);
+        })
+        $tableNode.append($playerScoreLine);
+    });
+
+    Global.$scoresDisplayContainer.append($tableNode);
+
+    if (data.endOfGame) {
+        Dialog.$scoresDisplayDialog.removeClass('hidden');
+        Dialog.openSimpleDialog(Dialog.$scoresDisplayDialog, '🏆 Scores', null, 600);
     }
 });
 
@@ -350,6 +398,7 @@ $(document).ready(() => {
     Global.$helpButton = $('#help-button');
     Global.$botButton = $('#bot-button');
     Global.$scoresButton = $('#scores-button');
+    Global.$scoresDisplayContainer = $('#scores-display-container');
 
     // TODO : only if the game hasn't started !!!!
     Dialog.openSimpleDialog(Dialog.$simpleDialog, '⏳ Attente', 'En attente des joueurs...');
@@ -438,6 +487,9 @@ $(document).ready(() => {
         Player.isBot = !Player.isBot;
         const buttonTitle = Player.isBot ? 'Désactiver mode Auto' : 'Activer mode Auto';
         Global.$botButton.attr('title', buttonTitle);
+        if (Player.isBot) {
+            Dialog.openSimpleDialog(Dialog.$simpleDialog, '🦜 Mode Auto Activé', 'Le mode 🦜 Auto est activé pour ce joueur !');
+        }
         autoPlay();
     });
 
