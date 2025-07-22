@@ -299,17 +299,30 @@ Socket.on('players-scores', (data) => {
 
     data.playerScores.forEach((playerScore) => {
         const $playerScoreLine = $('<tr/>');
+
         const $playerHeader = $('<th/>');
         $playerHeader.append($('<div/>').text(playerScore.id === Player.id ? 'Moi' : playerScore.id));
-        $playerHeader.append($('<div/>').text(playerScore.totalScore));
         $playerScoreLine.append($playerHeader);
+
         playerScore.scores.forEach(score => {
             const $scoreCell = $('<td/>');
-            $scoreCell.append($('<div/>').text('Pari: ' + score.bet));
-            $scoreCell.append($('<div/>').text('Plis: ' + score.folds));
-            $scoreCell.append($('<div/>').text('Score: ' + score.value));
-            $scoreCell.append($('<div/>').text('Bonus: ' + score.bonus));
-            $scoreCell.append($('<div/>').text('Total: ' + score.total));
+
+            const $betAndFolds = $('<div class="bet-and-fold-container"/>');
+            const $betValue = $('<div class="bet-value"/>');
+            $betValue.append($('<img/>').attr('src', 'static/assets/score_' + score.bet + '.jpg'));
+            $betAndFolds.append($betValue);
+            const $foldValue = $('<div class="fold-counter-container"/>');
+            $foldValue.append($('<img src="static/assets/back.jpg" width="10px"/>'));
+            $foldValue.append($('<span/>').text(' x '));
+            $foldValue.append($('<span/>').text(score.folds));
+            $betAndFolds.append($foldValue);
+
+            $scoreCell.append($betAndFolds);
+            $scoreCell.append($('<hr/>'));
+            $scoreCell.append($('<div/>').text(score.value + (score.bonus > 0 ? ' + ⭐' + score.bonus : '')));
+            $scoreCell.append($('<hr/>'));
+            $scoreCell.append($('<div/>').append($('<strong/>').text(score.total)));
+
             $playerScoreLine.append($scoreCell);
         })
         $tableNode.append($playerScoreLine);

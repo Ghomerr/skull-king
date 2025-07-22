@@ -263,12 +263,16 @@ main {
     font-weight: bold;
 }
 
-.player-bet .bet-value  img {
+.bet-value  img {
     width: 20px;
     border-radius: 25px;
 }
 
-.fold-counter-container span {
+.fold-counter-container {
+    white-space: nowrap;
+}
+
+.fold-counter-container [id*="fold-counter-value-"] {
     font-weight: bold;
 }
 
@@ -284,6 +288,9 @@ main {
 
 .fold-card {
     position: relative;
+}
+.fold-card img {
+    border-radius: 10px;
 }
 
 /**  Help */
@@ -330,9 +337,61 @@ main {
 
 .scores-table {
     font-size: small;
+    text-align: center;
+}
+
+.scores-table hr {
+    padding: 0;
+    margin: 3px 0;
+    border-color: #78350e;
 }
 
 .scores-table table, .scores-table th, .scores-table td {
-    border: 1px black solid;
+    border: 1px #78350e solid;
     border-collapse: collapse;
+    padding: 5px;
+}
+
+/** Dialog override */
+.skull-king .ui-widget.ui-widget-content {
+    border: 1px outset #b36e32;
+}
+
+.skull-king .ui-widget-header {
+    background: none;
+    background: linear-gradient(to bottom, #ffba44, #ffa50b);
+    border: 1px outset #ffba44;
+    color: #78350e;
+}
+
+.skull-king .ui-widget-content {
+    background: #b87a42;
+    color: #ffba44;
+}
+
+.skull-king .ui-dialog .ui-dialog-buttonpane {
+    border-color: #ffba44;
+    padding: 0;
+}
+
+.skull-king .ui-dialog .ui-dialog-buttonpane .ui-dialog-buttonset {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.skull-king .ui-dialog .ui-dialog-buttonpane button {
+    margin: .5em .4em;
+}
+
+.skull-king .ui-button {
+    border: outset 1px #78350e;
+    background: linear-gradient(to bottom, #ffba44, #ffa50b);
+    color: #78350e;
+    font-weight: bold;
+    opacity: 0.75;
+}
+.skull-king .ui-button:hover {
+    border: inset 1px #ffba44;
+    opacity: 1;
 }
