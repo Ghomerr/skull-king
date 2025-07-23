@@ -102,6 +102,7 @@ function autoPlay() {
 
                 // No played card yet, or no color played, or no card of played type, play the first card
                 if (indexOfPlayedCardType === -1) {
+                    // TODO : WHY THE BOT MAY NOT HAVE NO CARD HERE ????
                     playCard({
                         roomId: Room.id,
                         playerId: Player.id,
@@ -127,7 +128,7 @@ function autoPlay() {
 // Receiving its cards
 Socket.on('player-cards', (data) => {
     console.log('=> player-cards', data);
-    Player.cards = data.cards;
+    Player.cards = [...data.cards];
     Player.isCurrentPlayer = false;
 
     // Display the fold count displays
@@ -136,7 +137,7 @@ Socket.on('player-cards', (data) => {
         foldCountDisplay.removeClass('hidden');
     }
     Global.$foldCountPicker.removeClass('hidden');
-    displayCards(data.cards, Global.$playerCards);
+    displayCards(Player.cards, Global.$playerCards);
     Global.$playerCardsContainer.removeClass('hidden');
 
     // Reset these classes because the players aren't playing but selecting a new bet for this new turn
