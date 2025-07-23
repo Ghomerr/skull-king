@@ -9,6 +9,8 @@ const CARD_TYPE = {
     CHOICE: 'choice'
 };
 
+const MAX_TURN = 10;
+
 exports.initializeRoomGameData = (room) => {
     room.canStartGame = false;
 };
@@ -126,24 +128,42 @@ function initializeNewTurn(room, turn, startPlayerIndex) {
     }
 }
 
+function dispatchPlayerScores(io, room, previousTurn, endOfGame) {
+    // Dispatch player score
+    io.to(room.id).emit('players-scores', {
+        endOfGame: endOfGame,
+        turn: previousTurn,
+        playerScores: room.users
+            .sort((p1, p2) => p2.totalScore - p1.totalScore)
+            .map(player => {
+                return {
+                    id: player.id,
+                    totalScore: player.totalScore,
+                    scores: player.scores
+                };
+            })
+    });
+}
+
 exports.setEventListeners = (io, Socket, room) => {
 
     // Handle player requesting its cards
     Socket.on('get-my-cards', (data) => {
         if (data.roomId === room.id) {
             const player = Utils.findElementById(room.users, data.userId);
-            // TODO : WHY ONLY ONE CARD AT TURN 2 ???
-            console.log('get-my-cards', data, player.cards.length, 'cards');
+            const playerCards =  
+            player.cards.map(c => {
+                return {
+                    id: c.id,
+                    type: c.type,
+                    img: c.img,
+                    value: c.value
+                };
+            });
+            console.log('player-cards =>', playerCards);
             Socket.emit('player-cards',  {
                 turn: room.turn,
-                cards: player.cards.map(c => {
-                        return {
-                            id: c.id,
-                            type: c.type,
-                            img: c.img,
-                            value: c.value
-                        };
-                    })
+                cards: playerCards
             });
         }
     });
@@ -153,7 +173,7 @@ exports.setEventListeners = (io, Socket, room) => {
         if (data.roomId === room.id) {
             const player = Utils.findElementById(room.users, data.userId);
             if (player) {
-                console.log('set-fold-bet', data);
+                console.log('=> set-fold-bet', data);
                 player.foldBet = data.foldBet;
             }
 
@@ -186,7 +206,7 @@ exports.setEventListeners = (io, Socket, room) => {
     Socket.on('play-a-card', (data) => {
         if (room.id === data.roomId) {
             if (data.playerId === room.currentPlayerId) {
-                console.log('play-a-card', data);
+                console.log('=> play-a-card', data);
 
                 const playedCard = room.cardsById[data.cardId];
                 if (playedCard.type === CARD_TYPE.CHOICE) {
@@ -318,48 +338,25 @@ exports.setEventListeners = (io, Socket, room) => {
                         if (isLastCardPlayed) {
                             console.log('last card of the turn', room.turn, 'has been played');
                                                        
-                            if (room.turn < 10) {
+                            if (room.turn < MAX_TURN) {
                                 // Next first player
                                 room.firstPlayerIndex++;
                                 if (room.firstPlayerIndex === room.users.length) {
                                     room.firstPlayerIndex = 0;
                                 }
-                                initializeNewTurn(room, room.turn + 1, room.firstPlayerIndex);
-
-                                // Dispatch player score
-                                io.to(room.id).emit('players-scores', {
-                                    endOfGame: false,
-                                    turn: room.turn - 1,
-                                    playerScores: room.users.map(player => {
-                                        return {
-                                            id: player.id,
-                                            totalScore: player.totalScore,
-                                            scores: player.scores
-                                        };
-                                    })
-                                });
+                                const previousTurn = room.turn;
+                                initializeNewTurn(room, previousTurn + 1, room.firstPlayerIndex);
+                                dispatchPlayerScores(io, room, previousTurn, false);
 
                             } else {
                                 isLastTurn = true;
-                                console.log('END OF THE GAME !');
+                                console.log('END OF THE GAME ! Turn=', room.turn);
 
                                 // Compute final scores for each players
                                 room.users.forEach(player => {
-                                    computePlayerScore(player, room.turn);
+                                    computePlayerScore(player, MAX_TURN);
                                 })
-                                
-                                // Dispatch player score
-                                io.to(room.id).emit('players-scores', {
-                                    endOfGame: true,
-                                    turn: room.turn,
-                                    playerScores: room.users.map(player => {
-                                        return {
-                                            id: player.id,
-                                            totalScore: player.totalScore,
-                                            scores: player.scores
-                                        };
-                                    })
-                                });
+                                dispatchPlayerScores(io, room, MAX_TURN, true);
                             }
                         } else {
                             resetCurrentRound(room, startPlayerIndex);
@@ -367,7 +364,7 @@ exports.setEventListeners = (io, Socket, room) => {
                         }
 
                         // Display the taken fold and go to the next card
-                        io.to(room.id).emit('player-won-current-fold', {
+                        const playerWonCurrentFoldEvent = {
                             hasToGetCards: !isLastTurn && isLastCardPlayed,
                             currentPlayerId: foldWinner.id,
                             foldWinnerPosition: startPlayerIndex + 1,
@@ -378,7 +375,9 @@ exports.setEventListeners = (io, Socket, room) => {
                                     playedBy: c.playedBy
                                 }
                             })
-                        }); 
+                        };
+                        console.log('player-won-current-fold =>', playerWonCurrentFoldEvent);
+                        io.to(room.id).emit('player-won-current-fold', playerWonCurrentFoldEvent); 
                                               
                     } else {
                         // Next player to play

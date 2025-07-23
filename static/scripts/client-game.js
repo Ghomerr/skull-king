@@ -15,14 +15,20 @@ const Player = {
 
 // Handle when a player is ready to display the waiting modal
 Socket.on('ready-players-amount', (data) => {
+    console.log('=> ready-players-amount', data);
     Dialog.$simpleDialog.dialog('close');
     Dialog.openSimpleDialog(Dialog.$simpleDialog, '⏳ Attente', 'En attente des joueurs... ' + 
         data.readyPlayersAmout + '/' + data.totalPlayers + ' joueurs connectés.');
 });
 
+function getMyCards(event) {
+    console.log('get-my-cards =>', event);
+    Socket.emit('get-my-cards', event);
+}
+
 // All players are ready, the game can be started !
 Socket.on('all-players-ready-to-play', (data) => {
-    console.log('START all-players-ready-to-play');
+    console.log('=> START all-players-ready-to-play', data);
 
     // Display players names
     data.playersIds.forEach((playerId, index) => {
@@ -41,14 +47,14 @@ Socket.on('all-players-ready-to-play', (data) => {
     Global.$playersBetsContainer.removeClass('hidden');
 
     // Request cards
-    Socket.emit('get-my-cards', {
+    getMyCards({
         roomId: Room.id,
         userId: Player.id
     });
 
     Dialog.$simpleDialog.dialog('close');
     Dialog.openSimpleDialog(Dialog.$simpleDialog, '🟢 START', 'Jeu en cours !');
-    console.log('END all-players-ready-to-play');
+    console.log('=> END all-players-ready-to-play');
 });
 
 /**
@@ -75,6 +81,11 @@ function displayCards(cards, $cards, addSomethingFn) {
     });
 }
 
+function playCard(cardEvent) {
+    console.log('play-a-card =>', cardEvent);
+    Socket.emit('play-a-card', cardEvent);
+}
+
 function autoPlay() {
     if (Player.isBot) {
         Global.$botButton.addClass('active');
@@ -91,7 +102,7 @@ function autoPlay() {
 
                 // No played card yet, or no color played, or no card of played type, play the first card
                 if (indexOfPlayedCardType === -1) {
-                    Socket.emit('play-a-card', {
+                    playCard({
                         roomId: Room.id,
                         playerId: Player.id,
                         cardId: Player.cards[0].id
@@ -99,7 +110,7 @@ function autoPlay() {
                 } else {
                     // Play the first card of the played type (handle the tigresse choice)
                     const cardToBePlayed = Player.cards[indexOfPlayedCardType];
-                    Socket.emit('play-a-card', {
+                    playCard({
                         roomId: Room.id,
                         playerId: Player.id,
                         cardId: cardToBePlayed.id,
@@ -115,7 +126,7 @@ function autoPlay() {
 
 // Receiving its cards
 Socket.on('player-cards', (data) => {
-    console.log('player-cards', data);
+    console.log('=> player-cards', data);
     Player.cards = data.cards;
     Player.isCurrentPlayer = false;
 
@@ -182,7 +193,7 @@ function displayCurrentPlayer(data) {
 
 // Handle when all players have chosen their bet
 Socket.on('yo-ho-ho', (data) => {
-    console.log('yo-ho-ho', data);
+    console.log('=> yo-ho-ho', data);
 
     // Display players bets
     data.bets.forEach((playerBet, index) => {
@@ -210,6 +221,7 @@ Socket.on('yo-ho-ho', (data) => {
 
 // Handle when a player has just played a card, and it must be removed from its hand
 Socket.on('remove-played-card', (data) => {
+    console.log('=> remove-played-card', data);
     Global.$playerCards.each((index, card) => {
         const $playedCard = $(card);
         if (+$playedCard.data('card-id') === data.playedCardId) {
@@ -222,6 +234,7 @@ Socket.on('remove-played-card', (data) => {
 
 // Handle when a player has played a card to display current played cards and the current player name
 Socket.on('card-has-been-played', (data) => {
+    console.log('=> card-has-been-played', data);
     Room.playedCards = data.playedCards;
     displayCurrentPlayer(data);
     displayCards(data.playedCards, Global.$playedCards, (cardData, $cardElement) => {
@@ -238,7 +251,7 @@ function openFoldDialog(foldOwner, foldSize, hasToGetCards) {
     // Ask cards for the next turn
     Dialog.$foldDisplayDialog.dialog('option', 'close', () => {
         if (hasToGetCards) {
-            Socket.emit('get-my-cards', {
+            getMyCards({
                 roomId: Room.id,
                 userId: Player.id
             });
@@ -254,6 +267,8 @@ function openFoldDialog(foldOwner, foldSize, hasToGetCards) {
 }
 
 Socket.on('player-won-current-fold', (data) => {
+    console.log('=> player-won-current-fold', data);
+
     // Next player will be the winner
     displayCurrentPlayer(data);
 
@@ -275,7 +290,7 @@ Socket.on('player-won-current-fold', (data) => {
         openFoldDialog(data.currentPlayerId, data.fold.length, data.hasToGetCards);
     } else if (data.hasToGetCards) {
         // Player is a bot and it was the last fold of the turn, get new cards
-        Socket.emit('get-my-cards', {
+        getMyCards({
             roomId: Room.id,
             userId: Player.id
         });
@@ -286,7 +301,8 @@ Socket.on('player-won-current-fold', (data) => {
 });
 
 Socket.on('players-scores', (data) => {
-    console.log('players-scores', data);
+    console.log('=> players-scores', data);
+
     Global.$scoresDisplayContainer.text('');
     const $tableNode = $('<table/>');
     $tableNode.addClass('scores-table');
@@ -295,13 +311,16 @@ Socket.on('players-scores', (data) => {
     for (let i = 1 ; i <= data.turn ; i++) {
         $tableHeader.append($('<td/>').text('Manche ' + i));
     }
+    $tableHeader.append($('<th/>').text('Total'));
     $tableNode.append($tableHeader);
 
-    data.playerScores.forEach((playerScore) => {
+    data.playerScores.forEach((playerScore, index) => {
         const $playerScoreLine = $('<tr/>');
 
         const $playerHeader = $('<th/>');
+        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
         $playerHeader.append($('<div/>').text(playerScore.id === Player.id ? 'Moi' : playerScore.id));
+        $playerHeader.append($('<div/>').text(medal));
         $playerScoreLine.append($playerHeader);
 
         playerScore.scores.forEach(score => {
@@ -312,19 +331,18 @@ Socket.on('players-scores', (data) => {
             $betValue.append($('<img/>').attr('src', 'static/assets/score_' + score.bet + '.jpg'));
             $betAndFolds.append($betValue);
             const $foldValue = $('<div class="fold-counter-container"/>');
-            $foldValue.append($('<img src="static/assets/back.jpg" width="10px"/>'));
-            $foldValue.append($('<span/>').text(' x '));
-            $foldValue.append($('<span/>').text(score.folds));
+            $foldValue.append($('<img src="static/assets/back.jpg" width="15px"/>'));
+            $foldValue.append($('<span class="floating-fold-value"/>').text(score.folds));
             $betAndFolds.append($foldValue);
 
             $scoreCell.append($betAndFolds);
             $scoreCell.append($('<hr/>'));
             $scoreCell.append($('<div/>').text(score.value + (score.bonus > 0 ? ' + ⭐' + score.bonus : '')));
-            $scoreCell.append($('<hr/>'));
-            $scoreCell.append($('<div/>').append($('<strong/>').text(score.total)));
 
             $playerScoreLine.append($scoreCell);
-        })
+        });
+        
+        $playerScoreLine.append($('<td/>').append($('<strong/>').text(playerScore.totalScore)));
         $tableNode.append($playerScoreLine);
     });
 
@@ -354,17 +372,19 @@ function selectFoldCount(Socket, Global, $currentFoldCountDisplay, event) {
     Global.$foldCountDisplays.removeClass('selected-bet');
     $currentFoldCountDisplay.addClass('selected-bet');
 
-    Socket.emit('set-fold-bet', {
+    const foldBetEvent = {
         roomId: Room.id,
         userId: Player.id,
         foldBet: +(event.currentTarget.id.split('-')[1])
-    });
+    };
+    console.log('set-fold-bet =>', foldBetEvent);
+    Socket.emit('set-fold-bet', foldBetEvent);
 }
 
 function doChoiceTigresse(event, type) {
     if (Player.isCurrentPlayer) {
         console.log('current player choosed to play a Tigresse as', type, event);
-        Socket.emit('play-a-card', {
+        playCard({
             roomId: Room.id,
             playerId: Player.id,
             cardId: 106, // tigresse
@@ -447,7 +467,7 @@ $(document).ready(() => {
                 // Display the choice dialog
                 Dialog.$choiceCardDialog.dialog('open');
             } else {
-                Socket.emit('play-a-card', {
+                playCard({
                     roomId: Room.id,
                     playerId: Player.id,
                     cardId: cardId

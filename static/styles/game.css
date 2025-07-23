@@ -335,7 +335,7 @@ main {
     border: inset 3px #ffba44;
 }
 
-.scores-table {
+.scores-table th, .scores-table td {
     font-size: small;
     text-align: center;
 }
@@ -350,6 +350,12 @@ main {
     border: 1px #78350e solid;
     border-collapse: collapse;
     padding: 5px;
+}
+
+.scores-table .floating-fold-value {
+    position: relative;
+    right: 11px;
+    color: white;
 }
 
 /** Dialog override */
