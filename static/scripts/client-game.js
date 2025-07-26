@@ -154,6 +154,10 @@ Socket.on('player-cards', (data) => {
         Dialog.openSimpleDialog(Dialog.$scoresDisplayDialog, '🏆 Scores', null, 600);
     }
 
+    // Display the player that will play and the current round
+    displayCurrentPlayer(data);
+    Global.$headTitle.text('Manche ' + data.turn);
+
     autoPlay();
 });
 

@@ -243,7 +243,7 @@ main {
 }
 
 .player-bet {
-    border: 2px solid #78350e;
+    border: 1px solid #78350e;
     border-radius: 5px;
     background-color: #ffba44;
     color: #78350e;
@@ -254,13 +254,17 @@ main {
 }
 
 .player-bet.current-player {
-    border-color: #ffba44;
+    border: 2px solid #ffba44;
     background-color: #b36e32;
     color: #ffba44;
 }
 
-.player-name {
+.current-player .player-name {
     font-weight: bold;
+}
+.current-player .player-name::before,
+.current-player .player-name::after {
+    content: '🟢';
 }
 
 .bet-value  img {

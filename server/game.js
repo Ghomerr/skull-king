@@ -103,7 +103,7 @@ function initializeNewTurn(room, turn, startPlayerIndex) {
         room.cardsById[card.id] = card;
     });
     resetCurrentRound(room, startPlayerIndex);
-    console.log('INITIALIZING A NEW TURN OF ROOM', room.id, 'TURN', turn, 'START WITH', room.currentPlayerId, 'PLAYER');
+    console.log('INITIALIZING A NEW TURN OF ROOM', room.id, 'TURN', turn, 'START WITH', room.currentPlayerId, 'PLAYER of index', room.currentPlayerIndex);
 
     for (let player of room.users) {
         // Compute previous turn players scores
@@ -134,7 +134,6 @@ function dispatchPlayerScores(io, room, previousTurn, endOfGame) {
         endOfGame: endOfGame,
         turn: previousTurn,
         playerScores: room.users
-            .sort((p1, p2) => p2.totalScore - p1.totalScore)
             .map(player => {
                 return {
                     id: player.id,
@@ -142,6 +141,7 @@ function dispatchPlayerScores(io, room, previousTurn, endOfGame) {
                     scores: player.scores
                 };
             })
+            .sort((p1, p2) => p2.totalScore - p1.totalScore)
     });
 }
 
@@ -163,6 +163,7 @@ exports.setEventListeners = (io, Socket, room) => {
             console.log('player-cards =>', playerCards);
             Socket.emit('player-cards',  {
                 turn: room.turn,
+                currentPlayerId: room.currentPlayerId,
                 cards: playerCards
             });
         }
@@ -287,10 +288,12 @@ exports.setEventListeners = (io, Socket, room) => {
                     });
 
                     // Update current player turn
+                    console.log('before updating next player', room.currentPlayerId, room.currentPlayerIndex);
                     room.currentPlayerIndex++;
                     if (room.currentPlayerIndex === room.users.length) {
                         room.currentPlayerIndex = 0;
                     }
+                    console.log('new current player is', room.currentPlayerIndex, room.users[room.currentPlayerIndex].id);
 
                     // Check if the last player played its card, when there is the same amount of cards played than users
                     if (room.playedCards.length === room.users.length) {
@@ -336,21 +339,23 @@ exports.setEventListeners = (io, Socket, room) => {
                         const startPlayerIndex = Utils.findIndexById(room.users, foldWinner.id);
                         const foldWinnerAmount = foldWinner.folds.length;
                         if (isLastCardPlayed) {
-                            console.log('last card of the turn', room.turn, 'has been played');
+                            console.log('last card of the turn', room.turn, 'has been played by', foldWinner.id, 'at index', startPlayerIndex);
                                                        
                             if (room.turn < MAX_TURN) {
                                 // Next first player
+                                const previousTurn = room.turn;
+                                console.log('Before a new turn, last first player index', room.firstPlayerIndex, 'was', room.users[room.firstPlayerIndex].id, 'at turn', previousTurn);                                
                                 room.firstPlayerIndex++;
                                 if (room.firstPlayerIndex === room.users.length) {
                                     room.firstPlayerIndex = 0;
                                 }
-                                const previousTurn = room.turn;
                                 initializeNewTurn(room, previousTurn + 1, room.firstPlayerIndex);
                                 dispatchPlayerScores(io, room, previousTurn, false);
 
                             } else {
                                 isLastTurn = true;
                                 console.log('END OF THE GAME ! Turn=', room.turn);
+                                // TODO : display a proper end state (hide round, current player, bets)
 
                                 // Compute final scores for each players
                                 room.users.forEach(player => {
@@ -360,14 +365,14 @@ exports.setEventListeners = (io, Socket, room) => {
                             }
                         } else {
                             resetCurrentRound(room, startPlayerIndex);
-                            console.log('new round of turn', room.turn, 'starting with player', room.currentPlayerId);
+                            console.log('new round of turn', room.turn, 'starting with winning player', room.currentPlayerId, 'at index', room.currentPlayerIndex);
                         }
 
                         // Display the taken fold and go to the next card
                         const playerWonCurrentFoldEvent = {
                             hasToGetCards: !isLastTurn && isLastCardPlayed,
                             currentPlayerId: foldWinner.id,
-                            foldWinnerPosition: startPlayerIndex + 1,
+                            foldWinnerPosition: startPlayerIndex + 1, // +1 to handle the position on client side
                             foldWinnerAmount: foldWinnerAmount,
                             fold: playedCards.map(c => {
                                 return {
@@ -382,9 +387,10 @@ exports.setEventListeners = (io, Socket, room) => {
                     } else {
                         // Next player to play
                         room.currentPlayerId = room.users[room.currentPlayerIndex].id;
+                        console.log('A card has been played. Next player to play is', room.currentPlayerId);
 
                         // Notify players with the played cards
-                        io.to(room.id).emit('card-has-been-played', {
+                        const playedCardEvent = {
                             currentPlayerId: room.currentPlayerId,
                             playedCards: room.playedCards.map(c => { 
                                 return {
@@ -394,7 +400,9 @@ exports.setEventListeners = (io, Socket, room) => {
                                     playedBy: c.playedBy
                                 }; 
                             })
-                        });
+                        };
+                        console.log('card-has-been-played =>', playedCardEvent);
+                        io.to(room.id).emit('card-has-been-played', playedCardEvent);
                     }
                 } else {
                     // Notify the player that its cards cannot be played
