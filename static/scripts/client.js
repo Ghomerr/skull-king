@@ -74,6 +74,8 @@ $(document).ready(() => {
     Lobby.$formRoomId = $('#formRoomId');
     Lobby.$startBtn = $('#start-btn');
 
+    Lobby.$debugButton = $('#debug-button');
+
     Lobby.$randomRoomIdBtn.click(() => {
         Socket.emit('get-random-room-id');
     });
@@ -122,6 +124,11 @@ $(document).ready(() => {
         Socket.emit('start-game', {
            roomId: Lobby.inputs.$roomId.val()
         });
+    });
+
+    // Debug button 
+    Lobby.$debugButton.click(() => {
+        Socket.emit('debug-toggle');
     });
 });
 
@@ -228,4 +235,14 @@ Socket.on('players-list-changed', (room) => {
 // Handle game started
 Socket.on('game-started', () => {
     Lobby.$startContentFrom.trigger('submit');
+});
+
+// Handle debug changed
+Socket.on('debug-changed', (data) => {
+    console.log('debug-changed', data);
+    if (data.isDebugEnabled) {
+        Lobby.$debugButton.addClass('active');
+    } else {
+        Lobby.$debugButton.removeClass('active');
+    }
 });

@@ -405,3 +405,23 @@ main {
     border: inset 1px #ffba44;
     opacity: 1;
 }
+
+/* Debug button */
+#debug-button {
+    width: 15px;
+    height: 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    position: fixed;
+    bottom: 5px;
+    left: 5px;
+    background-color: black;
+}
+
+#debug-button:hover:not(.active) {
+    background-color: #2a2a2a;
+}
+
+#debug-button.active {
+    background-color: #219250;
+}

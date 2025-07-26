@@ -372,6 +372,16 @@ Socket.on('player-error', (error) => {
     }
 });
 
+// Handle debug changed
+Socket.on('debug-changed', (data) => {
+    console.log('debug-changed', data);
+    if (data.isDebugEnabled) {
+        Global.$debugButton.addClass('active');
+    } else {
+        Global.$debugButton.removeClass('active');
+    }
+});
+
 function selectFoldCount(Socket, Global, $currentFoldCountDisplay, event) {
     Global.$foldCountPicker.addClass('bet-selected');
     Global.$foldCountDisplays.removeClass('selected-bet');
@@ -437,6 +447,8 @@ $(document).ready(() => {
     Global.$botButton = $('#bot-button');
     Global.$scoresButton = $('#scores-button');
     Global.$scoresDisplayContainer = $('#scores-display-container');
+
+    Global.$debugButton = $('#debug-button');
 
     // TODO : only if the game hasn't started !!!!
     Dialog.openSimpleDialog(Dialog.$simpleDialog, '⏳ Attente', 'En attente des joueurs...');
@@ -540,5 +552,10 @@ $(document).ready(() => {
     Global.$scoresButton.click((_) => {
         Dialog.$scoresDisplayDialog.removeClass('hidden');
         Dialog.openSimpleDialog(Dialog.$scoresDisplayDialog, '🏆 Scores', null, 600);
+    });
+
+    // Debug button 
+    Global.$debugButton.click(() => {
+        Socket.emit('debug-toggle');
     });
 });

@@ -33,6 +33,7 @@ const SOCKETS = {};
 // Server rooms
 const ROOMS = {};
 let roomsCount = 0;
+let isDebugEnabled = false;
 
 // Start server and expose main page
 app.get('/', (req, res) => {
@@ -63,7 +64,11 @@ function getRoomList() {
 
 // #1 First socket.io native event from client.js
 io.on('connection', (Socket) => {
-    console.log('Player has just connected. Socket.id=', Socket.id);  
+    console.log('Player has just connected. Socket.id=', Socket.id);
+    // Display debug
+    Socket.emit('debug-changed', {
+        isDebugEnabled: isDebugEnabled
+    });  
 
     // Handle a player request on the main page to receive rooms list
     Socket.on('get-rooms-list', () => {
@@ -222,6 +227,10 @@ io.on('connection', (Socket) => {
                     });
                 }
                 Game.setEventListeners(io, Socket, room);
+                // Display debug
+                Socket.emit('debug-changed', {
+                    isDebugEnabled: isDebugEnabled
+                });  
 
             } else {
                 console.error('[join-game] Unknown user', data.userId);
@@ -246,6 +255,14 @@ io.on('connection', (Socket) => {
             console.log('player has just disconnected from socket', Socket.id, data);
             handleDisconnect(data, Socket);
         }
+    });
+
+    // Handle debug button event
+    Socket.on('debug-toggle', () => {
+        isDebugEnabled = !isDebugEnabled;
+        io.emit('debug-changed', {
+            isDebugEnabled: isDebugEnabled
+        });
     });
 });
 
