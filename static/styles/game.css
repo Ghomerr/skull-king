@@ -406,6 +406,29 @@ main {
     opacity: 1;
 }
 
+/* Emojis */
+.emojis-container {
+  position: absolute;
+  z-index: 1000;
+  border: 2px outset #fff;
+
+  width: 320px;        /* largeur fixe (ajustez) */
+  max-width: 100%;     /* optionnel: ne pas dépasser le parent */
+  display: flex;
+  flex-wrap: wrap;     /* retour à la ligne automatique */
+  gap: 6px;            /* espace entre emojis */
+  height: auto;        /* la hauteur grandit selon le contenu */
+  align-content: flex-start;
+}
+
+#emojiContainer span {
+  flex: 0 0 auto;      /* ne pas s’étirer */
+  display: inline-block;
+  font-size: 24px;     /* taille des emojis */
+  line-height: 1;
+}
+
+
 /* Debug button */
 #debug-button {
     width: 15px;

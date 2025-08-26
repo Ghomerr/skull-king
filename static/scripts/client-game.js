@@ -448,6 +448,8 @@ $(document).ready(() => {
     Global.$scoresButton = $('#scores-button');
     Global.$scoresDisplayContainer = $('#scores-display-container');
 
+    Global.$emojiButton = $('#emoji-button');
+    Global.$emojisContainer = $('.emojis-container');
     Global.$debugButton = $('#debug-button');
 
     // TODO : only if the game hasn't started !!!!
@@ -558,4 +560,44 @@ $(document).ready(() => {
     Global.$debugButton.click(() => {
         Socket.emit('debug-toggle');
     });
+
+    // Emojis
+    Global.$emojiButton.click((event) => {
+      if (Global.$emojisContainer.hasClass('hidden')) {
+        const $anchor = $(event.currentTarget);           // l’élément qui a déclenché le clic
+        const off = $anchor.offset();                     // position dans le document
+        const top = Math.round(off.top + $anchor.outerHeight());
+        let left = Math.round(off.left);
+
+        const prevVisibility = Global.$emojisContainer.css('visibility');
+
+        Global.$emojisContainer.css({ visibility: 'hidden', display: 'block' });
+        const panelWidth = Global.$emojisContainer.outerWidth();
+        const viewportRight = $(window).scrollLeft() + $(window).width();
+
+        // Option: éviter que le panneau ne dépasse à droite
+        if (left + panelWidth > viewportRight) {
+          left = Math.max(0, viewportRight - panelWidth - 8);
+        }
+
+        // Appliquer la position finale
+        Global.$emojisContainer.css({
+          position: 'absolute',
+          top: top,
+          left: left
+        });
+
+        // Restaurer visibilité (leave display as-is if you’ll toggle via classe)
+        Global.$emojisContainer.css({ visibility: prevVisibility });
+
+        Global.$emojisContainer.removeClass('hidden');
+      } else {
+        Global.$emojisContainer.addClass('hidden');
+      }
+    });
+
+    for (let codePoint = 0x1F600; codePoint <= 0x1F64F; codePoint++) {
+      const emoji = String.fromCodePoint(codePoint);
+       Global.$emojisContainer.append($('<span/>').text(emoji));
+    }
 });
