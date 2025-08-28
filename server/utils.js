@@ -8,6 +8,10 @@ exports.findIndexById = (array, id) => {
     return _findIndex(array, 'id', id);
 };
 
+exports.findUserByIdAndToken = (users, id, token) => {
+  return users.find(user => user.id === id && user.token === token);
+};
+
 exports.findElementById = (array, id) => {
     return array.find(e => e.id === id);
 };

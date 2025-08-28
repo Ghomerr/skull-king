@@ -44,6 +44,9 @@ $(document).ready(() => {
             case 'password-error':
                 Dialog.openSimpleDialog(Dialog.$simpleDialog, '⛔ Erreur', 'Le mot de passe de la salle de jeu ' + error.data + ' est incorrect.');
                 break;
+            case 'wrong-owner':
+                Dialog.openSimpleDialog(Dialog.$simpleDialog, '⛔ Erreur', 'Vous ne pouvez pas démarrer la partie.');
+                break;
             default:
                 Dialog.openSimpleDialog(Dialog.$simpleDialog, '⛔ Erreur!', 'Erreur inconnue: ' + error.type + ' ' + error.data);
         }
@@ -52,7 +55,6 @@ $(document).ready(() => {
     //------------------------------------------------------------//
 
     Lobby.$randomRoomIdBtn = $('#random-room-id-btn');
-    Lobby.$roomIdInput = $('#room-id');
     Lobby.$roomPasswordLink = $('#room-password-link');
     Lobby.$roomPasswordContainer = $('#room-password-container');
     Lobby.$lobbyInputsContainer = $('#lobby-inputs');
@@ -72,6 +74,7 @@ $(document).ready(() => {
     Lobby.$startContentFrom = $('form#start-content');
     Lobby.$formUserId = $('#formUserId');
     Lobby.$formRoomId = $('#formRoomId');
+    Lobby.$formToken = $('#formToken');
     Lobby.$startBtn = $('#start-btn');
 
     Lobby.$debugButton = $('#debug-button');
@@ -82,7 +85,7 @@ $(document).ready(() => {
     
     // Handle change room id
     Socket.on('random-room-id', (roomId) => {
-        Lobby.$roomIdInput.val(roomId);
+      Lobby.inputs.$roomId.val(roomId);
     });
 
     // Handle click on private party link
@@ -98,16 +101,18 @@ $(document).ready(() => {
 
     // Handle lobby button click
     Lobby.$submitButton.click(() => {
+        Player.id = Lobby.inputs.$userId.val();
+        Player.token = window.crypto.randomUUID();
         const lobbyData = {
-            userId: Lobby.inputs.$userId.val(),
+            userId: Player.id,
             roomId: Lobby.inputs.$roomId.val(),
+            token: Player.token,
             password: Lobby.inputs.$roomPassword.val()
         };
-        Player.id = lobbyData.userId;
         console.log('Sending start lobby event', lobbyData);
 
         // Send lobby event to server
-        Socket.emit('start-lobby', lobbyData);
+        Socket.emit('join-lobby', lobbyData);
     });
 
     // Handle quick room join button
@@ -122,7 +127,9 @@ $(document).ready(() => {
     // Start the game
     Lobby.$startBtn.click(() => {
         Socket.emit('start-game', {
-           roomId: Lobby.inputs.$roomId.val()
+           roomId: Lobby.inputs.$roomId.val(),
+           ownerId: Player.id,
+           token: Player.token,
         });
     });
 
@@ -140,9 +147,16 @@ Socket.on('connected', (data) => {
 
     // Init room id from generated server value
     const roomId = data.roomId;
-    Lobby.$roomIdInput.val(roomId);
+  Lobby.inputs.$roomId.val(roomId);
 
     // Socket.emit('get-version');
+});
+
+// Handle the user connected event to get the player token
+Socket.on('user-connected', (data) => {
+  if (data.userId === Player.id) {
+    Player.token = data.token;
+  }
 });
 
 Socket.on('rooms-status-changed', (data) => {
@@ -185,8 +199,6 @@ Socket.on('players-list-changed', (room) => {
     Lobby.roomStatus = room.STATUS;
     Lobby.$lobbyInputsContainer.hide();
     Lobby.$roomsList.hide();
-    Lobby.$formRoomId.val(Lobby.inputs.$roomId.val());
-    Lobby.$formUserId.val(Lobby.inputs.$userId.val());
     Lobby.$playersList.show();
     Lobby.$playersList.find('.room-id-title').text(room.id);
     Lobby.$lobbyPlayersList.text('');
@@ -214,6 +226,8 @@ Socket.on('players-list-changed', (room) => {
                 });
                 Socket.emit('change-players-order', {
                     roomId: room.id,
+                    ownerId: Player.id,
+                    token: Player.token,
                     newUsersOrder: newUsersOrder
                 });
             }
@@ -234,6 +248,9 @@ Socket.on('players-list-changed', (room) => {
 
 // Handle game started
 Socket.on('game-started', () => {
+    Lobby.$formRoomId.val(Lobby.inputs.$roomId.val());
+    Lobby.$formUserId.val(Lobby.inputs.$userId.val());
+    Lobby.$formToken.val(Player.token);
     Lobby.$startContentFrom.trigger('submit');
 });
 

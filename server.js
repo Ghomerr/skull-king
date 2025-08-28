@@ -40,7 +40,7 @@ app.get('/', (req, res) => {
     // Check req hidden query params submitted
     if (req.query.formRoomId && ROOMS[req.query.formRoomId] && 
             Utils.findIndexById(ROOMS[req.query.formRoomId].users, req.query.formUserId) >= 0) {
-        console.log('req.query', req.query);
+        logDebug('req.query', req.query);
         res.sendFile(path.resolve(__dirname, '.') + '/static/game.html');
     } else {
         res.sendFile(path.resolve(__dirname, '.') + '/static/main.html');
@@ -62,9 +62,15 @@ function getRoomList() {
     return roomsList;
 }
 
+function logDebug(...message) {
+  if (console && isDebugEnabled) {
+    console.log.apply(console, message);
+  }
+}
+
 // #1 First socket.io native event from client.js
 io.on('connection', (Socket) => {
-    console.log('Player has just connected. Socket.id=', Socket.id);
+    logDebug('Player has just connected. Socket.id=', Socket.id);
     // Display debug
     Socket.emit('debug-changed', {
         isDebugEnabled: isDebugEnabled
@@ -87,19 +93,24 @@ io.on('connection', (Socket) => {
     Socket.on('change-players-order', (data) => {
         const room = ROOMS[data.roomId];
         if (room) {
-            console.log('newUsersOrder', data.newUsersOrder);
+            const owner = Utils.findUserByIdAndToken(room.users, data.ownerId, data.token);
+            if (owner) {
+              logDebug('newUsersOrder', data.newUsersOrder);
 
-            room.users.sort((u1, u2) => {
-               return data.newUsersOrder.findIndex(u => u === u1.id) - data.newUsersOrder.findIndex(u => u === u2.id);
-            });
+              room.users.sort((u1, u2) => {
+                return data.newUsersOrder.findIndex(u => u === u1.id) - data.newUsersOrder.findIndex(u => u === u2.id);
+              });
 
-            emitPlayerListChangedEvent(room);
+              emitPlayerListChangedEvent(room);
+            } else {
+              Socket.emit('lobby-error', { type: 'wrong-owner' });
+            }
         }
     });
 
-    // A player has started a lobby instance waiting other players
-    Socket.on('start-lobby', (lobbyData) => {
-        console.log('Handling a start lobby request', Socket.id, lobbyData);
+    // A player has joined a lobby instance waiting other players
+    Socket.on('join-lobby', (lobbyData) => {
+        logDebug('Handling a join lobby request', Socket.id, lobbyData);
 
         // Save socket and room ids
         SOCKETS[Socket.id] = {
@@ -136,13 +147,23 @@ io.on('connection', (Socket) => {
                     if (!Utils.findElementById(room.users, lobbyData.userId)) {
                         const newUser = {
                             id: lobbyData.userId,
+                            token: lobbyData.token,
                             isConnected: true
                         };
+
                         room.users.push(newUser);
                         Socket.join(lobbyData.roomId);
                         if (room.users.length === MAX_PLAYERS) {
                             room.status = STATUS.IN_LOBBY_FULL;
-                        } 
+                        }
+
+                        // Notify the new player with its own info
+                        logDebug('New user', newUser, 'joined the lobby');
+                        Socket.emit('user-connected', {
+                          id: newUser.id,
+                          token: newUser.token,
+                          roomId: lobbyData.roomId,
+                        });
 
                         emitPlayerListChangedEvent(room);
                         io.sockets.emit('rooms-status-changed', {
@@ -178,21 +199,26 @@ io.on('connection', (Socket) => {
 
     // Handle the start game event, players will be redirected to the game page
     Socket.on('start-game', (lobbyData) => {
-        console.log('Game started for room', lobbyData.roomId);
+        logDebug('Game started for room', lobbyData.roomId);
 
         const room = ROOMS[lobbyData.roomId];
         if (room) {
-            room.status = STATUS.GAME_STARTED_WAITING_PLAYERS;
-            io.to(lobbyData.roomId).emit('game-started');
-            io.sockets.emit('rooms-status-changed', {
+            const owner = Utils.findUserByIdAndToken(room.users, lobbyData.ownerId, lobbyData.token);
+            if (owner) {
+              room.status = STATUS.GAME_STARTED_WAITING_PLAYERS;
+              io.to(lobbyData.roomId).emit('game-started');
+              io.sockets.emit('rooms-status-changed', {
                 roomsList: getRoomList()
-            });
-        }       
+              });
+            } else {
+              Socket.emit('lobby-error', { type: 'wrong-owner' });
+            }
+        }
     });
 
     // Handle when a player joins the gaming page
     Socket.on('join-game', (data) => {
-        console.log('join-game', data);
+        logDebug('join-game', data);
         const room = ROOMS[data.roomId];
         if (room) {
             // Join the room again
@@ -210,13 +236,13 @@ io.on('connection', (Socket) => {
 
                 // TODO : handle refresh after YO HO HO !!!
                 if (readyPlayersAmout < totalPlayers) {
-                    console.log('user', player.id, 'joined the game', room.id, 'with', readyPlayersAmout,'/', totalPlayers, 'players');
+                    logDebug('user', player.id, 'joined the game', room.id, 'with', readyPlayersAmout,'/', totalPlayers, 'players');
                     io.to(room.id).emit('ready-players-amount', {
                         readyPlayersAmout,
                         totalPlayers
                     });
                 } else {
-                    console.log('Last player', player.id, 'joined. Game can start !');
+                    logDebug('Last player', player.id, 'joined. Game can start !');
                     room.status = STATUS.IN_GAME;
                     Game.initializeGame(room, [...CARDS]);
                     io.to(room.id).emit('all-players-ready-to-play', {
@@ -243,7 +269,7 @@ io.on('connection', (Socket) => {
     // Handle player leaving the client-game page, sending a disconnect event before unload
     Socket.on('player-disconnect', (data) => {
         if (data) {
-            console.log('player-disconnect event from beforeunload', data);
+            logDebug('player-disconnect event from beforeunload', data);
             handleDisconnect(data, Socket);
         }
     });
@@ -252,7 +278,7 @@ io.on('connection', (Socket) => {
     Socket.on('disconnect', () => {
         const data = SOCKETS[Socket.id];
         if (data) {
-            console.log('player has just disconnected from socket', Socket.id, data);
+            logDebug('player has just disconnected from socket', Socket.id, data);
             handleDisconnect(data, Socket);
         }
     });
@@ -275,10 +301,10 @@ function handleDisconnect(data, Socket) {
             let index = Utils.findIndexById(room.users, data.userId);
             if (index >= 0) {
                 if (room.status === STATUS.GAME_STARTED_WAITING_PLAYERS) {
-                    console.log('player leave the lobby to go to the game page');
+                    logDebug('player leave the lobby to go to the game page');
                     room.users[index].isConnected = false;
                 } else {
-                    console.log('[player-quit]', data.userId, 'left the room', data.roomId);
+                    logDebug('[player-quit]', data.userId, 'left the room', data.roomId);
                     
                     // Remove player from room
                     room.users.splice(index, 1);
@@ -298,7 +324,7 @@ function handleDisconnect(data, Socket) {
                     });
                 }
             } else {
-                console.log('[player-quit] user not found in room', data);
+                logDebug('[player-quit] user not found in room', data);
             }
         }
     }
@@ -307,5 +333,5 @@ function handleDisconnect(data, Socket) {
 // Server start
 const port = process.env.PORT || SERVER_PORT;
 http.listen(port, () => {
-    console.log('Server listening on http://localhost:' + port);
+    logDebug('Server listening on http://localhost:' + port);
 });

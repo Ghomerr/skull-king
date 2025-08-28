@@ -1,5 +1,7 @@
 const Socket = io();
-const Global = {};
+const Global = {
+  isDebugEnabled: false,
+};
 
 const urlParams = new URLSearchParams(window.location.search);
 const Room = {
@@ -8,6 +10,7 @@ const Room = {
 };
 const Player = {
     id: urlParams.get('formUserId'),
+    token: urlParams.get('formToken'),
     cards: [],
     isCurrentPlayer: false,
     isBot: false
@@ -377,9 +380,14 @@ Socket.on('debug-changed', (data) => {
     console.log('debug-changed', data);
     if (data.isDebugEnabled) {
         Global.$debugButton.addClass('active');
+        // Beta features to enable
+        Global.$emojiButton.removeClass('hidden');
     } else {
         Global.$debugButton.removeClass('active');
+        // Beta features to disable
+        Global.$emojiButton.addClass('hidden');
     }
+  Global.isDebugEnabled = data.isDebugEnabled;
 });
 
 function selectFoldCount(Socket, Global, $currentFoldCountDisplay, event) {
