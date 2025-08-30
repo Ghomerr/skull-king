@@ -447,6 +447,31 @@ exports.setEventListeners = (io, Socket, room) => {
             }
         }
     });
+
+    // Emoji handling
+    Socket.on('send-emoji', (data) => {
+        if (data.roomId === room.id) {          
+            const player = Utils.findUserByIdAndToken(room.users, data.playerId, data.token);
+            if (player) {
+                logDebug('=> send-emoji', data);
+                // Check emoji sanity
+                if (data.emojiCode >= 0x1F600 && data.emojiCode <= 0x1F64F || 
+                    data.emojiCode >= 0x1F440 && data.emojiCode <= 0x1F44F ||
+                    data.emojiCode >= 0x1F4A0 && data.emojiCode <= 0x1F4AF ||
+                    data.emojiCode >= 0x1F910 && data.emojiCode <= 0x1F92F
+                ) {
+                    io.to(room.id).emit('player-display-emoji', {
+                        emojiCode: data.emojiCode,
+                        playerId: data.playerId
+                    });
+                } else {
+                    console.error('[send-emoji] wrong emoji code', data);
+                }
+            } else {
+                console.error('[send-emoji] player not found', data);
+            }
+        }
+    });
 };
 
 function dispatchCardsOfList(cardsById, turn, player, gameCards, list) {

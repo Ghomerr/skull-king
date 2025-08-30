@@ -46,6 +46,7 @@ Socket.on('all-players-ready-to-play', (data) => {
 
         let playerName = Player.id === playerId ? 'Moi' : playerId;
         $playerBet.find('.player-name').text(playerName);
+        $playerBet.attr('player-id', playerId);
     });
     Global.$playersBetsContainer.removeClass('hidden');
 
@@ -191,15 +192,8 @@ function displayCurrentPlayer(data) {
     }
 
     // Refresh current-player state
-    Global.$playersBets.each((_index, playerBetNode) => {
-        const $playerBet = $(playerBetNode);
-        const playerName = $playerBet.find('.player-name').text();
-        if (playerName === 'Moi' && Player.id === data.currentPlayerId || playerName === data.currentPlayerId) {
-            $playerBet.addClass('current-player');
-        } else {
-            $playerBet.removeClass('current-player');
-        }
-    });
+    Global.$playersBets.removeClass('current-player');
+    Global.$playersBets.filter(`[player-id="${data.currentPlayerId}"]`).addClass('current-player');
 }
 
 // Handle when all players have chosen their bet
@@ -386,17 +380,63 @@ Socket.on('player-error', (error) => {
     }
 });
 
+// Handling emoji display event
+Socket.on('player-display-emoji', (data) => {
+    console.log('=> player-display-emoji', data);
+    const $playerBetElement = Global.$playersBets.filter(`[player-id="${data.playerId}"]`);
+    const $emojiDisplayer = $playerBetElement.find('.emoji-displayer');
+    const $emojiDisplay = $emojiDisplayer.find('.emoji-display');
+    const $emojiArrow = $emojiDisplayer.find('.emoji-arrow');
+
+    // Display emoji
+    $emojiDisplay.find('span').text(String.fromCodePoint(data.emojiCode));
+
+    $emojiDisplayer.css({
+        visibility: 'hidden',
+    });
+    $emojiDisplayer.removeClass('hidden');
+
+    const displayerWidth = $emojiDisplay.outerWidth();
+    const displayerHeight = $emojiDisplay.outerHeight();
+    const playerBetWidth = $playerBetElement.outerWidth();
+    const playerBetHeight = $playerBetElement.outerHeight();
+    const arrowWidth = $emojiArrow.outerWidth();
+    const arrowHeight = $emojiArrow.outerHeight();
+
+    // Move the displayer at the right position
+    const top = -displayerHeight - playerBetHeight;
+    const left = Math.round((playerBetWidth / 2) - (displayerWidth / 2));
+    $emojiDisplay.css({ 
+        top: top + 'px', 
+        left: left + 'px',
+        visibility: 'visible'
+     });
+
+    const arrowTop = - playerBetHeight - 2;
+    const arrowLeft = Math.round((playerBetWidth / 2) - (arrowWidth / 2));
+    $emojiArrow.css({
+        top: arrowTop + 'px',
+        left: arrowLeft,
+        visibility: 'visible'
+    });
+
+    // Temporary hide the emoji (TODO : do it from the server !)
+    setTimeout(() => {
+        $emojiDisplayer.addClass('hidden');
+    }, 5000);
+});
+
 // Handle debug changed
 Socket.on('debug-changed', (data) => {
     console.log('debug-changed', data);
     if (data.isDebugEnabled) {
         Global.$debugButton.addClass('active');
         // Beta features to enable
-        Global.$emojiButton.removeClass('hidden');
+        // Global.$emojiButton.removeClass('hidden');
     } else {
         Global.$debugButton.removeClass('active');
         // Beta features to disable
-        Global.$emojiButton.addClass('hidden');
+        // Global.$emojiButton.addClass('hidden');
     }
   Global.isDebugEnabled = data.isDebugEnabled;
 });
@@ -591,12 +631,13 @@ $(document).ready(() => {
         const $anchor = $(event.currentTarget);           // event trigger element
         const off = $anchor.offset();                     // position in document
         const top = Math.round(off.top + $anchor.outerHeight());
-        let left = Math.round(off.left);
+        let left = Math.round(off.left) + $anchor.outerWidth() / 2;
 
         const prevVisibility = Global.$emojisContainer.css('visibility');
 
-        Global.$emojisContainer.css({ visibility: 'hidden', display: 'block' });
+        Global.$emojisContainer.css({ visibility: 'hidden' });
         const panelWidth = Global.$emojisContainer.outerWidth();
+        left -= panelWidth / 2; // to display the panel in the middle of the button
         const viewportRight = $(window).scrollLeft() + $(window).width();
 
         // Option: avoid the element to overlap on right
@@ -621,9 +662,6 @@ $(document).ready(() => {
     function drawEmoji(codePoint) {
         const emoji = String.fromCodePoint(codePoint);
         Global.$emojisContainer.append($('<span/>').text(emoji).attr('code', codePoint));
-        if (('' + codePoint).endsWith('F')) {
-            Global.$emojisContainer.append($('<br/>'));
-        }
     }
 
     // Emoji Faces
@@ -642,4 +680,17 @@ $(document).ready(() => {
     for (let codePoint = 0x1F910; codePoint <= 0x1F92F; codePoint++) {
         drawEmoji(codePoint); 
     }
+
+    // Send emoji
+    Global.$emojisContainer.find('span').click((event) => {
+        const $emoji = $(event.currentTarget);
+        const codePoint = $emoji.attr('code');
+        Socket.emit('send-emoji', {
+            roomId: Room.id,
+            playerId: Player.id,
+            token: Player.token,
+            emojiCode: codePoint
+        });
+        Global.$emojisContainer.addClass('hidden');
+    });
 });
