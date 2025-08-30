@@ -38,18 +38,21 @@
     text-align: center; /* Alignement du contenu */
 }
 
-#bot-button {
+.action-button {
     opacity: 0.5;
     cursor: pointer;
     border: outset 3px #78350e;
     border-radius: 25px;
+    width: 50px;
+    height: 50px;
+    margin: 0 5px;
 }
 
-#bot-button:hover {
+.action-button:hover {
     border: inset 3px #ffba44;
 }
 
-#bot-button.active {
+.action-button.active {
     opacity: 1;
 }
 
@@ -410,7 +413,8 @@ main {
 .emojis-container {
   position: absolute;
   z-index: 1000;
-  border: 2px outset #fff;
+  border: 2px outset #78350e;
+  background-color: #ffba44;
 
   width: 320px;        /* largeur fixe (ajustez) */
   max-width: 100%;     /* optionnel: ne pas dépasser le parent */

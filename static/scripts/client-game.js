@@ -472,7 +472,7 @@ $(document).ready(() => {
     Global.$scoresDisplayContainer = $('#scores-display-container');
 
     Global.$emojiButton = $('#emoji-button');
-    Global.$emojisContainer = $('.emojis-container');
+    Global.$emojisContainer = $('#emojis-container');
     Global.$debugButton = $('#debug-button');
 
     // TODO : only if the game hasn't started !!!!
@@ -588,8 +588,8 @@ $(document).ready(() => {
     // Emojis
     Global.$emojiButton.click((event) => {
       if (Global.$emojisContainer.hasClass('hidden')) {
-        const $anchor = $(event.currentTarget);           // l’élément qui a déclenché le clic
-        const off = $anchor.offset();                     // position dans le document
+        const $anchor = $(event.currentTarget);           // event trigger element
+        const off = $anchor.offset();                     // position in document
         const top = Math.round(off.top + $anchor.outerHeight());
         let left = Math.round(off.left);
 
@@ -599,29 +599,47 @@ $(document).ready(() => {
         const panelWidth = Global.$emojisContainer.outerWidth();
         const viewportRight = $(window).scrollLeft() + $(window).width();
 
-        // Option: éviter que le panneau ne dépasse à droite
+        // Option: avoid the element to overlap on right
         if (left + panelWidth > viewportRight) {
           left = Math.max(0, viewportRight - panelWidth - 8);
         }
 
-        // Appliquer la position finale
+        // Apply final position and visibility
         Global.$emojisContainer.css({
           position: 'absolute',
           top: top,
-          left: left
+          left: left,
+          visibility: prevVisibility
         });
-
-        // Restaurer visibilité (leave display as-is if you’ll toggle via classe)
-        Global.$emojisContainer.css({ visibility: prevVisibility });
 
         Global.$emojisContainer.removeClass('hidden');
       } else {
         Global.$emojisContainer.addClass('hidden');
       }
     });
+    
+    function drawEmoji(codePoint) {
+        const emoji = String.fromCodePoint(codePoint);
+        Global.$emojisContainer.append($('<span/>').text(emoji).attr('code', codePoint));
+        if (('' + codePoint).endsWith('F')) {
+            Global.$emojisContainer.append($('<br/>'));
+        }
+    }
 
+    // Emoji Faces
     for (let codePoint = 0x1F600; codePoint <= 0x1F64F; codePoint++) {
-      const emoji = String.fromCodePoint(codePoint);
-       Global.$emojisContainer.append($('<span/>').text(emoji));
+        drawEmoji(codePoint);
+    }
+    // Emoji Hands and other body parts
+    for (let codePoint = 0x1F440; codePoint <= 0x1F44F; codePoint++) {
+        drawEmoji(codePoint); 
+    }
+    // Emoji Emotes
+    for (let codePoint = 0x1F4A0; codePoint <= 0x1F4AF; codePoint++) {
+        drawEmoji(codePoint); 
+    }
+    // Emoji other faces and hands
+    for (let codePoint = 0x1F910; codePoint <= 0x1F92F; codePoint++) {
+        drawEmoji(codePoint); 
     }
 });

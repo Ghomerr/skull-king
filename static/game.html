@@ -30,8 +30,12 @@
         <div class="head-title-container">
             <div id="head-title">Choix du pari...</div>
             <div id="buttons-container">
-                <img src="static/assets/parrot_button.png" id="bot-button" title="Activer mode Auto" width="50px" />
-                <input type="button" value="test" id="emoji-button" class="hidden"/>
+                <img id="bot-button" class="action-button" src="static/assets/parrot-button.png" 
+                    title="Activer mode Auto" width="50px" 
+                />
+                <img id="emoji-button" src="static/assets/emoji-button.png" class="hidden action-button active" 
+                    title="Envoyer un emoji" width="50px"
+                />
             </div>
             <div id="head-status"></div>
         </div>
@@ -198,9 +202,7 @@
             </div>
         </div>
 
-        <div class="emojis-container hidden">
-
-        </div>
+        <div id="emojis-container" class="emojis-container hidden"></div>
     </main> 
 
     <footer id="footer">
