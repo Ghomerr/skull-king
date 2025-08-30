@@ -34,8 +34,11 @@ const SOCKETS = {};
 
 // Server rooms
 const ROOMS = {};
-let roomsCount = 0;
-let isDebugEnabled = false;
+
+const SERVER = {
+    roomCount: 0,
+    isDebugEnabled: false
+};
 
 // Start server and expose main page
 app.get('/', (req, res) => {
@@ -65,7 +68,7 @@ function getRoomList() {
 }
 
 function logDebug(...message) {
-  if (console && isDebugEnabled) {
+  if (console && SERVER.isDebugEnabled) {
     console.log.apply(console, message);
   }
 }
@@ -75,7 +78,7 @@ io.on('connection', (Socket) => {
     logDebug('Player has just connected. Socket.id=', Socket.id);
     // Display debug
     Socket.emit('debug-changed', {
-        isDebugEnabled: isDebugEnabled
+        isDebugEnabled: SERVER.isDebugEnabled
     });  
 
     // Handle a player request on the main page to receive rooms list
@@ -144,7 +147,7 @@ io.on('connection', (Socket) => {
                 };
 
                 ROOMS[lobbyData.roomId] = newRoom;
-                Game.initializeRoomGameData(newRoom);
+                Game.initializeRoomGameData(newRoom, SERVER);
 
             } else {
                 Socket.emit('lobby-error', { type: 'maximum-rooms-count', data: MAX_ROOMS });
@@ -266,7 +269,7 @@ io.on('connection', (Socket) => {
                 Game.setEventListeners(io, Socket, room);
                 // Display debug
                 Socket.emit('debug-changed', {
-                    isDebugEnabled: isDebugEnabled
+                    isDebugEnabled: SERVER.isDebugEnabled
                 });  
 
             } else {
@@ -296,9 +299,9 @@ io.on('connection', (Socket) => {
 
     // Handle debug button event
     Socket.on('debug-toggle', () => {
-        isDebugEnabled = !isDebugEnabled;
+        SERVER.isDebugEnabled = !SERVER.isDebugEnabled;
         io.emit('debug-changed', {
-            isDebugEnabled: isDebugEnabled
+            isDebugEnabled: SERVER.isDebugEnabled
         });
     });
 });

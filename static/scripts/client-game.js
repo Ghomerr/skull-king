@@ -378,6 +378,9 @@ Socket.on('player-error', (error) => {
         case 'wrong-player':
             Dialog.openSimpleDialog(Dialog.$simpleDialog, '⚠️ Attention', 'Vous ne pouvez pas jouer maintenant !');
             break;
+        case 'wrong-fold-bet':
+            Dialog.openSimpleDialog(Dialog.$simpleDialog, '⚠️ Attention', 'Vous ne pouvez pas faire ce pari: ' + error.data + ' !');
+            break;
         default:
             Dialog.openSimpleDialog(Dialog.$simpleDialog, '⛔ Erreur!', 'Erreur inconnue: ' + error.type + ' ' + error.data);
     }
