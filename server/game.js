@@ -150,63 +150,71 @@ exports.setEventListeners = (io, Socket, room) => {
     // Handle player requesting its cards
     Socket.on('get-my-cards', (data) => {
         if (data.roomId === room.id) {
-            const player = Utils.findElementById(room.users, data.userId);
-            const playerCards =  
-            player.cards.map(c => {
-                return {
-                    id: c.id,
-                    type: c.type,
-                    img: c.img,
-                    value: c.value
-                };
-            });
-            console.log('player-cards =>', playerCards);
-            Socket.emit('player-cards',  {
-                turn: room.turn,
-                currentPlayerId: room.currentPlayerId,
-                cards: playerCards
-            });
+            const player = Utils.findUserByIdAndToken(room.users, data.userId, data.token);
+            if (player) {
+                const playerCards =  
+                player.cards.map(c => {
+                    return {
+                        id: c.id,
+                        type: c.type,
+                        img: c.img,
+                        value: c.value
+                    };
+                });
+                console.log('player-cards =>', playerCards);
+                Socket.emit('player-cards',  {
+                    turn: room.turn,
+                    currentPlayerId: room.currentPlayerId,
+                    cards: playerCards
+                });
+            } else {
+                console.error('[get-my-cards] player not found', data);
+            }
         }
     });
 
     // Handle when a player set its fold bet
     Socket.on('set-fold-bet', (data) => {
         if (data.roomId === room.id) {
-            const player = Utils.findElementById(room.users, data.userId);
+            const player = Utils.findUserByIdAndToken(room.users, data.userId, data.token);
             if (player) {
                 console.log('=> set-fold-bet', data);
                 player.foldBet = data.foldBet;
-            }
 
-            const totalNumberOfPlayers = room.users.length;
-            const numberOfReadyPlayers = room.users.filter(u => u.foldBet !== null).length;
+                const totalNumberOfPlayers = room.users.length;
+                const numberOfReadyPlayers = room.users.filter(u => u.foldBet !== null).length;
 
-            // If all players have chosen their bet, display the turn start !
-            if (totalNumberOfPlayers === numberOfReadyPlayers) {
-                io.to(room.id).emit('yo-ho-ho', {
-                    turn: room.turn,
-                    bets: room.users.map(player => {
-                        return {
-                            userId: player.id,
-                            foldBet: player.foldBet
-                        };
-                    }),
-                    currentPlayerId: room.currentPlayerId
-                });
+                // If all players have chosen their bet, display the turn start !
+                if (totalNumberOfPlayers === numberOfReadyPlayers) {
+                    io.to(room.id).emit('yo-ho-ho', {
+                        turn: room.turn,
+                        bets: room.users.map(player => {
+                            return {
+                                userId: player.id,
+                                foldBet: player.foldBet
+                            };
+                        }),
+                        currentPlayerId: room.currentPlayerId
+                    });
+                } else {
+                    // Notifies players of how many players are ready
+                    io.to(room.id).emit('waiting-players-bets', {
+                        numberOfReadyPlayers: numberOfReadyPlayers,
+                        totalNumberOfPlayers: totalNumberOfPlayers
+                    });
+                }
+
             } else {
-                // Notifies players of how many players are ready
-                io.to(room.id).emit('waiting-players-bets', {
-                    numberOfReadyPlayers: numberOfReadyPlayers,
-                    totalNumberOfPlayers: totalNumberOfPlayers
-                });
-            }
+                console.error('[set-fold-bet] player not found', data);
+            }           
         }
     });
 
     // Handle when a player plays a card
     Socket.on('play-a-card', (data) => {
         if (room.id === data.roomId) {
-            if (data.playerId === room.currentPlayerId) {
+            const player = Utils.findUserByIdAndToken(room.users, data.playerId, data.token);
+            if (player && player.id === room.currentPlayerId) {
                 console.log('=> play-a-card', data);
 
                 const playedCard = room.cardsById[data.cardId];
@@ -227,7 +235,7 @@ exports.setEventListeners = (io, Socket, room) => {
                     }
                 }
 
-                const player = Utils.findElementById(room.users, room.currentPlayerId);
+                
                 const cardIndex = Utils.findIndexById(player.cards, playedCard.id);
 
                 console.log(player.id, 'played the following card:', playedCard);
@@ -411,6 +419,11 @@ exports.setEventListeners = (io, Socket, room) => {
                         data: playedCard.name
                     });
                 }
+            } else {
+                // No player found or not the current player to play
+                Socket.emit('player-error',  {
+                    type: 'wrong-player'
+                });
             }
         }
     });

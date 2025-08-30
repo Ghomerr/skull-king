@@ -52,7 +52,8 @@ Socket.on('all-players-ready-to-play', (data) => {
     // Request cards
     getMyCards({
         roomId: Room.id,
-        userId: Player.id
+        userId: Player.id,
+        token: Player.token
     });
 
     Dialog.$simpleDialog.dialog('close');
@@ -109,6 +110,7 @@ function autoPlay() {
                     playCard({
                         roomId: Room.id,
                         playerId: Player.id,
+                        token: Player.token,
                         cardId: Player.cards[0].id
                     });
                 } else {
@@ -117,6 +119,7 @@ function autoPlay() {
                     playCard({
                         roomId: Room.id,
                         playerId: Player.id,
+                        token: Player.token,
                         cardId: cardToBePlayed.id,
                         type: cardToBePlayed.type !== 'choice' ?? 'evasion'
                     });
@@ -261,7 +264,8 @@ function openFoldDialog(foldOwner, foldSize, hasToGetCards) {
         if (hasToGetCards) {
             getMyCards({
                 roomId: Room.id,
-                userId: Player.id
+                userId: Player.id,
+                token: Player.token
             });
         }
     });
@@ -300,7 +304,8 @@ Socket.on('player-won-current-fold', (data) => {
         // Player is a bot and it was the last fold of the turn, get new cards
         getMyCards({
             roomId: Room.id,
-            userId: Player.id
+            userId: Player.id,
+            token: Player.token
         });
     } else {
         // Player is a bot and must auto play
@@ -370,6 +375,9 @@ Socket.on('player-error', (error) => {
         case 'wrong-type':
             Dialog.openSimpleDialog(Dialog.$simpleDialog, '⚠️ Attention', 'Vous devez jouer une carte ' + error.data + ' !');
             break;
+        case 'wrong-player':
+            Dialog.openSimpleDialog(Dialog.$simpleDialog, '⚠️ Attention', 'Vous ne pouvez pas jouer maintenant !');
+            break;
         default:
             Dialog.openSimpleDialog(Dialog.$simpleDialog, '⛔ Erreur!', 'Erreur inconnue: ' + error.type + ' ' + error.data);
     }
@@ -398,6 +406,7 @@ function selectFoldCount(Socket, Global, $currentFoldCountDisplay, event) {
     const foldBetEvent = {
         roomId: Room.id,
         userId: Player.id,
+        token: Player.token,
         foldBet: +(event.currentTarget.id.split('-')[1])
     };
     console.log('set-fold-bet =>', foldBetEvent);
@@ -410,6 +419,7 @@ function doChoiceTigresse(event, type) {
         playCard({
             roomId: Room.id,
             playerId: Player.id,
+            token: Player.token,
             cardId: 106, // tigresse
             type: type
         });
@@ -422,14 +432,16 @@ $(document).ready(() => {
     window.addEventListener("beforeunload", () => {
         Socket.emit('player-disconnect', {
             roomId: Room.id,
-            userId: Player.id
+            userId: Player.id,
+            token: Player.token
         });
     });
 
     // Join the current game
     Socket.emit('join-game', {
         roomId: Room.id,
-        userId: Player.id
+        userId: Player.id,
+        token: Player.token
     });
 
     Global.$headTitle = $('#head-title');
@@ -497,6 +509,7 @@ $(document).ready(() => {
                 playCard({
                     roomId: Room.id,
                     playerId: Player.id,
+                    token: Player.token,
                     cardId: cardId
                 });
             }

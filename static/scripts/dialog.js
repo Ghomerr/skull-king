@@ -16,12 +16,12 @@ $(document).ready(() => {
             // Reset default width
             $dialog.dialog('option', 'width', 300);
         }
-        $dialog.dialog('option', 'buttons', [{
-            text: 'Ok',
-            click: () => {
-                $dialog.dialog('close');
-            }
-        }]);
+    $dialog.dialog('option', 'buttons', [{
+        text: 'Ok',
+        click: () => {
+            $dialog.dialog('close');
+        }
+    }]);
         if (text) {
             $dialog.find('.dialog-text').text('').append(text);
         }

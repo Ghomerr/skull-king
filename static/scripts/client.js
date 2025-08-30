@@ -19,6 +19,12 @@ if (urlParams.get('formRoomId') || urlParams.get('formUserId')) {
    window.location.href = '/';
 }
 
+const INVALID_INPUT_REGEX = /[^a-zA-Z0-9\s\-_À-ÿ]/g;
+function sanitizeUserInput(input) {
+    const sanitized = input.val().replace(INVALID_INPUT_REGEX, '');
+    input.val(sanitized);
+}
+
 $(document).ready(() => {
     Socket.emit('get-random-room-id');
     Socket.emit('get-rooms-list');
@@ -47,6 +53,12 @@ $(document).ready(() => {
             case 'wrong-owner':
                 Dialog.openSimpleDialog(Dialog.$simpleDialog, '⛔ Erreur', 'Vous ne pouvez pas démarrer la partie.');
                 break;
+            case 'wrong-room-name':
+                Dialog.openSimpleDialog(Dialog.$simpleDialog, '⛔ Erreur', 'Le nom de la salle est invalide: 20 caractères autorisés: A-Z, a-z, 0,9, -, _, espace.');
+                break;     
+            case 'invalid-username':
+                Dialog.openSimpleDialog(Dialog.$simpleDialog, '⛔ Erreur', 'Le nom d\'utilisateur est invalide: 20 caractères autorisés: A-Z, a-z, 0,9, -, _, espace.');
+                break;
             default:
                 Dialog.openSimpleDialog(Dialog.$simpleDialog, '⛔ Erreur!', 'Erreur inconnue: ' + error.type + ' ' + error.data);
         }
@@ -59,6 +71,7 @@ $(document).ready(() => {
     Lobby.$roomPasswordContainer = $('#room-password-container');
     Lobby.$lobbyInputsContainer = $('#lobby-inputs');
     Lobby.$requiredInputs = $('#room-id, #user-id');
+    Lobby.$userInputs = $('#room-id, #user-id, #room-password');
     Lobby.inputs = {
         $roomId: $('#room-id'),
         $userId: $('#user-id'),
@@ -82,10 +95,15 @@ $(document).ready(() => {
     Lobby.$randomRoomIdBtn.click(() => {
         Socket.emit('get-random-room-id');
     });
-    
+
+    // Sanitize the user inputs
+    Lobby.$userInputs.on('input', function() {
+        sanitizeUserInput($(this));
+    });
+
     // Handle change room id
     Socket.on('random-room-id', (roomId) => {
-      Lobby.inputs.$roomId.val(roomId);
+      Lobby.inputs.$roomId.val('Salle ' + roomId);
     });
 
     // Handle click on private party link
@@ -101,6 +119,10 @@ $(document).ready(() => {
 
     // Handle lobby button click
     Lobby.$submitButton.click(() => {
+        sanitizeUserInput(Lobby.inputs.$userId);
+        sanitizeUserInput(Lobby.inputs.$roomId);
+        sanitizeUserInput(Lobby.inputs.$roomPassword);
+
         Player.id = Lobby.inputs.$userId.val();
         Player.token = window.crypto.randomUUID();
         const lobbyData = {
@@ -147,7 +169,7 @@ Socket.on('connected', (data) => {
 
     // Init room id from generated server value
     const roomId = data.roomId;
-  Lobby.inputs.$roomId.val(roomId);
+    Lobby.inputs.$roomId.val(roomId);
 
     // Socket.emit('get-version');
 });
@@ -248,6 +270,7 @@ Socket.on('players-list-changed', (room) => {
 
 // Handle game started
 Socket.on('game-started', () => {
+    sanitizeUserInput(Lobby.inputs.$userId);
     Lobby.$formRoomId.val(Lobby.inputs.$roomId.val());
     Lobby.$formUserId.val(Lobby.inputs.$userId.val());
     Lobby.$formToken.val(Player.token);

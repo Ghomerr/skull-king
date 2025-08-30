@@ -26,6 +26,8 @@ const STATUS = {
     IN_GAME: 4
     // client.js !
 };
+// 1-20 chars, same as client regex but with length check
+const USER_INPUT_REGEX = /^[a-zA-Z0-9\s\-_À-ÿ]{1,20}$/;
 
 // Sockets handle
 const SOCKETS = {};
@@ -110,13 +112,24 @@ io.on('connection', (Socket) => {
 
     // A player has joined a lobby instance waiting other players
     Socket.on('join-lobby', (lobbyData) => {
-        logDebug('Handling a join lobby request', Socket.id, lobbyData);
+        // Check room name
+        if (!lobbyData.roomId || !USER_INPUT_REGEX.test(lobbyData.roomId)) {
+            Socket.emit('lobby-error', { type: 'wrong-room-name' });
+            return;
+        }
+        // Server-side validation for username
+        if (!lobbyData.userId || !USER_INPUT_REGEX.test(lobbyData.userId)) {
+            Socket.emit('lobby-error', { type: 'invalid-username' });
+            return;
+        }
 
         // Save socket and room ids
         SOCKETS[Socket.id] = {
             userId: lobbyData.userId,
-            roomId: lobbyData.roomId
+            roomId: lobbyData.roomId,
+            token: lobbyData.token
         };
+        logDebug('Handling a join lobby request', Socket.id, lobbyData);
 
         // For a new room, create its new instance
         if (!ROOMS[lobbyData.roomId]) {
@@ -223,11 +236,9 @@ io.on('connection', (Socket) => {
         if (room) {
             // Join the room again
             Socket.join(room.id);
-            
-            const playerIndex = Utils.findIndexById(room.users, data.userId);
-            if (playerIndex >= 0) {
 
-                const player = room.users[playerIndex];
+            const player = Utils.findUserByIdAndToken(room.users, data.userId, data.token);
+            if (player) {
                 player.isConnected = true;
 
                 // Notifies players
@@ -298,15 +309,16 @@ function handleDisconnect(data, Socket) {
         const room = ROOMS[data.roomId];
         if (room) {
             // Search player index
-            let index = Utils.findIndexById(room.users, data.userId);
-            if (index >= 0) {
+            const player = Utils.findUserByIdAndToken(room.users, data.userId, data.token);
+            if (player) {
                 if (room.status === STATUS.GAME_STARTED_WAITING_PLAYERS) {
                     logDebug('player leave the lobby to go to the game page');
-                    room.users[index].isConnected = false;
+                    player.isConnected = false;
                 } else {
                     logDebug('[player-quit]', data.userId, 'left the room', data.roomId);
                     
                     // Remove player from room
+                    const index = Utils.findIndexById(room.users, data.userId);
                     room.users.splice(index, 1);
                     if (room.users.length === 0) {
                         // Delete empty room
