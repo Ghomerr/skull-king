@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/smoothness/jquery-ui.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="static/styles/main.css">
+    <link rel="stylesheet" type="text/css" href="static/styles/dialog.css">
     <link rel="stylesheet" type="text/css" href="node_modules/@fortawesome/fontawesome-free/css/all.css">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.min.js"></script>
@@ -14,14 +15,14 @@
     <script src="static/scripts/client.js"></script>
 </head>
 
-<body>
+<body class="skull-king">
     <header>
         <div id="head-container" class="head-container">
             <div class="game-title"><img src="static/assets/banniere_small.jpg" alt="Skull King" /></div>
         </div>
     </header>
 
-    <main>
+    <main class="pirate-font">
         <div class="lobby-container">
             <div id="lobby-inputs" class="lobby-inputs">
                 <div class="lobby-inputs-title big-text">Rejoindre une salle de jeu</div>
@@ -68,7 +69,9 @@
                     <button id="start-btn" type="button" class="primary" disabled style="display: none;">
                         <i class="fas fa-play"></i> Démarrer
                     </button>
-                    <div class="info-players"><span> Joueur(s) </span><span id="players-counter"></span> (min 2, max 7)</div>
+                    <div class="info-players">
+                      <span id="players-counter"></span><span> Joueur(s) (min 2, max  7)</span>
+                    </div>
                     <div class="info-players" id="info-password" style="display: none;"></div>
                 </form>
             </div>
@@ -81,7 +84,7 @@
         </div>
 
         <div id="simple-dialog" title="Test dialog">
-            <div class="dialog-text">
+            <div class="dialog-text pirate-font">
                 Ceci est un message.
             </div>
         </div>

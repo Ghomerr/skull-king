@@ -19,6 +19,24 @@ i.fixed-size {
     border: 1px solid white;
 }
 
+/**
+ * Font
+ */
+@font-face {
+  font-family: pirate;
+  src: url("../assets/fonts/pieces-of-eight.ttf");
+}
+
+.pirate-font {
+  font-family: pirate, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: large;
+}
+
+.ui-dialog {
+  font-family: pirate, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: large;
+}
+
 /** 
  * Page structure
  */
@@ -37,6 +55,8 @@ body {
 }
 
 main {
+    font-family: pirate, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: large;
     padding-bottom: 2.5rem;
     overflow-y: auto;
     height: calc(100% - 140px);
