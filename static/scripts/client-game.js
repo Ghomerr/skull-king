@@ -29,11 +29,17 @@ function getMyCards(event) {
     Socket.emit('get-my-cards', event);
 }
 
-// All players are ready, the game can be started !
-Socket.on('all-players-ready-to-play', (data) => {
-    console.log('=> START all-players-ready-to-play', data);
+// Handle the room state when a player joined a room again
+Socket.on('connected-player-room-state', (data) => {
+    console.log('=> connected-player-room-state', data);
+    displayPlayerNames(data);
+    if (data.playerCardsEvent) {
+        displayPlayerCards(data.playerCardsEvent);
+    }
+    // Display yo-oh-oh elements !
+});
 
-    // Display players names
+function displayPlayerNames(data) {
     data.playersIds.forEach((playerId, index) => {
         const $playerBet = Global.$playersBets.eq(index);
         $playerBet.removeClass('hidden');
@@ -49,6 +55,13 @@ Socket.on('all-players-ready-to-play', (data) => {
         $playerBet.attr('player-id', playerId);
     });
     Global.$playersBetsContainer.removeClass('hidden');
+}
+
+// All players are ready, the game can be started !
+Socket.on('all-players-ready-to-play', (data) => {
+    console.log('=> START all-players-ready-to-play', data);
+
+    displayPlayerNames(data);
 
     // Request cards
     getMyCards({
@@ -132,9 +145,7 @@ function autoPlay() {
     }
 }
 
-// Receiving its cards
-Socket.on('player-cards', (data) => {
-    console.log('=> player-cards', data);
+function displayPlayerCards(data) {
     Player.cards = [...data.cards];
     Player.isCurrentPlayer = false;
 
@@ -166,6 +177,12 @@ Socket.on('player-cards', (data) => {
     Global.$headTitle.text('Manche ' + data.turn);
 
     autoPlay();
+}
+
+// Receiving its cards
+Socket.on('player-cards', (data) => {
+    console.log('=> player-cards', data);
+    displayPlayerCards(data);
 });
 
 // Handle when a player updated its bet to display that it's ready to play
@@ -361,6 +378,31 @@ Socket.on('players-scores', (data) => {
     }
 });
 
+// Handle event when a player left the room during the game
+Socket.on('player-left-the-room', (data) => {
+    console.log('=> player-left-the-room', data);
+
+    Global.$missingPlayersAmount.text(data.missingPlayers);
+    const $playerBetElement = Global.$playersBets.filter(`[player-id="${data.playerId}"]`);
+    $playerBetElement.addClass('missing-player');
+
+    Dialog.$missingPlayersDialog.dialog('open');
+});
+
+// Handle event when a player join the game again
+Socket.on('in-game-player-connected', (data) => {
+    // TODO : handle this event properly
+    console.log('=> in-game-player-connected', data);
+
+    const $playerBetElement = Global.$playersBets.filter(`[player-id="${data.playerId}"]`);
+    $playerBetElement.removeClass('missing-player');
+    Global.$missingPlayersAmount.text(data.missingPlayers);
+
+    if (data.missingPlayers === 0) {
+        Dialog.$missingPlayersDialog.dialog('close');
+    }
+});
+
 Socket.on('player-error', (error) => {
     switch (error.type) {
         case 'cannot-play-this-card':
@@ -424,6 +466,11 @@ Socket.on('player-display-emoji', (data) => {
     setTimeout(() => {
         $emojiDisplayer.addClass('hidden');
     }, 5000);
+});
+
+Socket.on('join-game-error', () => {
+    // Reload the main page
+    window.location.href = '/';
 });
 
 // Handle debug changed
@@ -511,6 +558,8 @@ $(document).ready(() => {
     Global.$scoresButton = $('#scores-button');
     Global.$scoresDisplayContainer = $('#scores-display-container');
 
+    Global.$missingPlayersAmount = $('#missing-players-amount');
+
     Global.$emojiButton = $('#emoji-button');
     Global.$emojisContainer = $('#emojis-container');
     Global.$debugButton = $('#debug-button');
@@ -578,6 +627,19 @@ $(document).ready(() => {
         }
     });
     Dialog.$choiceCardDialog.removeClass('hidden');
+
+    // Missing players dialog
+    Dialog.$missingPlayersDialog = $('#missing-players-dialog');
+    Dialog.$missingPlayersDialog.dialog({
+        modal: true,
+        autoOpen: false,
+        closeOnEscape: false,
+        buttons: {},
+        open: () => {
+            $('.ui-dialog[aria-describedby=missing-players-dialog] .ui-dialog-titlebar-close').hide();
+        }
+    });
+    Dialog.$missingPlayersDialog.removeClass('hidden');
 
     // Fold dialog
     Dialog.$foldDisplayDialog = $('#fold-display-dialog');

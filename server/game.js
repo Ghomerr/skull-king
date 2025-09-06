@@ -39,6 +39,19 @@ exports.initializeGame = (room, cards) => {
     }
 };
 
+exports.refreshConnectedPlayerRoomState = (Socket, room, player) => {
+    // Allow the player to rebuild the current room state
+    Socket.emit('connected-player-room-state', {
+        // Display player names
+        playersIds: room.users.map(user => {
+            return user.id;
+        }),
+        currentPlayerId: room.currentPlayerId,
+        // Display player cards
+        playerCardsEvent:  player.foldBet === null ? null : getPlayerCardsEvent(player, room) 
+    });
+}
+
 function resetCurrentRound(room, startPlayerIndex) {
     room.playedCards = [];
     room.currentPlayerIndex = startPlayerIndex;
@@ -154,6 +167,23 @@ function dispatchPlayerScores(io, room, previousTurn, endOfGame) {
     });
 }
 
+function getPlayerCardsEvent(player, room) {
+    const playerCards =  
+    player.cards.map(c => {
+        return {
+            id: c.id,
+            type: c.type,
+            img: c.img,
+            value: c.value
+        };
+    });
+    return {
+        turn: room.turn,
+        currentPlayerId: room.currentPlayerId,
+        cards: playerCards
+    };
+}
+
 exports.setEventListeners = (io, Socket, room) => {
 
     // Handle player requesting its cards
@@ -161,21 +191,9 @@ exports.setEventListeners = (io, Socket, room) => {
         if (data.roomId === room.id) {
             const player = Utils.findUserByIdAndToken(room.users, data.userId, data.token);
             if (player) {
-                const playerCards =  
-                player.cards.map(c => {
-                    return {
-                        id: c.id,
-                        type: c.type,
-                        img: c.img,
-                        value: c.value
-                    };
-                });
-                logDebug('player-cards =>', playerCards);
-                Socket.emit('player-cards',  {
-                    turn: room.turn,
-                    currentPlayerId: room.currentPlayerId,
-                    cards: playerCards
-                });
+                const playerCardsEvent = getPlayerCardsEvent(player, room);
+                logDebug('player-cards =>', playerCardsEvent);
+                Socket.emit('player-cards',  playerCardsEvent);
             } else {
                 console.error('[get-my-cards] player not found', data);
             }

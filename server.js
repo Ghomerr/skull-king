@@ -19,11 +19,12 @@ const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 7;
 const STATUS = {
     // client.js !
-    NOT_CONNECTED: 0,
-    IN_LOBBY_WAITING: 1,
-    IN_LOBBY_FULL: 2,
-    GAME_STARTED_WAITING_PLAYERS: 3,
-    IN_GAME: 4
+    NOT_CONNECTED: 'NOT_CONNECTED',
+    IN_LOBBY_WAITING: 'IN_LOBBY_WAITING',
+    IN_LOBBY_FULL: 'IN_LOBBY_FULL',
+    GAME_STARTED_WAITING_PLAYERS: 'GAME_STARTED_WAITING_PLAYERS',
+    IN_GAME: 'IN_GAME',
+    IN_GAME_MISSING_PLAYERS: 'IN_GAME_MISSING_PLAYERS',
     // client.js !
 };
 // 1-20 chars, same as client regex but with length check
@@ -37,15 +38,16 @@ const ROOMS = {};
 
 const SERVER = {
     roomCount: 0,
-    isDebugEnabled: false
+    isDebugEnabled: true
 };
 
 // Start server and expose main page
 app.get('/', (req, res) => {
+    console.log('req.query', req.query);
     // Check req hidden query params submitted
-    if (req.query.formRoomId && ROOMS[req.query.formRoomId] && 
-            Utils.findIndexById(ROOMS[req.query.formRoomId].users, req.query.formUserId) >= 0) {
-        logDebug('req.query', req.query);
+    const room = ROOMS[req.query.formRoomId];
+    // If the room exists and the user is valid
+    if (room && Utils.findUserByIdAndToken(room.users, req.query.formUserId, req.query.formToken)) {
         res.sendFile(path.resolve(__dirname, '.') + '/static/game.html');
     } else {
         res.sendFile(path.resolve(__dirname, '.') + '/static/main.html');
@@ -144,6 +146,7 @@ io.on('connection', (Socket) => {
                     owner: lobbyData.userId,
                     password: lobbyData.password,
                     users: [],
+                    missingPlayers: 0
                 };
 
                 ROOMS[lobbyData.roomId] = newRoom;
@@ -174,7 +177,7 @@ io.on('connection', (Socket) => {
                         }
 
                         // Notify the new player with its own info
-                        logDebug('New user', newUser, 'joined the lobby');
+                        logDebug('New user', newUser.id, 'joined the lobby');
                         Socket.emit('user-connected', {
                           id: newUser.id,
                           token: newUser.token,
@@ -234,9 +237,9 @@ io.on('connection', (Socket) => {
 
     // Handle when a player joins the gaming page
     Socket.on('join-game', (data) => {
-        logDebug('join-game', data);
         const room = ROOMS[data.roomId];
         if (room) {
+            logDebug('join-game', data, 'room status', room.status);
             // Join the room again
             Socket.join(room.id);
 
@@ -244,39 +247,64 @@ io.on('connection', (Socket) => {
             if (player) {
                 player.isConnected = true;
 
-                // Notifies players
-                const readyPlayersAmout = room.users.filter(user => user.isConnected).length;
-                const totalPlayers = room.users.length;
+                if (room.status === STATUS.GAME_STARTED_WAITING_PLAYERS) {              
+                    // Notifies players
+                    const readyPlayersAmout = room.users.filter(user => user.isConnected).length;
+                    const totalPlayers = room.users.length;
+    
+                    // TODO : handle refresh after YO HO HO !!!
+                    if (readyPlayersAmout < totalPlayers) {
+                        logDebug('user', player.id, 'joined the room', room.id, 'in status', room.status, 
+                            'with', readyPlayersAmout,'/', totalPlayers, 'players');
+                        io.to(room.id).emit('ready-players-amount', {
+                            readyPlayersAmout,
+                            totalPlayers
+                        });
+                    } else {
+                        logDebug('Last player', player.id, 'joined. Game can start !');
+                        room.status = STATUS.IN_GAME;
+                        Game.initializeGame(room, [...CARDS]);
+                        io.to(room.id).emit('all-players-ready-to-play', {
+                            currentPlayerId: room.currentPlayerId,
+                            playersIds: room.users.map(user => {
+                                return user.id;
+                            })
+                        });
+                    }
+                } else if (room.status === STATUS.IN_GAME_MISSING_PLAYERS) {
+                    room.missingPlayers--;
+                    logDebug(player.id, 'joined the room', room.id, 'again ! Missing players=', room.missingPlayers);
+                    if (room.missingPlayers === 0) {
+                        room.status = STATUS.IN_GAME;
+                    }
 
-                // TODO : handle refresh after YO HO HO !!!
-                if (readyPlayersAmout < totalPlayers) {
-                    logDebug('user', player.id, 'joined the game', room.id, 'with', readyPlayersAmout,'/', totalPlayers, 'players');
-                    io.to(room.id).emit('ready-players-amount', {
-                        readyPlayersAmout,
-                        totalPlayers
+                    // Display the current missing players
+                    io.to(room.id).emit('in-game-player-connected', {
+                        playerId: player.id,
+                        status: room.status,
+                        missingPlayers: room.missingPlayers
                     });
-                } else {
-                    logDebug('Last player', player.id, 'joined. Game can start !');
-                    room.status = STATUS.IN_GAME;
-                    Game.initializeGame(room, [...CARDS]);
-                    io.to(room.id).emit('all-players-ready-to-play', {
-                        currentPlayerId: room.currentPlayerId,
-                        playersIds: room.users.map(user => {
-                            return user.id;
-                        })
-                    });
+
+                    Game.refreshConnectedPlayerRoomState(Socket, room, player);
                 }
+
+                // Link the events of the Game itself
                 Game.setEventListeners(io, Socket, room);
+
                 // Display debug
                 Socket.emit('debug-changed', {
                     isDebugEnabled: SERVER.isDebugEnabled
                 });  
 
+                refreshAllRoomsStatus();
+
             } else {
                 console.error('[join-game] Unknown user', data.userId);
+                Socket.emit('join-game-error');
             }
         } else {
             console.error('[join-game] Unknown room', data.roomId);
+            Socket.emit('join-game-error');
         }
     });
 
@@ -306,38 +334,71 @@ io.on('connection', (Socket) => {
     });
 });
 
+function refreshAllRoomsStatus() {
+    io.sockets.emit('rooms-status-changed', {
+        roomsList: getRoomList()
+    });
+}
+
 function handleDisconnect(data, Socket) {
     if (data) {
         delete SOCKETS[Socket.id];
         const room = ROOMS[data.roomId];
         if (room) {
+            logDebug('handleDisconnect, room status=', room.status);
+
             // Search player index
             const player = Utils.findUserByIdAndToken(room.users, data.userId, data.token);
             if (player) {
-                if (room.status === STATUS.GAME_STARTED_WAITING_PLAYERS) {
-                    logDebug('player leave the lobby to go to the game page');
-                    player.isConnected = false;
-                } else {
-                    logDebug('[player-quit]', data.userId, 'left the room', data.roomId);
+                switch(room.status) {
+                    case STATUS.GAME_STARTED_WAITING_PLAYERS:
+                        logDebug('player leave the lobby to go to the game page');
+                        player.isConnected = false;
+                    break;
+
+                    case STATUS.IN_LOBBY_WAITING:
+                    case STATUS.IN_LOBBY_FULL:
+                        logDebug('[player-quit]', data.userId, 'left the room', data.roomId);
                     
-                    // Remove player from room
-                    const index = Utils.findIndexById(room.users, data.userId);
-                    room.users.splice(index, 1);
-                    if (room.users.length === 0) {
-                        // Delete empty room
-                        delete ROOMS[data.roomId];
-                    } else {
-                        // Update players list
-                        io.to(data.roomId).emit('players-list-changed', room);
-                        if (room.status === STATUS.IN_LOBBY_FULL && room.users.length < MAX_PLAYERS) {
-                            room.status = STATUS.IN_LOBBY_WAITING;
+                        // Remove player from room
+                        const index = Utils.findIndexById(room.users, data.userId);
+                        room.users.splice(index, 1);
+                        if (room.users.length === 0) {
+                            // Delete empty room
+                            delete ROOMS[data.roomId];
+                        } else {
+                            // Update players list
+                            io.to(data.roomId).emit('players-list-changed', room);
+                            if (room.status === STATUS.IN_LOBBY_FULL && room.users.length < MAX_PLAYERS) {
+                                room.status = STATUS.IN_LOBBY_WAITING;
+                            }
+                            // Other status ??
                         }
-                        // Other status ??
-                    }
-                    io.sockets.emit('rooms-status-changed', {
-                        roomsList: getRoomList()
-                    });
+                        break;
+                        
+                    case STATUS.IN_GAME:
+                    case STATUS.IN_GAME_MISSING_PLAYERS:
+                        player.isConnected = false;
+                        room.status = STATUS.IN_GAME_MISSING_PLAYERS;
+                        room.missingPlayers++;
+                        logDebug(player.id, 'left during the game in', room.id, 'with status', room.status, 'with', room.missingPlayers, 'missing players');
+                        if (room.missingPlayers < room.users.length) {
+                            io.to(data.roomId).emit('player-left-the-room', {
+                                playerId: player.id,
+                                status: room.status,
+                                missingPlayers: room.missingPlayers
+                            });
+                        } else {
+                            // No more players, remove the room
+                            logDebug(player.id, 'was the last player of', room.id, 'so it has been closed');
+                            delete ROOMS[data.roomId];
+                        }
+                        break;
+
+                    default:
+                        log-debug('Player', player.id, 'left the room', room.id,' with status', room.status, 'but nothing handled here !');
                 }
+                refreshAllRoomsStatus();
             } else {
                 logDebug('[player-quit] user not found in room', data);
             }
@@ -348,5 +409,5 @@ function handleDisconnect(data, Socket) {
 // Server start
 const port = process.env.PORT || SERVER_PORT;
 http.listen(port, () => {
-    logDebug('Server listening on http://localhost:' + port);
+    console.log('Server listening on http://localhost:' + port);
 });

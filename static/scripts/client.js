@@ -2,11 +2,12 @@ const Socket = io();
 const Player = {};
 const STATUS = {
     // server.js !
-    NOT_CONNECTED: 0,
-    IN_LOBBY_WAITING: 1,
-    IN_LOBBY_FULL: 2,
-    GAME_STARTED_WAITING_PLAYERS: 3,
-    IN_GAME: 4
+    NOT_CONNECTED: 'NOT_CONNECTED',
+    IN_LOBBY_WAITING: 'IN_LOBBY_WAITING',
+    IN_LOBBY_FULL: 'IN_LOBBY_FULL',
+    GAME_STARTED_WAITING_PLAYERS: 'GAME_STARTED_WAITING_PLAYERS',
+    IN_GAME: 'IN_GAME',
+    IN_GAME_MISSING_PLAYERS: 'IN_GAME_MISSING_PLAYERS',
     // server.js !
 };
 const Lobby = {
@@ -182,9 +183,10 @@ Socket.on('user-connected', (data) => {
 });
 
 Socket.on('rooms-status-changed', (data) => {
+    console.log('=> rooms-status-changed', data); 
     // Display rooms list
     const roomsList = data.roomsList;
-    if (roomsList.length && Lobby.roomStatus === STATUS.NOT_CONNECTED) {
+    if (roomsList.length > 0 && Lobby.roomStatus === STATUS.NOT_CONNECTED) {
         Lobby.$roomsListContent.text('');
         for (const roomData of roomsList) {
             // Prepare displayed data
@@ -211,6 +213,8 @@ Socket.on('rooms-status-changed', (data) => {
             Lobby.$roomsListContent.append(roomsListText);
         }
         Lobby.$roomsList.show();
+    } else {
+        Lobby.$roomsList.hide();
     }
 });
 

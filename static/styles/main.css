@@ -150,49 +150,38 @@ footer {
 
 .room-line {
     display: flex;
+    font-weight: bold;
+    color: #e74c3c;
 }
 
 .room-line>div {
     flex: 1;
 }
 
-.room-line>.room-name {
-    flex: 2;
-    font-weight: bold;
-}
-
-.room-line {
-    font-weight: bold;
-}
-
-.room-status-3>.room-name,
-.room-status-3>.room-status {
-    color: #e74c3c;
-}
-
-.room-status-2>.room-name,
-.room-status-2>.room-status {
+.room-line.room-status-IN_LOBBY_FULL {
     color: #e67e22;
 }
 
-.room-status-1>.room-name,
-.room-status-1>.room-status {
+.room-line.room-status-IN_LOBBY_WAITING{
     color: #27ae60;
 }
 
-.room-status-1>.room-name {
+.room-line .room-name {
+    flex: 2;
+    cursor: not-allowed;
+    font-weight: bold;
+}
+
+.room-line.room-status-IN_LOBBY_WAITING .room-name {
+    text-decoration: none;
     cursor: pointer;
 }
 
-.room-status-1>.room-name:hover {
+.room-line.room-status-IN_LOBBY_WAITING .room-name:hover {
     text-decoration: underline;
     color: #219250;
 }
 
-.room-status-2>.room-name,
-.room-status-3>.room-name {
-    cursor: not-allowed;
-}
 
 /* Debug button */
 #debug-button {

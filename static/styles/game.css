@@ -267,6 +267,11 @@ main {
     content: '🟢';
 }
 
+.missing-player .player-name::before,
+.missing-player .player-name::after {
+    content: '⏳';
+}
+
 .bet-value  img {
     width: 20px;
     border-radius: 25px;
