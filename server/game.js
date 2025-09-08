@@ -40,15 +40,28 @@ exports.initializeGame = (room, cards) => {
 };
 
 exports.refreshConnectedPlayerRoomState = (Socket, room, player) => {
+    const hasFoldBet = player.foldBet !== null;
     // Allow the player to rebuild the current room state
     Socket.emit('connected-player-room-state', {
+        // Common events data
+        turn: room.turn,
+        currentPlayerId: room.currentPlayerId,
         // Display player names
         playersIds: room.users.map(user => {
             return user.id;
         }),
-        currentPlayerId: room.currentPlayerId,
-        // Display player cards
-        playerCardsEvent:  player.foldBet === null ? null : getPlayerCardsEvent(player, room) 
+        // Display players bets
+        isWaitingPlayersBets: room.isWaitingPlayersBets,
+        hasFoldBet: hasFoldBet,
+        foldBet: player.foldBet,
+        bets: getPlayersBets(room),
+        // Display players cards
+        cards:  getPlayerCards(player, room),
+        playedCards: room.playedCards,
+        // Display player scores
+        playerScores: room.turn > 1 ?
+          getPlayerScoresEvent(room, room.turn - 1, room.turn < MAX_TURN) :
+          null
     });
 }
 
@@ -121,6 +134,7 @@ function initializeNewTurn(room, turn, startPlayerIndex) {
     room.turn = turn;
     room.gameCards = Utils.deepCopy(Utils.shuffle([...room.initialCards]));
     room.cardsById = {};
+    room.isWaitingPlayersBets = true;
     room.gameCards.forEach((card) => {
         room.cardsById[card.id] = card;
     });
@@ -150,26 +164,23 @@ function initializeNewTurn(room, turn, startPlayerIndex) {
     }
 }
 
-function dispatchPlayerScores(io, room, previousTurn, endOfGame) {
-    // Dispatch player score
-    io.to(room.id).emit('players-scores', {
-        endOfGame: endOfGame,
-        turn: previousTurn,
-        playerScores: room.users
-            .map(player => {
-                return {
-                    id: player.id,
-                    totalScore: player.totalScore,
-                    scores: player.scores
-                };
-            })
-            .sort((p1, p2) => p2.totalScore - p1.totalScore)
-    });
+function getPlayerScoresEvent(room, previousTurn, endOfGame) {
+  return {
+    endOfGame: endOfGame,
+    turn: previousTurn,
+    playerScores: room.users.map(player => {
+      return {
+        id: player.id,
+        totalScore: player.totalScore,
+        scores: player.scores
+      };
+    })
+    .sort((p1, p2) => p2.totalScore - p1.totalScore)
+  };
 }
 
-function getPlayerCardsEvent(player, room) {
-    const playerCards =  
-    player.cards.map(c => {
+function getPlayerCards(player) {
+    return player.cards.map(c => {
         return {
             id: c.id,
             type: c.type,
@@ -177,11 +188,15 @@ function getPlayerCardsEvent(player, room) {
             value: c.value
         };
     });
+}
+
+function getPlayersBets(room) {
+  return room.users.map(player => {
     return {
-        turn: room.turn,
-        currentPlayerId: room.currentPlayerId,
-        cards: playerCards
+      userId: player.id,
+      foldBet: player.foldBet
     };
+  })
 }
 
 exports.setEventListeners = (io, Socket, room) => {
@@ -191,7 +206,12 @@ exports.setEventListeners = (io, Socket, room) => {
         if (data.roomId === room.id) {
             const player = Utils.findUserByIdAndToken(room.users, data.userId, data.token);
             if (player) {
-                const playerCardsEvent = getPlayerCardsEvent(player, room);
+                const playerCards = getPlayerCards(player);
+                const playerCardsEvent = {
+                  turn: room.turn,
+                  currentPlayerId: room.currentPlayerId,
+                  cards: playerCards
+                }
                 logDebug('player-cards =>', playerCardsEvent);
                 Socket.emit('player-cards',  playerCardsEvent);
             } else {
@@ -224,14 +244,10 @@ exports.setEventListeners = (io, Socket, room) => {
 
                 // If all players have chosen their bet, display the turn start !
                 if (totalNumberOfPlayers === numberOfReadyPlayers) {
+                    room.isWaitingPlayersBets = false;
                     io.to(room.id).emit('yo-ho-ho', {
                         turn: room.turn,
-                        bets: room.users.map(player => {
-                            return {
-                                userId: player.id,
-                                foldBet: player.foldBet
-                            };
-                        }),
+                        bets: getPlayersBets(room),
                         currentPlayerId: room.currentPlayerId
                     });
                 } else {
@@ -396,7 +412,10 @@ exports.setEventListeners = (io, Socket, room) => {
                                     room.firstPlayerIndex = 0;
                                 }
                                 initializeNewTurn(room, previousTurn + 1, room.firstPlayerIndex);
-                                dispatchPlayerScores(io, room, previousTurn, false);
+                                // Dispatch player score
+                                io.to(room.id).emit('players-scores',
+                                  getPlayerScoresEvent(room, previousTurn, false)
+                                );
 
                             } else {
                                 isLastTurn = true;
@@ -407,7 +426,10 @@ exports.setEventListeners = (io, Socket, room) => {
                                 room.users.forEach(player => {
                                     computePlayerScore(player, MAX_TURN);
                                 })
-                                dispatchPlayerScores(io, room, MAX_TURN, true);
+                                // Dispatch player score
+                                io.to(room.id).emit('players-scores',
+                                  getPlayerScoresEvent(room, MAX_TURN, true)
+                                );
                             }
                         } else {
                             resetCurrentRound(room, startPlayerIndex);

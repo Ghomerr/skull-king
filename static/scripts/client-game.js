@@ -33,10 +33,26 @@ function getMyCards(event) {
 Socket.on('connected-player-room-state', (data) => {
     console.log('=> connected-player-room-state', data);
     displayPlayerNames(data);
-    if (data.playerCardsEvent) {
-        displayPlayerCards(data.playerCardsEvent);
+    displayPlayerCards({
+      turn: data.turn,
+      currentPlayerId: data.currentPlayerId,
+      cards: data.cards
+    });
+
+    if (data.isWaitingPlayersBets) {
+      if (data.hasFoldBet && !Global.$foldCountDisplays.hasClass('hidden')) {
+        const $currentFoldCountDisplay = Global.$foldCountDisplays.filter(`[id=fold-${data.foldBet}]`);
+        selectFoldCount(Socket, Global, $currentFoldCountDisplay, data.foldBet);
+      }
+    } else {
+      displayPlayersBets(data);
     }
-    // Display yo-oh-oh elements !
+
+    displayPlayedCards(data);
+
+    if (data.playerScores) {
+      displayScores(data.playerScores);
+    }
 });
 
 function displayPlayerNames(data) {
@@ -213,27 +229,31 @@ function displayCurrentPlayer(data) {
     Global.$playersBets.filter(`[player-id="${data.currentPlayerId}"]`).addClass('current-player');
 }
 
+function displayPlayersBets(data) {
+  data.bets.forEach((playerBet, index) => {
+    const $playerBetValue = Global.$playersBetsValues.eq(index);
+    $playerBetValue.find('img').attr('src', 'static/assets/score_' + playerBet.foldBet + '.jpg');
+    $playerBetValue.removeClass('hidden');
+  });
+  Global.$foldCounterContainer.find('span').text('0');
+  Global.$foldCounterContainer.removeClass('hidden');
+
+  displayCurrentPlayer(data);
+  Global.$headTitle.text('Manche ' + data.turn);
+
+  // Hide previous elements
+  Global.$foldCountPicker.addClass('hidden');
+  Global.$foldCountDisplays.addClass('hidden');
+}
+
 // Handle when all players have chosen their bet
 Socket.on('yo-ho-ho', (data) => {
     console.log('=> yo-ho-ho', data);
 
-    // Display players bets
-    data.bets.forEach((playerBet, index) => {
-        const $playerBetValue = Global.$playersBetsValues.eq(index);
-        $playerBetValue.find('img').attr('src', 'static/assets/score_' + playerBet.foldBet + '.jpg');
-        $playerBetValue.removeClass('hidden');
-    });
-    Global.$foldCounterContainer.find('span').text('0');
-    Global.$foldCounterContainer.removeClass('hidden');
+  // Display players bets
+  displayPlayersBets(data);
 
-    displayCurrentPlayer(data);
-    Global.$headTitle.text('Manche ' + data.turn);
-
-    // Hide previous elements
-    Global.$foldCountPicker.addClass('hidden');
-    Global.$foldCountDisplays.addClass('hidden');
-
-    // Display yo ho ho !
+  // Display yo ho ho !
     if (!Player.isBot) {
         Dialog.openSimpleDialog(Dialog.$simpleDialog, '🏴‍☠️ YO HO HO', 'YO HO HO !!!!!');
     } else {
@@ -254,14 +274,18 @@ Socket.on('remove-played-card', (data) => {
     });
 });
 
-// Handle when a player has played a card to display current played cards and the current player name
-Socket.on('card-has-been-played', (data) => {
-    console.log('=> card-has-been-played', data);
+function displayPlayedCards(data) {
     Room.playedCards = data.playedCards;
     displayCurrentPlayer(data);
     displayCards(data.playedCards, Global.$playedCards, (cardData, $cardElement) => {
-        $cardElement.find('span').text(cardData.playedBy === Player.id ? 'Moi' : cardData.playedBy);
+      $cardElement.find('span').text(cardData.playedBy === Player.id ? 'Moi' : cardData.playedBy);
     });
+}
+
+// Handle when a player has played a card to display current played cards and the current player name
+Socket.on('card-has-been-played', (data) => {
+    console.log('=> card-has-been-played', data);
+    displayPlayedCards(data);
     autoPlay();
 });
 
@@ -324,58 +348,61 @@ Socket.on('player-won-current-fold', (data) => {
     }
 });
 
-Socket.on('players-scores', (data) => {
-    console.log('=> players-scores', data);
+function displayScores(data) {
+  Global.$scoresDisplayContainer.text('');
+  const $tableNode = $('<table/>');
+  $tableNode.addClass('scores-table');
+  const $tableHeader = $('<tr/>');
+  $tableHeader.append($('<th/>').text('Joueur'));
+  for (let i = 1 ; i <= data.turn ; i++) {
+    $tableHeader.append($('<td/>').text('Manche ' + i));
+  }
+  $tableHeader.append($('<th/>').text('Total'));
+  $tableNode.append($tableHeader);
 
-    Global.$scoresDisplayContainer.text('');
-    const $tableNode = $('<table/>');
-    $tableNode.addClass('scores-table');
-    const $tableHeader = $('<tr/>');
-    $tableHeader.append($('<th/>').text('Joueur'));
-    for (let i = 1 ; i <= data.turn ; i++) {
-        $tableHeader.append($('<td/>').text('Manche ' + i));
-    }
-    $tableHeader.append($('<th/>').text('Total'));
-    $tableNode.append($tableHeader);
+  data.playerScores.forEach((playerScore, index) => {
+    const $playerScoreLine = $('<tr/>');
 
-    data.playerScores.forEach((playerScore, index) => {
-        const $playerScoreLine = $('<tr/>');
+    const $playerHeader = $('<th/>');
+    const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+    $playerHeader.append($('<div/>').text(playerScore.id === Player.id ? 'Moi' : playerScore.id));
+    $playerHeader.append($('<div/>').text(medal));
+    $playerScoreLine.append($playerHeader);
 
-        const $playerHeader = $('<th/>');
-        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
-        $playerHeader.append($('<div/>').text(playerScore.id === Player.id ? 'Moi' : playerScore.id));
-        $playerHeader.append($('<div/>').text(medal));
-        $playerScoreLine.append($playerHeader);
+    playerScore.scores.forEach(score => {
+      const $scoreCell = $('<td/>');
 
-        playerScore.scores.forEach(score => {
-            const $scoreCell = $('<td/>');
+      const $betAndFolds = $('<div class="bet-and-fold-container"/>');
+      const $betValue = $('<div class="bet-value"/>');
+      $betValue.append($('<img/>').attr('src', 'static/assets/score_' + score.bet + '.jpg'));
+      $betAndFolds.append($betValue);
+      const $foldValue = $('<div class="fold-counter-container"/>');
+      $foldValue.append($('<img src="static/assets/back.jpg" width="15px"/>'));
+      $foldValue.append($('<span class="floating-fold-value"/>').text(score.folds));
+      $betAndFolds.append($foldValue);
 
-            const $betAndFolds = $('<div class="bet-and-fold-container"/>');
-            const $betValue = $('<div class="bet-value"/>');
-            $betValue.append($('<img/>').attr('src', 'static/assets/score_' + score.bet + '.jpg'));
-            $betAndFolds.append($betValue);
-            const $foldValue = $('<div class="fold-counter-container"/>');
-            $foldValue.append($('<img src="static/assets/back.jpg" width="15px"/>'));
-            $foldValue.append($('<span class="floating-fold-value"/>').text(score.folds));
-            $betAndFolds.append($foldValue);
+      $scoreCell.append($betAndFolds);
+      $scoreCell.append($('<hr/>'));
+      $scoreCell.append($('<div/>').text(score.value + (score.bonus > 0 ? ' + ⭐' + score.bonus : '')));
 
-            $scoreCell.append($betAndFolds);
-            $scoreCell.append($('<hr/>'));
-            $scoreCell.append($('<div/>').text(score.value + (score.bonus > 0 ? ' + ⭐' + score.bonus : '')));
-
-            $playerScoreLine.append($scoreCell);
-        });
-        
-        $playerScoreLine.append($('<td/>').append($('<strong/>').text(playerScore.totalScore)));
-        $tableNode.append($playerScoreLine);
+      $playerScoreLine.append($scoreCell);
     });
 
-    Global.$scoresDisplayContainer.append($tableNode);
+    $playerScoreLine.append($('<td/>').append($('<strong/>').text(playerScore.totalScore)));
+    $tableNode.append($playerScoreLine);
+  });
 
-    if (data.endOfGame) {
-        Dialog.$scoresDisplayDialog.removeClass('hidden');
-        Dialog.openSimpleDialog(Dialog.$scoresDisplayDialog, '🏆 Scores', null, 600);
-    }
+  Global.$scoresDisplayContainer.append($tableNode);
+
+  if (data.endOfGame) {
+    Dialog.$scoresDisplayDialog.removeClass('hidden');
+    Dialog.openSimpleDialog(Dialog.$scoresDisplayDialog, '🏆 Scores', null, 600);
+  }
+}
+
+Socket.on('players-scores', (data) => {
+    console.log('=> players-scores', data);
+    displayScores(data);
 });
 
 // Handle event when a player left the room during the game
@@ -488,7 +515,7 @@ Socket.on('debug-changed', (data) => {
   Global.isDebugEnabled = data.isDebugEnabled;
 });
 
-function selectFoldCount(Socket, Global, $currentFoldCountDisplay, event) {
+function selectFoldCount(Socket, Global, $currentFoldCountDisplay, foldBet) {
     Global.$foldCountPicker.addClass('bet-selected');
     Global.$foldCountDisplays.removeClass('selected-bet');
     $currentFoldCountDisplay.addClass('selected-bet');
@@ -497,7 +524,7 @@ function selectFoldCount(Socket, Global, $currentFoldCountDisplay, event) {
         roomId: Room.id,
         userId: Player.id,
         token: Player.token,
-        foldBet: +(event.currentTarget.id.split('-')[1])
+        foldBet: foldBet
     };
     console.log('set-fold-bet =>', foldBetEvent);
     Socket.emit('set-fold-bet', foldBetEvent);
@@ -575,12 +602,13 @@ $(document).ready(() => {
         if (!$currentFoldCountDisplay.hasClass('hidden') && !$currentFoldCountDisplay.hasClass('selected-bet')) {
             console.log('$foldCountDisplays.click() event', event.currentTarget.id);
 
+            const foldBet = +(event.currentTarget.id.split('-')[1]);
             if (!Global.$foldCountDisplays.hasClass('selected-bet')) {
-                selectFoldCount(Socket, Global, $currentFoldCountDisplay, event);
+                selectFoldCount(Socket, Global, $currentFoldCountDisplay, foldBet);
             } else {
                 Dialog.openTwoChoicesDialog(Dialog.$simpleDialog, '⚠️ Attention', 'Êtes-vous sûr de vouloir changer' +
                   ' de pari ?', 'Oui', () => {
-                    selectFoldCount(Socket, Global, $currentFoldCountDisplay, event);
+                    selectFoldCount(Socket, Global, $currentFoldCountDisplay, foldBet);
                 }, 'Non', () => {});
             }
         }
