@@ -38,7 +38,7 @@ const ROOMS = {};
 
 const SERVER = {
     roomCount: 0,
-    isDebugEnabled: true
+    isDebugEnabled: false
 };
 
 // Start server and expose main page
