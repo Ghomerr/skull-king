@@ -344,6 +344,10 @@ main {
     border: inset 3px #ffba44;
 }
 
+table.scores-table {
+    width: 100%;
+}
+
 .scores-table th, .scores-table td {
     font-size: small;
     text-align: center;
@@ -355,7 +359,7 @@ main {
     border-color: #78350e;
 }
 
-.scores-table table, .scores-table th, .scores-table td {
+table.scores-table, .scores-table th, .scores-table td {
     border: 1px #78350e solid;
     border-collapse: collapse;
     padding: 5px;

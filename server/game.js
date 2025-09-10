@@ -292,11 +292,9 @@ exports.setEventListeners = (io, Socket, room) => {
                         playedCard.bonus = 0;
                         playedCard.type = data.type;
                     } else {
-                        logDebug('wrong choice', data.type);
-                        return;
+                        logDebug('wrong choice', data.type, 'default is pirate');
                     }
                 }
-
                 
                 const cardIndex = Utils.findIndexById(player.cards, playedCard.id);
 

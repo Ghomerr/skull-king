@@ -383,55 +383,72 @@ Socket.on('player-won-current-fold', (data) => {
 });
 
 function displayScores(data) {
-  Global.$scoresDisplayContainer.text('');
-  const $tableNode = $('<table/>');
-  $tableNode.addClass('scores-table');
-  const $tableHeader = $('<tr/>');
-  $tableHeader.append($('<th/>').text('Joueur'));
-  for (let i = 1 ; i <= data.turn ; i++) {
-    $tableHeader.append($('<td/>').text('Manche ' + i));
-  }
-  $tableHeader.append($('<th/>').text('Total'));
-  $tableNode.append($tableHeader);
+    Global.$scoresDisplayContainer.text('');
+    const $tableNode = $('<table class="scores-table"/>');
 
-  data.playerScores.forEach((playerScore, index) => {
-    const $playerScoreLine = $('<tr/>');
+    // The server sends player scores sorted by total score.
+    // We sort them by ID to have a consistent column order for display.
+    //const sortedPlayerScores = [...data.playerScores].sort((a, b) => a.id.localeCompare(b.id));
 
-    const $playerHeader = $('<th/>');
-    const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
-    $playerHeader.append($('<div/>').text(playerScore.id === Player.id ? 'Moi' : playerScore.id));
-    $playerHeader.append($('<div/>').text(medal));
-    $playerScoreLine.append($playerHeader);
+    // Header row with player names as columns
+    const $tableHeader = $('<tr/>');
+    $tableHeader.append($('<th/>').text('Manche'));
+    data.playerScores.forEach((playerScore) => {
+        const $playerHeader = $('<th/>');
 
-    playerScore.scores.forEach(score => {
-      const $scoreCell = $('<td/>');
+        // Find original index for rank/medal, as data.playerScores is sorted by score
+        const originalIndex = data.playerScores.findIndex(p => p.id === playerScore.id);
+        const medal = originalIndex === 0 ? '🥇' : originalIndex === 1 ? '🥈' : originalIndex === 2 ? '🥉' : '';
 
-      const $betAndFolds = $('<div class="bet-and-fold-container"/>');
-      const $betValue = $('<div class="bet-value"/>');
-      $betValue.append($('<img/>').attr('src', 'static/assets/score_' + score.bet + '.jpg'));
-      $betAndFolds.append($betValue);
-      const $foldValue = $('<div class="fold-counter-container"/>');
-      $foldValue.append($('<img src="static/assets/back.jpg" width="15px"/>'));
-      $foldValue.append($('<span class="floating-fold-value"/>').text(score.folds));
-      $betAndFolds.append($foldValue);
-
-      $scoreCell.append($betAndFolds);
-      $scoreCell.append($('<hr/>'));
-      $scoreCell.append($('<div/>').text(score.value + (score.bonus > 0 ? ' + ⭐' + score.bonus : '')));
-
-      $playerScoreLine.append($scoreCell);
+        $playerHeader.append($('<div/>').text(
+            (playerScore.id === Player.id ? 'Moi' : playerScore.id) + ' ' + medal
+        ));
+        $tableHeader.append($playerHeader);
     });
+    $tableNode.append($tableHeader);
 
-    $playerScoreLine.append($('<td/>').append($('<strong/>').text(playerScore.totalScore)));
-    $tableNode.append($playerScoreLine);
-  });
+    // Body of the table with one row per turn
+    for (let i = 1; i <= data.turn; i++) {
+        const $turnRow = $('<tr/>');
+        $turnRow.append($('<th>').text(i));
 
-  Global.$scoresDisplayContainer.append($tableNode);
+        // For each turn, add a cell for each player
+        data.playerScores.forEach(playerScore => {
+            const score = playerScore.scores[i - 1];
+            const $scoreCell = $('<td/>');
+            if (score) {
+                const $betAndFolds = $('<div class="bet-and-fold-container"/>');
+                const $betValue = $('<div class="bet-value"/>');
+                $betValue.append($('<img/>').attr('src', 'static/assets/score_' + score.bet + '.jpg'));
+                $betAndFolds.append($betValue);
+                const $foldValue = $('<div class="fold-counter-container"/>');
+                $foldValue.append($('<img src="static/assets/back.jpg" width="15px"/>'));
+                $foldValue.append($('<span class="floating-fold-value"/>').text(score.folds));
+                $betAndFolds.append($foldValue);
 
-  if (data.endOfGame) {
-    Dialog.$scoresDisplayDialog.removeClass('hidden');
-    Dialog.openSimpleDialog(Dialog.$scoresDisplayDialog, '🏆 Scores', null, 600);
-  }
+                $scoreCell.append($betAndFolds);
+                $scoreCell.append($('<hr/>'));
+                $scoreCell.append($('<div/>').text(score.value + (score.bonus > 0 ? ' + ⭐' + score.bonus : '')));
+            }
+            $turnRow.append($scoreCell);
+        });
+        $tableNode.append($turnRow);
+    }
+
+    // Footer row with total scores
+    const $totalRow = $('<tr/>');
+    $totalRow.append($('<th/>').text('Total'));
+    data.playerScores.forEach(playerScore => {
+        $totalRow.append($('<td>').append($('<strong/>').text(playerScore.totalScore)));
+    });
+    $tableNode.append($totalRow);
+
+    Global.$scoresDisplayContainer.append($tableNode);
+
+    if (data.endOfGame) {
+        Dialog.$scoresDisplayDialog.removeClass('hidden');
+        Dialog.openSimpleDialog(Dialog.$scoresDisplayDialog, '🏆 Scores', null, 600);
+    }
 }
 
 Socket.on('players-scores', (data) => {
