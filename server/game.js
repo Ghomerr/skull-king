@@ -31,6 +31,7 @@ exports.getCanStartGame = (room, minPlayer, maxPlayer) => {
 exports.initializeGame = (room, cards) => {
     // Room needs to be initialized once only, but the socket is reset at each connection !
     if (!room.initialCards) {
+        room.isPlaying = true;
         room.initialCards = cards;
         room.cardsById = {};
         room.firstPlayerIndex = 0;
@@ -55,12 +56,16 @@ exports.refreshConnectedPlayerRoomState = (Socket, room, player) => {
         hasFoldBet: hasFoldBet,
         foldBet: player.foldBet,
         bets: getPlayersBets(room),
+        numberOfReadyPlayers: room.numberOfReadyPlayers,
+        totalNumberOfPlayers: room.users.length,
         // Display players cards
         cards:  getPlayerCards(player, room),
         playedCards: room.playedCards,
         // Display player scores
+        endOfGame: !room.isPlaying,
+        gameWinner: room.gameWinner,
         playerScores: room.turn > 1 ?
-          getPlayerScoresEvent(room, room.turn - 1, room.turn < MAX_TURN) :
+          getPlayerScoresEvent(room, room.isPlaying ? room.turn - 1 : room.turn, room.turn >= MAX_TURN) :
           null
     });
 }
@@ -138,6 +143,7 @@ function initializeNewTurn(room, turn, startPlayerIndex) {
     room.gameCards.forEach((card) => {
         room.cardsById[card.id] = card;
     });
+    room.numberOfReadyPlayers = 0;
     resetCurrentRound(room, startPlayerIndex);
     logDebug('INITIALIZING A NEW TURN OF ROOM', room.id, 'TURN', turn, 'START WITH', room.currentPlayerId, 'PLAYER of index', room.currentPlayerIndex);
 
@@ -210,7 +216,9 @@ exports.setEventListeners = (io, Socket, room) => {
                 const playerCardsEvent = {
                   turn: room.turn,
                   currentPlayerId: room.currentPlayerId,
-                  cards: playerCards
+                  cards: playerCards,
+                  numberOfReadyPlayers: room.numberOfReadyPlayers,
+                  totalNumberOfPlayers: room.users.length
                 }
                 logDebug('player-cards =>', playerCardsEvent);
                 Socket.emit('player-cards',  playerCardsEvent);
@@ -240,10 +248,10 @@ exports.setEventListeners = (io, Socket, room) => {
                 player.foldBet = roundedBet;
 
                 const totalNumberOfPlayers = room.users.length;
-                const numberOfReadyPlayers = room.users.filter(u => u.foldBet !== null).length;
+                room.numberOfReadyPlayers = room.users.filter(u => u.foldBet !== null).length;
 
                 // If all players have chosen their bet, display the turn start !
-                if (totalNumberOfPlayers === numberOfReadyPlayers) {
+                if (totalNumberOfPlayers === room.numberOfReadyPlayers) {
                     room.isWaitingPlayersBets = false;
                     io.to(room.id).emit('yo-ho-ho', {
                         turn: room.turn,
@@ -253,7 +261,7 @@ exports.setEventListeners = (io, Socket, room) => {
                 } else {
                     // Notifies players of how many players are ready
                     io.to(room.id).emit('waiting-players-bets', {
-                        numberOfReadyPlayers: numberOfReadyPlayers,
+                        numberOfReadyPlayers: room.numberOfReadyPlayers,
                         totalNumberOfPlayers: totalNumberOfPlayers
                     });
                 }
@@ -284,8 +292,8 @@ exports.setEventListeners = (io, Socket, room) => {
                         playedCard.bonus = 0;
                         playedCard.type = data.type;
                     } else {
-                        // TODO : wrong choice
                         logDebug('wrong choice', data.type);
+                        return;
                     }
                 }
 
@@ -395,7 +403,6 @@ exports.setEventListeners = (io, Socket, room) => {
                         foldWinner.folds.push(playedCards);
 
                         let isLastCardPlayed = player.cards.length === 0;
-                        let isLastTurn = false;
 
                         // Prepare the next turn when the last card has been played
                         const startPlayerIndex = Utils.findIndexById(room.users, foldWinner.id);
@@ -418,18 +425,17 @@ exports.setEventListeners = (io, Socket, room) => {
                                 );
 
                             } else {
-                                isLastTurn = true;
+                                room.isPlaying = false;
                                 logDebug('END OF THE GAME ! Turn=', room.turn);
-                                // TODO : display a proper end state (hide round, current player, bets)
 
                                 // Compute final scores for each players
                                 room.users.forEach(player => {
                                     computePlayerScore(player, MAX_TURN);
                                 })
                                 // Dispatch player score
-                                io.to(room.id).emit('players-scores',
-                                  getPlayerScoresEvent(room, MAX_TURN, true)
-                                );
+                                const scoresEvent = getPlayerScoresEvent(room, MAX_TURN, true);
+                                room.gameWinner = scoresEvent.playerScores[0].id;
+                                io.to(room.id).emit('players-scores', scoresEvent);
                             }
                         } else {
                             resetCurrentRound(room, startPlayerIndex);
@@ -438,10 +444,14 @@ exports.setEventListeners = (io, Socket, room) => {
 
                         // Display the taken fold and go to the next card
                         const playerWonCurrentFoldEvent = {
-                            hasToGetCards: !isLastTurn && isLastCardPlayed,
+                            endOfGame: !room.isPlaying,
+                            hasToGetCards: room.isPlaying && isLastCardPlayed,
                             currentPlayerId: foldWinner.id,
+                            gameWinner: room.gameWinner,
                             foldWinnerPosition: startPlayerIndex + 1, // +1 to handle the position on client side
                             foldWinnerAmount: foldWinnerAmount,
+                            numberOfReadyPlayers: room.numberOfReadyPlayers,
+                            totalNumberOfPlayers: room.users.length,
                             fold: playedCards.map(c => {
                                 return {
                                     img: c.img,
@@ -450,7 +460,7 @@ exports.setEventListeners = (io, Socket, room) => {
                             })
                         };
                         logDebug('player-won-current-fold =>', playerWonCurrentFoldEvent);
-                        io.to(room.id).emit('player-won-current-fold', playerWonCurrentFoldEvent); 
+                        io.to(room.id).emit('player-won-current-fold', playerWonCurrentFoldEvent);
                                               
                     } else {
                         // Next player to play

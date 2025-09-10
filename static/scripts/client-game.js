@@ -29,30 +29,53 @@ function getMyCards(event) {
     Socket.emit('get-my-cards', event);
 }
 
+function displayEndOfGame(data) {
+    if (data.endOfGame) {
+        Global.$headTitle.text('Partie terminée');
+        if (data.gameWinner) {
+            if (data.gameWinner === Player.id) {
+                Global.$headStatus.text('J\'ai a gagné ! 🥳');
+            } else {
+                Global.$headStatus.text(data.gameWinner + ' a gagné ! 🤯');
+            }
+        }
+    }
+}
+
 // Handle the room state when a player joined a room again
 Socket.on('connected-player-room-state', (data) => {
     console.log('=> connected-player-room-state', data);
+    
+    Dialog.$simpleDialog.dialog('close');
+
     displayPlayerNames(data);
-    displayPlayerCards({
-      turn: data.turn,
-      currentPlayerId: data.currentPlayerId,
-      cards: data.cards
-    });
+    
+    if (!data.endOfGame) {
+        displayPlayerCards({
+        turn: data.turn,
+        currentPlayerId: data.currentPlayerId,
+        cards: data.cards
+        }, false); // don't show the scores
+        displayPlayedCards(data);
+    }
 
     if (data.isWaitingPlayersBets) {
-      if (data.hasFoldBet && !Global.$foldCountDisplays.hasClass('hidden')) {
-        const $currentFoldCountDisplay = Global.$foldCountDisplays.filter(`[id=fold-${data.foldBet}]`);
+      displayNumberOfReadyPlayers(data);
+
+      // Update fold count display if the player has already choosen its bet
+      const $currentFoldCountDisplay = Global.$foldCountDisplays.filter(`[id=fold-${data.foldBet}]`);
+      if (data.hasFoldBet && !$currentFoldCountDisplay.hasClass('hidden')) {
         selectFoldCount(Socket, Global, $currentFoldCountDisplay, data.foldBet);
       }
     } else {
       displayPlayersBets(data);
     }
 
-    displayPlayedCards(data);
-
     if (data.playerScores) {
       displayScores(data.playerScores);
     }
+
+    displayEndOfGame(data);
 });
 
 function displayPlayerNames(data) {
@@ -136,7 +159,6 @@ function autoPlay() {
 
                 // No played card yet, or no color played, or no card of played type, play the first card
                 if (indexOfPlayedCardType === -1) {
-                    // TODO : WHY THE BOT MAY NOT HAVE NO CARD HERE ????
                     playCard({
                         roomId: Room.id,
                         playerId: Player.id,
@@ -161,7 +183,7 @@ function autoPlay() {
     }
 }
 
-function displayPlayerCards(data) {
+function displayPlayerCards(data, isScoreDisplayNeeded) {
     Player.cards = [...data.cards];
     Player.isCurrentPlayer = false;
 
@@ -183,7 +205,7 @@ function displayPlayerCards(data) {
     Global.$foldCounterContainer.addClass('hidden');
 
     // Display the scores between each turn
-    if (!Player.isBot && data.turn > 1) {
+    if (isScoreDisplayNeeded && !Player.isBot && data.turn > 1) {
         Dialog.$scoresDisplayDialog.removeClass('hidden');
         Dialog.openSimpleDialog(Dialog.$scoresDisplayDialog, '🏆 Scores', null, 600);
     }
@@ -191,19 +213,29 @@ function displayPlayerCards(data) {
     // Display the player that will play and the current round
     displayCurrentPlayer(data);
     Global.$headTitle.text('Manche ' + data.turn);
-
+   
     autoPlay();
 }
 
 // Receiving its cards
 Socket.on('player-cards', (data) => {
     console.log('=> player-cards', data);
-    displayPlayerCards(data);
+    displayPlayerCards(
+        data, 
+        true // can show the score now
+    );
+    displayNumberOfReadyPlayers(data);
 });
+
+function displayNumberOfReadyPlayers(data) {
+    if (!data.endOfGame && data.numberOfReadyPlayers !== data.totalNumberOfPlayers) {
+        Global.$headStatus.text(data.numberOfReadyPlayers + '/' + data.totalNumberOfPlayers + ' joueurs prêts');
+    }
+}
 
 // Handle when a player updated its bet to display that it's ready to play
 Socket.on('waiting-players-bets', (data) => {
-    Global.$headStatus.text(data.numberOfReadyPlayers + '/' + data.totalNumberOfPlayers + ' joueurs prêts');
+    displayNumberOfReadyPlayers(data);
 });
 
 /**
@@ -318,6 +350,8 @@ Socket.on('player-won-current-fold', (data) => {
 
     // Next player will be the winner
     displayCurrentPlayer(data);
+    displayNumberOfReadyPlayers(data); // should be 0 players ready
+    displayEndOfGame(data);
 
     // Increment the fold counter value of the fold winner Player
     const $foldCounterValue = Global.$foldCounterContainer.find('#fold-counter-value-' + data.foldWinnerPosition);
@@ -418,7 +452,6 @@ Socket.on('player-left-the-room', (data) => {
 
 // Handle event when a player join the game again
 Socket.on('in-game-player-connected', (data) => {
-    // TODO : handle this event properly
     console.log('=> in-game-player-connected', data);
 
     const $playerBetElement = Global.$playersBets.filter(`[player-id="${data.playerId}"]`);
@@ -591,7 +624,6 @@ $(document).ready(() => {
     Global.$emojisContainer = $('#emojis-container');
     Global.$debugButton = $('#debug-button');
 
-    // TODO : only if the game hasn't started !!!!
     Dialog.openSimpleDialog(Dialog.$simpleDialog, '⏳ Attente', 'En attente des joueurs...');
 
     // Handle click on fold count display
