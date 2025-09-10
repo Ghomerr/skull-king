@@ -34,7 +34,7 @@ function displayEndOfGame(data) {
         Global.$headTitle.text('Partie terminée');
         if (data.gameWinner) {
             if (data.gameWinner === Player.id) {
-                Global.$headStatus.text('J\'ai a gagné ! 🥳');
+                Global.$headStatus.text('J\'ai gagné ! 🥳');
             } else {
                 Global.$headStatus.text(data.gameWinner + ' a gagné ! 🤯');
             }
@@ -385,10 +385,6 @@ Socket.on('player-won-current-fold', (data) => {
 function displayScores(data) {
     Global.$scoresDisplayContainer.text('');
     const $tableNode = $('<table class="scores-table"/>');
-
-    // The server sends player scores sorted by total score.
-    // We sort them by ID to have a consistent column order for display.
-    //const sortedPlayerScores = [...data.playerScores].sort((a, b) => a.id.localeCompare(b.id));
 
     // Header row with player names as columns
     const $tableHeader = $('<tr/>');
