@@ -10,6 +10,12 @@ i.fixed-size {
     width: 15px;
 }
 
+@media(max-width: 1000px) {
+  i.fixed-size {
+    width: 5rem;
+  }
+}
+
 .lobby-container button[disabled] {
     background-color: #685448;
     color: #a5844f;
@@ -35,6 +41,13 @@ i.fixed-size {
 .ui-dialog {
   font-family: pirate, "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: large;
+}
+
+@media (max-width: 1000px) {
+  .pirate-font,
+  .ui-dialog {
+    font-size: xxx-large;
+  }
 }
 
 /** 
@@ -85,6 +98,12 @@ footer {
     text-align: center;
 }
 
+ @media (max-width: 1000px) {
+    .lobby-container {
+      margin: 2rem;
+    }
+  }
+
 .lobby-inputs,
 .players-list {
     background-color: #010101;
@@ -94,6 +113,20 @@ footer {
     width: 400px;
     margin: auto;
 }
+
+@media (max-width: 1000px) {
+  .lobby-inputs,
+  .players-list {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 1rem;
+  }
+
+  .lobby-inputs > div {
+    margin-bottom: 1rem;
+  }
+}
+
 
 .primary {
     background-color: #78350e;
@@ -126,6 +159,12 @@ footer {
     margin-left: 5px;
 }
 
+@media (max-width: 1000px) {
+  #random-room-id-btn {
+    margin-left: 1rem;
+  }
+}
+
 #room-password-link {
     cursor: pointer;
 }
@@ -142,6 +181,11 @@ footer {
     margin-top: 10px;
 }
 
+@media (max-width: 1000px) {
+  #rooms-list {
+    margin-top: 2rem;
+  }
+}
 
 .lobby-inputs-title,
 .rooms-list-title {
@@ -170,6 +214,13 @@ footer {
     flex: 2;
     cursor: not-allowed;
     font-weight: bold;
+}
+
+@media (max-width: 1000px) {
+  .room-line .room-name,
+  .room-line > div {
+    flex: 1;
+  }
 }
 
 .room-line.room-status-IN_LOBBY_WAITING .room-name {
