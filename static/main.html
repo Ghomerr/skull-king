@@ -2,9 +2,11 @@
 
 <head>
     <title>Skull King - Lobby</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="static/assets/favicon.ico" />
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/smoothness/jquery-ui.css">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
+        integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="static/styles/main.css">
     <link rel="stylesheet" type="text/css" href="static/styles/dialog.css">
     <link rel="stylesheet" type="text/css" href="node_modules/@fortawesome/fontawesome-free/css/all.css">
@@ -27,17 +29,14 @@
             <div id="lobby-inputs" class="lobby-inputs">
                 <div class="lobby-inputs-title big-text">Rejoindre une salle de jeu</div>
                 <div class="user-id-container">
-                    <i class="fas fa-user fixed-size"  title="Votre nom"></i>
-                    <input id="user-id" class="primary" maxlength="20" type="text" value="" 
-                        placeholder="Votre nom" title="Votre nom" 
-                    />
+                    <i class="fas fa-user fixed-size" title="Votre nom"></i>
+                    <input id="user-id" class="primary" maxlength="20" type="text" value="" placeholder="Votre nom"
+                        title="Votre nom" />
                 </div>
                 <div class="room-id-container">
                     <i class="fas fa-key fixed-size" title="Nom de la salle de jeu"></i>
-                    <input id="room-id" class="primary" 
-                        type="text" value="" placeholder="Nom de la salle de jeu" 
-                        title="Nom de la salle de jeu" size="20" maxlength="20" 
-                    />
+                    <input id="room-id" class="primary" type="text" value="" placeholder="Nom de la salle de jeu"
+                        title="Nom de la salle de jeu" size="20" maxlength="20" />
                     <button id="random-room-id-btn" class="primary" title="Générer un ID de Salle de jeu">
                         <i class="fas fa-redo-alt"></i>
                     </button>
@@ -46,10 +45,8 @@
                     <span id="room-password-link"><i class="fas fa-lock"></i> Partie privée ?</span>
                     <div id="room-password-container" style="display: none;">
                         <i class="fas fa-lock fixed-size"></i>
-                        <input id="room-password" class="primary" type="text" value="" 
-                            placeholder="Mot de passe" title="Mot de passe" 
-                            size="20" maxlength="20" 
-                        />
+                        <input id="room-password" class="primary" type="text" value="" placeholder="Mot de passe"
+                            title="Mot de passe" size="20" maxlength="20" />
                     </div>
                 </div>
                 <div class="button-container">
@@ -70,7 +67,7 @@
                         <i class="fas fa-play"></i> Démarrer
                     </button>
                     <div class="info-players">
-                      <span id="players-counter"></span><span> Joueur(s) (min 2, max  7)</span>
+                        <span id="players-counter"></span><span> Joueur(s) (min 2, max 7)</span>
                     </div>
                     <div class="info-players" id="info-password" style="display: none;"></div>
                 </form>
@@ -93,23 +90,26 @@
     <footer id="footer">
         <span id="debug-button"></span>
         <span><i class="fas fa-skull-crossbones"></i></span>
-        <span class="version">Skull-king v0.2025.09.10</span>
+        <span class="version"><span class="footer-text">Skull-king </span><span id="version-tag"></span></span>
         <span> - </span>
         <span class="rules">
-            <a href="https://www.play-in.com/pdf/rules_games/skull_king_regles_fr.pdf"><i class="fas fa-book"></i> Règles du jeu</a>
+            <a href="https://www.play-in.com/pdf/rules_games/skull_king_regles_fr.pdf" title="Règles du jeu"><i
+                    class="fas fa-book"></i><span class="footer-text"> Règles du jeu</span></a>
         </span>
         <span> - </span>
         <span class="the-game">
-            <i class="fas fa-puzzle-piece"></i><span> Un jeu </span>
-            <a href="https://blackrockgames.fr/game/GRA002SK"></i>Blackrock Games</a>
+            <a href="https://blackrockgames.fr/game/GRA002SK" title="Un jeu Blackrock Games"><i
+                    class="fas fa-puzzle-piece"></i><span class="footer-text"> Un jeu Blackrock Games</span></a>
         </span>
         <span> - </span>
         <span class="twitter">
-            Développé par <a href="https://twitter.com/Ghomerr"><i class="fab fa-twitter"></i> Ghomerr</a>
+            <a href="https://twitter.com/Ghomerr" title="Développé par Ghomerr"><i class="fab fa-twitter"></i><span
+                    class="footer-text"> Ghomerr</span></a>
         </span>
         <span> - </span>
         <span>
-            <a href="https://github.com/Ghomerr/skull-king"><i class="fab fa-github"></i> Sources</a>
+            <a href="https://github.com/Ghomerr/skull-king" title="Sources"><i class="fab fa-github"></i><span
+                    class="footer-text"> Sources</span></a>
         </span>
     </footer>
 

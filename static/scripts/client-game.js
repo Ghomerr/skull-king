@@ -1,6 +1,6 @@
 const Socket = io();
 const Global = {
-  isDebugEnabled: false,
+    isDebugEnabled: false,
 };
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -20,7 +20,7 @@ const Player = {
 Socket.on('ready-players-amount', (data) => {
     console.log('=> ready-players-amount', data);
     Dialog.$simpleDialog.dialog('close');
-    Dialog.openSimpleDialog(Dialog.$simpleDialog, '⏳ Attente', 'En attente des joueurs... ' + 
+    Dialog.openSimpleDialog(Dialog.$simpleDialog, '⏳ Attente', 'En attente des joueurs... ' +
         data.readyPlayersAmout + '/' + data.totalPlayers + ' joueurs connectés.');
 });
 
@@ -45,34 +45,34 @@ function displayEndOfGame(data) {
 // Handle the room state when a player joined a room again
 Socket.on('connected-player-room-state', (data) => {
     console.log('=> connected-player-room-state', data);
-    
+
     Dialog.$simpleDialog.dialog('close');
 
     displayPlayerNames(data);
-    
+
     if (!data.endOfGame) {
         displayPlayerCards({
-        turn: data.turn,
-        currentPlayerId: data.currentPlayerId,
-        cards: data.cards
+            turn: data.turn,
+            currentPlayerId: data.currentPlayerId,
+            cards: data.cards
         }, false); // don't show the scores
         displayPlayedCards(data);
     }
 
     if (data.isWaitingPlayersBets) {
-      displayNumberOfReadyPlayers(data);
+        displayNumberOfReadyPlayers(data);
 
-      // Update fold count display if the player has already choosen its bet
-      const $currentFoldCountDisplay = Global.$foldCountDisplays.filter(`[id=fold-${data.foldBet}]`);
-      if (data.hasFoldBet && !$currentFoldCountDisplay.hasClass('hidden')) {
-        selectFoldCount(Socket, Global, $currentFoldCountDisplay, data.foldBet);
-      }
+        // Update fold count display if the player has already choosen its bet
+        const $currentFoldCountDisplay = Global.$foldCountDisplays.filter(`[id=fold-${data.foldBet}]`);
+        if (data.hasFoldBet && !$currentFoldCountDisplay.hasClass('hidden')) {
+            selectFoldCount(Socket, Global, $currentFoldCountDisplay, data.foldBet);
+        }
     } else {
-      displayPlayersBets(data);
+        displayPlayersBets(data);
     }
 
     if (data.playerScores) {
-      displayScores(data.playerScores);
+        displayScores(data.playerScores);
     }
 
     displayEndOfGame(data);
@@ -82,7 +82,7 @@ function displayPlayerNames(data) {
     data.playersIds.forEach((playerId, index) => {
         const $playerBet = Global.$playersBets.eq(index);
         $playerBet.removeClass('hidden');
-        
+
         if (playerId === data.currentPlayerId) {
             $playerBet.addClass('current-player');
         } else {
@@ -188,7 +188,7 @@ function displayPlayerCards(data, isScoreDisplayNeeded) {
     Player.isCurrentPlayer = false;
 
     // Display the fold count displays
-    for (let i = 0 ; i <= data.turn ; i++) {
+    for (let i = 0; i <= data.turn; i++) {
         const foldCountDisplay = Global.$foldCountDisplays.eq(i);
         foldCountDisplay.removeClass('hidden');
     }
@@ -213,7 +213,7 @@ function displayPlayerCards(data, isScoreDisplayNeeded) {
     // Display the player that will play and the current round
     displayCurrentPlayer(data);
     Global.$headTitle.text('Manche ' + data.turn);
-   
+
     autoPlay();
 }
 
@@ -221,7 +221,7 @@ function displayPlayerCards(data, isScoreDisplayNeeded) {
 Socket.on('player-cards', (data) => {
     console.log('=> player-cards', data);
     displayPlayerCards(
-        data, 
+        data,
         true // can show the score now
     );
     displayNumberOfReadyPlayers(data);
@@ -262,30 +262,30 @@ function displayCurrentPlayer(data) {
 }
 
 function displayPlayersBets(data) {
-  data.bets.forEach((playerBet, index) => {
-    const $playerBetValue = Global.$playersBetsValues.eq(index);
-    $playerBetValue.find('img').attr('src', 'static/assets/score_' + playerBet.foldBet + '.jpg');
-    $playerBetValue.removeClass('hidden');
-  });
-  Global.$foldCounterContainer.find('span').text('0');
-  Global.$foldCounterContainer.removeClass('hidden');
+    data.bets.forEach((playerBet, index) => {
+        const $playerBetValue = Global.$playersBetsValues.eq(index);
+        $playerBetValue.find('img').attr('src', 'static/assets/score_' + playerBet.foldBet + '.jpg');
+        $playerBetValue.removeClass('hidden');
+    });
+    Global.$foldCounterContainer.find('span').text('0');
+    Global.$foldCounterContainer.removeClass('hidden');
 
-  displayCurrentPlayer(data);
-  Global.$headTitle.text('Manche ' + data.turn);
+    displayCurrentPlayer(data);
+    Global.$headTitle.text('Manche ' + data.turn);
 
-  // Hide previous elements
-  Global.$foldCountPicker.addClass('hidden');
-  Global.$foldCountDisplays.addClass('hidden');
+    // Hide previous elements
+    Global.$foldCountPicker.addClass('hidden');
+    Global.$foldCountDisplays.addClass('hidden');
 }
 
 // Handle when all players have chosen their bet
 Socket.on('yo-ho-ho', (data) => {
     console.log('=> yo-ho-ho', data);
 
-  // Display players bets
-  displayPlayersBets(data);
+    // Display players bets
+    displayPlayersBets(data);
 
-  // Display yo ho ho !
+    // Display yo ho ho !
     if (!Player.isBot) {
         Dialog.openSimpleDialog(Dialog.$simpleDialog, '🏴‍☠️ YO HO HO', 'YO HO HO !!!!!');
     } else {
@@ -310,7 +310,7 @@ function displayPlayedCards(data) {
     Room.playedCards = data.playedCards;
     displayCurrentPlayer(data);
     displayCards(data.playedCards, Global.$playedCards, (cardData, $cardElement) => {
-      $cardElement.find('span').text(cardData.playedBy === Player.id ? 'Moi' : cardData.playedBy);
+        $cardElement.find('span').text(cardData.playedBy === Player.id ? 'Moi' : cardData.playedBy);
     });
 }
 
@@ -323,7 +323,7 @@ Socket.on('card-has-been-played', (data) => {
 
 function openFoldDialog(foldOwner, foldSize, hasToGetCards) {
     // Open fold dialog
-    const dialogTitle = foldOwner === Player.id ? '🥇 J\'ai' :  '🏳 ' + foldOwner + ' a';
+    const dialogTitle = foldOwner === Player.id ? '🥇 J\'ai' : '🏳 ' + foldOwner + ' a';
     Dialog.$foldDisplayDialog.dialog('option', 'title', dialogTitle + ' remporté le pli !');
     Dialog.$foldDisplayDialog.dialog('option', 'width', foldSize * 200);
     // Ask cards for the next turn
@@ -355,7 +355,7 @@ Socket.on('player-won-current-fold', (data) => {
 
     // Increment the fold counter value of the fold winner Player
     const $foldCounterValue = Global.$foldCounterContainer.find('#fold-counter-value-' + data.foldWinnerPosition);
-    $foldCounterValue.text(data.foldWinnerAmount);   
+    $foldCounterValue.text(data.foldWinnerAmount);
 
     // Remove played cards
     Room.playedCards = [];
@@ -521,11 +521,11 @@ Socket.on('player-display-emoji', (data) => {
     // Move the displayer at the right position
     const top = -displayerHeight - playerBetHeight;
     const left = Math.round((playerBetWidth / 2) - (displayerWidth / 2));
-    $emojiDisplay.css({ 
-        top: top + 'px', 
+    $emojiDisplay.css({
+        top: top + 'px',
         left: left + 'px',
         visibility: 'visible'
-     });
+    });
 
     const arrowTop = - playerBetHeight - 2;
     const arrowLeft = Math.round((playerBetWidth / 2) - (arrowWidth / 2));
@@ -558,7 +558,7 @@ Socket.on('debug-changed', (data) => {
         // Beta features to disable
         // Global.$emojiButton.addClass('hidden');
     }
-  Global.isDebugEnabled = data.isDebugEnabled;
+    Global.isDebugEnabled = data.isDebugEnabled;
 });
 
 function selectFoldCount(Socket, Global, $currentFoldCountDisplay, foldBet) {
@@ -607,6 +607,14 @@ $(document).ready(() => {
         token: Player.token
     });
 
+    // Fetch and display version
+    fetch('static/version.json')
+        .then(response => response.json())
+        .then(data => {
+            $('#version-tag').text(data.version);
+        })
+        .catch(err => console.error('Error loading version:', err));
+
     Global.$headTitle = $('#head-title');
     Global.$headStatus = $('#head-status');
 
@@ -652,9 +660,9 @@ $(document).ready(() => {
                 selectFoldCount(Socket, Global, $currentFoldCountDisplay, foldBet);
             } else {
                 Dialog.openTwoChoicesDialog(Dialog.$simpleDialog, '⚠️ Attention', 'Êtes-vous sûr de vouloir changer' +
-                  ' de pari ?', 'Oui', () => {
-                    selectFoldCount(Socket, Global, $currentFoldCountDisplay, foldBet);
-                }, 'Non', () => {});
+                    ' de pari ?', 'Oui', () => {
+                        selectFoldCount(Socket, Global, $currentFoldCountDisplay, foldBet);
+                    }, 'Non', () => { });
             }
         }
     });
@@ -682,10 +690,10 @@ $(document).ready(() => {
     });
 
     // Tigresse choice dialog
-    Global.$choiceTigresseEvasion.click((event) =>  {
+    Global.$choiceTigresseEvasion.click((event) => {
         doChoiceTigresse(event, 'evasion');
     });
-    Global.$choiceTigressePirate.click((event) =>  {
+    Global.$choiceTigressePirate.click((event) => {
         doChoiceTigresse(event, 'pirate');
     });
     Dialog.$choiceCardDialog = $('#choice-card-dialog');
@@ -762,38 +770,38 @@ $(document).ready(() => {
 
     // Emojis
     Global.$emojiButton.click((event) => {
-      if (Global.$emojisContainer.hasClass('hidden')) {
-        const $anchor = $(event.currentTarget);           // event trigger element
-        const off = $anchor.offset();                     // position in document
-        const top = Math.round(off.top + $anchor.outerHeight());
-        let left = Math.round(off.left) + $anchor.outerWidth() / 2;
+        if (Global.$emojisContainer.hasClass('hidden')) {
+            const $anchor = $(event.currentTarget);           // event trigger element
+            const off = $anchor.offset();                     // position in document
+            const top = Math.round(off.top + $anchor.outerHeight());
+            let left = Math.round(off.left) + $anchor.outerWidth() / 2;
 
-        const prevVisibility = Global.$emojisContainer.css('visibility');
+            const prevVisibility = Global.$emojisContainer.css('visibility');
 
-        Global.$emojisContainer.css({ visibility: 'hidden' });
-        const panelWidth = Global.$emojisContainer.outerWidth();
-        left -= panelWidth / 2; // to display the panel in the middle of the button
-        const viewportRight = $(window).scrollLeft() + $(window).width();
+            Global.$emojisContainer.css({ visibility: 'hidden' });
+            const panelWidth = Global.$emojisContainer.outerWidth();
+            left -= panelWidth / 2; // to display the panel in the middle of the button
+            const viewportRight = $(window).scrollLeft() + $(window).width();
 
-        // Option: avoid the element to overlap on right
-        if (left + panelWidth > viewportRight) {
-          left = Math.max(0, viewportRight - panelWidth - 8);
+            // Option: avoid the element to overlap on right
+            if (left + panelWidth > viewportRight) {
+                left = Math.max(0, viewportRight - panelWidth - 8);
+            }
+
+            // Apply final position and visibility
+            Global.$emojisContainer.css({
+                position: 'absolute',
+                top: top,
+                left: left,
+                visibility: prevVisibility
+            });
+
+            Global.$emojisContainer.removeClass('hidden');
+        } else {
+            Global.$emojisContainer.addClass('hidden');
         }
-
-        // Apply final position and visibility
-        Global.$emojisContainer.css({
-          position: 'absolute',
-          top: top,
-          left: left,
-          visibility: prevVisibility
-        });
-
-        Global.$emojisContainer.removeClass('hidden');
-      } else {
-        Global.$emojisContainer.addClass('hidden');
-      }
     });
-    
+
     function drawEmoji(codePoint) {
         const emoji = String.fromCodePoint(codePoint);
         Global.$emojisContainer.append($('<span/>').text(emoji).attr('code', codePoint));
@@ -805,15 +813,15 @@ $(document).ready(() => {
     }
     // Emoji Hands and other body parts
     for (let codePoint = 0x1F440; codePoint <= 0x1F44F; codePoint++) {
-        drawEmoji(codePoint); 
+        drawEmoji(codePoint);
     }
     // Emoji Emotes
     for (let codePoint = 0x1F4A0; codePoint <= 0x1F4AF; codePoint++) {
-        drawEmoji(codePoint); 
+        drawEmoji(codePoint);
     }
     // Emoji other faces and hands
     for (let codePoint = 0x1F910; codePoint <= 0x1F92F; codePoint++) {
-        drawEmoji(codePoint); 
+        drawEmoji(codePoint);
     }
 
     // Send emoji

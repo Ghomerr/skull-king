@@ -36,7 +36,27 @@
   font-weight: bold;
   opacity: 0.75;
 }
+
 .skull-king .ui-button:hover {
   border: inset 1px #ffba44;
   opacity: 1;
+}
+
+@media (max-width: 600px) {
+  .skull-king .ui-dialog {
+    max-width: 95% !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    font-size: 1rem !important;
+  }
+
+  .skull-king .ui-dialog .ui-dialog-title {
+    font-size: 1.2rem !important;
+  }
+
+  .skull-king .ui-dialog .ui-dialog-buttonpane button {
+    padding: 0.2rem 0.5rem !important;
+    font-size: 0.9rem !important;
+    margin: 0.3em !important;
+  }
 }

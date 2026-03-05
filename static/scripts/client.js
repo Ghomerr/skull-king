@@ -17,7 +17,7 @@ const Lobby = {
 // Query params cleanup
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.get('formRoomId') || urlParams.get('formUserId')) {
-   window.location.href = '/';
+    window.location.href = '/';
 }
 
 const INVALID_INPUT_REGEX = /[^a-zA-Z0-9\s\-_À-ÿ]/g;
@@ -29,6 +29,14 @@ function sanitizeUserInput(input) {
 $(document).ready(() => {
     Socket.emit('get-random-room-id');
     Socket.emit('get-rooms-list');
+
+    // Fetch and display version
+    fetch('static/version.json')
+        .then(response => response.json())
+        .then(data => {
+            $('#version-tag').text(data.version);
+        })
+        .catch(err => console.error('Error loading version:', err));
 
     //------------------------------------------------------------//
     // see dialog.js -> Dialog
@@ -56,7 +64,7 @@ $(document).ready(() => {
                 break;
             case 'wrong-room-name':
                 Dialog.openSimpleDialog(Dialog.$simpleDialog, '⛔ Erreur', 'Le nom de la salle est invalide: 20 caractères autorisés: A-Z, a-z, 0,9, -, _, espace.');
-                break;     
+                break;
             case 'invalid-username':
                 Dialog.openSimpleDialog(Dialog.$simpleDialog, '⛔ Erreur', 'Le nom d\'utilisateur est invalide: 20 caractères autorisés: A-Z, a-z, 0,9, -, _, espace.');
                 break;
@@ -98,13 +106,13 @@ $(document).ready(() => {
     });
 
     // Sanitize the user inputs
-    Lobby.$userInputs.on('input', function() {
+    Lobby.$userInputs.on('input', function () {
         sanitizeUserInput($(this));
     });
 
     // Handle change room id
     Socket.on('random-room-id', (roomId) => {
-      Lobby.inputs.$roomId.val('Salle ' + roomId);
+        Lobby.inputs.$roomId.val('Salle ' + roomId);
     });
 
     // Handle click on private party link
@@ -150,9 +158,9 @@ $(document).ready(() => {
     // Start the game
     Lobby.$startBtn.click(() => {
         Socket.emit('start-game', {
-           roomId: Lobby.inputs.$roomId.val(),
-           ownerId: Player.id,
-           token: Player.token,
+            roomId: Lobby.inputs.$roomId.val(),
+            ownerId: Player.id,
+            token: Player.token,
         });
     });
 
@@ -177,13 +185,13 @@ Socket.on('connected', (data) => {
 
 // Handle the user connected event to get the player token
 Socket.on('user-connected', (data) => {
-  if (data.userId === Player.id) {
-    Player.token = data.token;
-  }
+    if (data.userId === Player.id) {
+        Player.token = data.token;
+    }
 });
 
 Socket.on('rooms-status-changed', (data) => {
-    console.log('=> rooms-status-changed', data); 
+    console.log('=> rooms-status-changed', data);
     // Display rooms list
     const roomsList = data.roomsList;
     if (roomsList.length > 0 && Lobby.roomStatus === STATUS.NOT_CONNECTED) {
@@ -193,16 +201,16 @@ Socket.on('rooms-status-changed', (data) => {
             const roomTooltip = roomData.status === STATUS.IN_LOBBY_WAITING ?
                 'Rejoindre cette salle de jeu' :
                 roomData.status === STATUS.IN_LOBBY_FULL ?
-                'Impossible de rejoindre une salle de jeu complète' :
-                'Impossible de rejoindre une salle déjà en jeu';
+                    'Impossible de rejoindre une salle de jeu complète' :
+                    'Impossible de rejoindre une salle déjà en jeu';
             const roomIcon = roomData.status === STATUS.IN_LOBBY_WAITING ?
                 'fa-sign-in-alt' :
                 'fa-ban';
-            const roomStatus = roomData.status === STATUS.IN_LOBBY_WAITING ? 
+            const roomStatus = roomData.status === STATUS.IN_LOBBY_WAITING ?
                 'ATTENTE DE JOUEUR' : roomData.status === STATUS.IN_LOBBY_FULL ? 'COMPLÈTE' : 'EN JEU';
             // Create room line with room data
             const roomsListText = '<div class="room-line room-status-' + roomData.status + '">' +
-                '<div class="room-name" title="' + roomTooltip + '" data-room-id="' + roomData.id + 
+                '<div class="room-name" title="' + roomTooltip + '" data-room-id="' + roomData.id +
                 '" onclick="Lobby.joinRoomId(this);">' +
                 '<i class="fas ' + roomIcon + ' "></i> ' +
                 '<span>' + roomData.id + '</span>' +

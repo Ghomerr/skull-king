@@ -1,0 +1,46 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "npm run dev",
+            "type": "process",
+            "command": "npm",
+            "args": [
+                "run",
+                "dev"
+            ],
+            "options": {
+                "env": {
+                    "PATH": "C:\\vifweb\\util\\node-v22;${env:PATH}"
+                }
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "npm install",
+            "type": "process",
+            "command": "npm",
+            "args": [
+                "install"
+            ],
+            "options": {
+                "env": {
+                    "PATH": "C:\\vifweb\\util\\node-v22;${env:PATH}"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

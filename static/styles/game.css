@@ -1,5 +1,5 @@
 main {
-  overflow-x: hidden;
+    overflow-x: hidden;
 }
 
 /** Head title */
@@ -8,12 +8,36 @@ main {
 }
 
 .head-title-container {
-    font-size: 30px;
+    font-size: 1.5rem;
     margin: 0px;
     padding: 5px;
     background-color: #78350e;
     color: #ffba44;
     display: flex;
+    align-items: center;
+}
+
+@media (max-width: 600px) {
+    .head-title-container {
+        font-size: 1.3rem;
+        flex-wrap: wrap;
+    }
+
+    .game-title img {
+        max-height: 40px;
+        width: auto;
+    }
+
+    #head-title,
+    #head-status {
+        width: 100%;
+        text-align: center !important;
+    }
+
+    #buttons-container {
+        width: 100%;
+        margin: 2px 0;
+    }
 }
 
 #head-title {
@@ -26,15 +50,20 @@ main {
 
 #head-title,
 #head-status {
-    flex: 1; /* Tous les deux prennent la même largeur */
+    flex: 1;
+    /* Tous les deux prennent la même largeur */
 }
 
 #buttons-container {
-    flex: 0; /* Espace occupé uniquement en fonction des dimensions de l'image */
+    flex: 0;
+    /* Espace occupé uniquement en fonction des dimensions de l'image */
     display: flex;
-    justify-content: center; /* Centre horizontalement le contenu si nécessaire */
-    align-items: center; /* Centre verticalement l'image */
-    text-align: center; /* Alignement du contenu */
+    justify-content: center;
+    /* Centre horizontalement le contenu si nécessaire */
+    align-items: center;
+    /* Centre verticalement l'image */
+    text-align: center;
+    /* Alignement du contenu */
 }
 
 .action-button {
@@ -65,13 +94,25 @@ main {
     background-position: center;
     background-color: black;
     background-size: contain;
-    min-height: 300px;
+    min-height: 200px;
     width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 10px;
+    gap: 5px;
     position: relative;
+    padding: 10px;
+}
+
+@media (max-width: 600px) {
+    #played-cards-container {
+        min-height: 150px;
+        flex-wrap: wrap;
+    }
+
+    .played-card img {
+        height: 120px !important;
+    }
 }
 
 .played-card {
@@ -117,7 +158,7 @@ main {
 }
 
 .fake-border {
-    position:absolute;
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
@@ -136,18 +177,29 @@ main {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-left: -120px;
-    margin-top: 20px;
-    margin-bottom: 20px;
-    min-height: 350px;
+    margin-left: -80px;
+    margin-top: 10px;
+    margin-bottom: 70px;
+    min-height: 180px;
 }
 
-#player-cards-container > .card-display {
+@media (max-width: 600px) {
+    #player-cards-container {
+        margin-left: -40px;
+        min-height: 120px;
+    }
+
+    #player-cards-container .card-display img {
+        height: 150px !important;
+    }
+}
+
+#player-cards-container>.card-display {
     width: 60px;
     z-index: 1;
 }
 
-#player-cards-container > .card-display:hover {
+#player-cards-container>.card-display:hover {
     z-index: 2;
     zoom: 1.25;
     position: relative;
@@ -155,21 +207,21 @@ main {
     cursor: zoom-in;
 }
 
-#player-cards-container.not-playing > .card-display {
+#player-cards-container.not-playing>.card-display {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
-#player-cards-container.not-playing > .card-display:hover {
+#player-cards-container.not-playing>.card-display:hover {
     opacity: initial;
 }
 
-#player-cards-container.playing > .card-display:hover {
+#player-cards-container.playing>.card-display:hover {
     cursor: pointer;
 }
 
-.played-card > img, 
-.card-display > img {
+.played-card>img,
+.card-display>img {
     border-radius: 15px;
 }
 
@@ -177,9 +229,16 @@ main {
 .tigresse-choice {
     display: flex;
     justify-content: center;
+    gap: 10px;
 }
 
-.tigresse-choice > .card-display:hover {
+@media (max-width: 600px) {
+    .tigresse-choice img {
+        height: 120px !important;
+    }
+}
+
+.tigresse-choice>.card-display:hover {
     cursor: pointer;
 }
 
@@ -192,7 +251,7 @@ main {
     z-index: 2;
 }
 
-#fold-count-picker.bet-selected > .fold-count-display {
+#fold-count-picker.bet-selected>.fold-count-display {
     opacity: 0.5;
 }
 
@@ -201,18 +260,18 @@ main {
     margin: 5px;
 }
 
-#fold-count-picker.bet-selected > .fold-count-display.selected-bet {
+#fold-count-picker.bet-selected>.fold-count-display.selected-bet {
     border: 4px solid #ffba44;
     opacity: 1;
     border-radius: 10px;
     margin-top: -5px;
 }
 
-.fold-count-display > img {
+.fold-count-display>img {
     border-radius: 5px;
 }
 
-.fold-count-display > img {
+.fold-count-display>img {
     width: 40px;
 }
 
@@ -228,7 +287,8 @@ main {
 #players-bets-container {
     display: flex;
     justify-content: center;
-    margin: 10px;
+    margin: 5px;
+    flex-wrap: wrap;
 }
 
 .bet-and-fold-container {
@@ -245,12 +305,24 @@ main {
     border-radius: 5px;
     background-color: #ffba44;
     color: #78350e;
-    width: 150px;
+    width: 140px;
     word-wrap: break-word;
     word-break: break-all;
-    margin: 0 20px;
+    margin: 5px;
     text-align: center;
     padding-bottom: 5px;
+}
+
+@media (max-width: 600px) {
+    .player-bet {
+        width: 100px;
+        font-size: 0.8rem;
+        margin: 2px;
+    }
+
+    .bet-value img {
+        width: 15px;
+    }
 }
 
 .player-bet.current-player {
@@ -262,6 +334,7 @@ main {
 .current-player .player-name {
     font-weight: bold;
 }
+
 .current-player .player-name::before,
 .current-player .player-name::after {
     content: '🟢';
@@ -272,7 +345,7 @@ main {
     content: '⏳';
 }
 
-.bet-value  img {
+.bet-value img {
     width: 20px;
     border-radius: 25px;
 }
@@ -298,6 +371,7 @@ main {
 .fold-card {
     position: relative;
 }
+
 .fold-card img {
     border-radius: 10px;
 }
@@ -305,8 +379,15 @@ main {
 /**  Help */
 .help-button-container {
     position: fixed;
-    bottom: 50px;
-    left: 25px;
+    bottom: 5rem;
+    left: 10px;
+    z-index: 1001;
+}
+
+@media (max-width: 600px) {
+    .help-button-container {
+        bottom: 8rem;
+    }
 }
 
 #help-display-container {
@@ -314,6 +395,18 @@ main {
     flex-direction: row;
     align-items: center;
     justify-content: center;
+    gap: 10px;
+}
+
+@media (max-width: 600px) {
+    #help-display-container {
+        flex-direction: column;
+    }
+
+    #help-display-container img {
+        max-width: 90%;
+        height: auto;
+    }
 }
 
 #help-button {
@@ -330,8 +423,15 @@ main {
 /** Score button */
 .scores-button-container {
     position: fixed;
-    bottom: 50px;
-    right: 25px;
+    bottom: 5rem;
+    right: 10px;
+    z-index: 1001;
+}
+
+@media (max-width: 600px) {
+    .scores-button-container {
+        bottom: 8rem;
+    }
 }
 
 #scores-button {
@@ -348,7 +448,8 @@ table.scores-table {
     width: 100%;
 }
 
-.scores-table th, .scores-table td {
+.scores-table th,
+.scores-table td {
     font-size: small;
     text-align: center;
 }
@@ -359,10 +460,32 @@ table.scores-table {
     border-color: #78350e;
 }
 
-table.scores-table, .scores-table th, .scores-table td {
+table.scores-table,
+.scores-table th,
+.scores-table td {
     border: 1px #78350e solid;
     border-collapse: collapse;
     padding: 5px;
+}
+
+@media (max-width: 600px) {
+
+    .scores-table th,
+    .scores-table td {
+        font-size: 0.8rem !important;
+        padding: 4px !important;
+    }
+
+    #scores-display-container {
+        max-height: 50vh;
+        overflow-y: auto;
+        overflow-x: auto;
+    }
+
+    table.scores-table {
+        table-layout: auto;
+        min-width: 100%;
+    }
 }
 
 .scores-table .floating-fold-value {
@@ -380,12 +503,13 @@ table.scores-table, .scores-table th, .scores-table td {
     border: 2px outset #78350e;
     background-color: #ffba44;
     font-size: large;
-    width: 473px; /* 16emojis x 24px + 15gaps x 5px + 2padding x 5px + 2borders x 2px */
-    max-width: 100%;     
+    width: 473px;
+    /* 16emojis x 24px + 15gaps x 5px + 2padding x 5px + 2borders x 2px */
+    max-width: 100%;
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;            
-    height: auto;        
+    gap: 5px;
+    height: auto;
     align-content: flex-start;
     padding: 5px;
 }
@@ -396,7 +520,7 @@ table.scores-table, .scores-table th, .scores-table td {
     width: 24px;
     height: 24px;
     cursor: pointer;
-    transition: transform 0.1s ease-in-out; 
+    transition: transform 0.1s ease-in-out;
 }
 
 #emojis-container span:hover {
@@ -409,8 +533,10 @@ table.scores-table, .scores-table th, .scores-table td {
     opacity: 1;
     transition: opacity 0.3s ease-out;
 }
+
 .emoji-displayer.hidden {
-    display: block !important; /** because of hidden from utilities.less */
+    display: block !important;
+    /** because of hidden from utilities.less */
     opacity: 0;
     pointer-events: none;
 }
