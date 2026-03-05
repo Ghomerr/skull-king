@@ -98,6 +98,7 @@ $(document).ready(() => {
     Lobby.$formRoomId = $('#formRoomId');
     Lobby.$formToken = $('#formToken');
     Lobby.$startBtn = $('#start-btn');
+    Lobby.$addRobotBtn = $('#add-robot-btn');
 
     Lobby.$debugButton = $('#debug-button');
 
@@ -163,6 +164,24 @@ $(document).ready(() => {
             token: Player.token,
         });
     });
+
+    // Add robot
+    Lobby.$addRobotBtn.click(() => {
+        Socket.emit('add-robot', {
+            roomId: Lobby.inputs.$roomId.val(),
+            ownerId: Player.id,
+            token: Player.token,
+        });
+    });
+
+    Lobby.removeRobot = (robotId) => {
+        Socket.emit('remove-robot', {
+            roomId: Lobby.inputs.$roomId.val(),
+            ownerId: Player.id,
+            token: Player.token,
+            robotId: robotId
+        });
+    };
 
     // Debug button 
     Lobby.$debugButton.click(() => {
@@ -246,6 +265,12 @@ Socket.on('players-list-changed', (room) => {
         if (user.id === room.owner) {
             username = '<i class="fas fa-crown"></i>' + username;
         }
+        if (user.isRobot) {
+            username = '🤖 ' + username;
+            if (Player.id === room.owner) {
+                username += ' <span class="remove-robot" onclick="Lobby.removeRobot(\'' + user.id + '\')" title="Retirer ce robot">❌</span>';
+            }
+        }
         Lobby.$lobbyPlayersList.append('<li class="user">' + username + '</li>');
     });
 
@@ -268,15 +293,21 @@ Socket.on('players-list-changed', (room) => {
         });
     }
 
-    // Start conditions
     Lobby.$playerCounter.text(room.users.length);
     if (room.owner === Player.id) {
         Lobby.$startBtn.show();
         Lobby.$startBtn.prop('disabled', !room.canStartGame);
+
+        Lobby.$addRobotBtn.show();
+        Lobby.$addRobotBtn.prop('disabled', room.users.length >= 7);
+
         if (room.password) {
             Lobby.$infoPassword.text('Mot de passe : ' + room.password);
             Lobby.$infoPassword.show();
         }
+    } else {
+        Lobby.$startBtn.hide();
+        Lobby.$addRobotBtn.hide();
     }
 });
 

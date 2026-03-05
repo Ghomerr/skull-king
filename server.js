@@ -7,6 +7,7 @@ const path = require('path');
 // Load scripts
 const Utils = require('./server/utils.js');
 const Game = require('./server/game.js');
+const LobbyRobots = require('./server/lobby-robots.js');
 
 // Load data
 const CARDS = require('./server/cards.json');
@@ -70,9 +71,9 @@ function getRoomList() {
 }
 
 function logDebug(...message) {
-  if (console && SERVER.isDebugEnabled) {
-    console.log.apply(console, message);
-  }
+    if (console && SERVER.isDebugEnabled) {
+        console.log.apply(console, message);
+    }
 }
 
 // #1 First socket.io native event from client.js
@@ -81,13 +82,13 @@ io.on('connection', (Socket) => {
     // Display debug
     Socket.emit('debug-changed', {
         isDebugEnabled: SERVER.isDebugEnabled
-    });  
+    });
 
     // Handle a player request on the main page to receive rooms list
     Socket.on('get-rooms-list', () => {
         Socket.emit('rooms-status-changed', {
-           roomsList: getRoomList()
-       });
+            roomsList: getRoomList()
+        });
     });
 
     // Handle when player asks a room id
@@ -102,15 +103,41 @@ io.on('connection', (Socket) => {
         if (room) {
             const owner = Utils.findUserByIdAndToken(room.users, data.ownerId, data.token);
             if (owner) {
-              logDebug('newUsersOrder', data.newUsersOrder);
+                logDebug('newUsersOrder', data.newUsersOrder);
 
-              room.users.sort((u1, u2) => {
-                return data.newUsersOrder.findIndex(u => u === u1.id) - data.newUsersOrder.findIndex(u => u === u2.id);
-              });
+                room.users.sort((u1, u2) => {
+                    return data.newUsersOrder.findIndex(u => u === u1.id) - data.newUsersOrder.findIndex(u => u === u2.id);
+                });
 
-              emitPlayerListChangedEvent(room);
+                emitPlayerListChangedEvent(room);
             } else {
-              Socket.emit('lobby-error', { type: 'wrong-owner' });
+                Socket.emit('lobby-error', { type: 'wrong-owner' });
+            }
+        }
+    });
+
+    // Handle add robot
+    Socket.on('add-robot', (data) => {
+        const room = ROOMS[data.roomId];
+        if (room) {
+            const owner = Utils.findUserByIdAndToken(room.users, data.ownerId, data.token);
+            if (owner) {
+                LobbyRobots.addRobot(room, emitPlayerListChangedEvent, getRoomList, io);
+            } else {
+                Socket.emit('lobby-error', { type: 'wrong-owner' });
+            }
+        }
+    });
+
+    // Handle remove robot
+    Socket.on('remove-robot', (data) => {
+        const room = ROOMS[data.roomId];
+        if (room) {
+            const owner = Utils.findUserByIdAndToken(room.users, data.ownerId, data.token);
+            if (owner) {
+                LobbyRobots.removeRobot(room, data.robotId, emitPlayerListChangedEvent, getRoomList, io);
+            } else {
+                Socket.emit('lobby-error', { type: 'wrong-owner' });
             }
         }
     });
@@ -179,9 +206,9 @@ io.on('connection', (Socket) => {
                         // Notify the new player with its own info
                         logDebug('New user', newUser.id, 'joined the lobby');
                         Socket.emit('user-connected', {
-                          id: newUser.id,
-                          token: newUser.token,
-                          roomId: lobbyData.roomId,
+                            id: newUser.id,
+                            token: newUser.token,
+                            roomId: lobbyData.roomId,
                         });
 
                         emitPlayerListChangedEvent(room);
@@ -210,7 +237,7 @@ io.on('connection', (Socket) => {
             owner: room.owner,
             password: room.password,
             users: [...room.users.map(u => {
-               return { id: u.id };
+                return { id: u.id, isRobot: u.isRobot };
             })],
             canStartGame: Game.getCanStartGame(room, MIN_PLAYERS, MAX_PLAYERS)
         });
@@ -224,13 +251,13 @@ io.on('connection', (Socket) => {
         if (room) {
             const owner = Utils.findUserByIdAndToken(room.users, lobbyData.ownerId, lobbyData.token);
             if (owner) {
-              room.status = STATUS.GAME_STARTED_WAITING_PLAYERS;
-              io.to(lobbyData.roomId).emit('game-started');
-              io.sockets.emit('rooms-status-changed', {
-                roomsList: getRoomList()
-              });
+                room.status = STATUS.GAME_STARTED_WAITING_PLAYERS;
+                io.to(lobbyData.roomId).emit('game-started');
+                io.sockets.emit('rooms-status-changed', {
+                    roomsList: getRoomList()
+                });
             } else {
-              Socket.emit('lobby-error', { type: 'wrong-owner' });
+                Socket.emit('lobby-error', { type: 'wrong-owner' });
             }
         }
     });
@@ -247,15 +274,15 @@ io.on('connection', (Socket) => {
             if (player) {
                 player.isConnected = true;
 
-                if (room.status === STATUS.GAME_STARTED_WAITING_PLAYERS) {              
+                if (room.status === STATUS.GAME_STARTED_WAITING_PLAYERS) {
                     // Notifies players
                     const readyPlayersAmout = room.users.filter(user => user.isConnected).length;
                     const totalPlayers = room.users.length;
-    
+
                     // TODO : handle refresh after YO HO HO !!!
                     if (readyPlayersAmout < totalPlayers) {
-                        logDebug('user', player.id, 'joined the room', room.id, 'in status', room.status, 
-                            'with', readyPlayersAmout,'/', totalPlayers, 'players');
+                        logDebug('user', player.id, 'joined the room', room.id, 'in status', room.status,
+                            'with', readyPlayersAmout, '/', totalPlayers, 'players');
                         io.to(room.id).emit('ready-players-amount', {
                             readyPlayersAmout,
                             totalPlayers
@@ -267,7 +294,7 @@ io.on('connection', (Socket) => {
                         io.to(room.id).emit('all-players-ready-to-play', {
                             currentPlayerId: room.currentPlayerId,
                             playersIds: room.users.map(user => {
-                                return user.id;
+                                return { id: user.id, isRobot: user.isRobot };
                             })
                         });
                     }
@@ -294,7 +321,7 @@ io.on('connection', (Socket) => {
                 // Display debug
                 Socket.emit('debug-changed', {
                     isDebugEnabled: SERVER.isDebugEnabled
-                });  
+                });
 
                 refreshAllRoomsStatus();
 
@@ -350,16 +377,16 @@ function handleDisconnect(data, Socket) {
             // Search player index
             const player = Utils.findUserByIdAndToken(room.users, data.userId, data.token);
             if (player) {
-                switch(room.status) {
+                switch (room.status) {
                     case STATUS.GAME_STARTED_WAITING_PLAYERS:
                         logDebug('player leave the lobby to go to the game page');
                         player.isConnected = false;
-                    break;
+                        break;
 
                     case STATUS.IN_LOBBY_WAITING:
                     case STATUS.IN_LOBBY_FULL:
                         logDebug('[player-quit]', data.userId, 'left the room', data.roomId);
-                    
+
                         // Remove player from room
                         const index = Utils.findIndexById(room.users, data.userId);
                         room.users.splice(index, 1);
@@ -375,7 +402,7 @@ function handleDisconnect(data, Socket) {
                             // Other status ??
                         }
                         break;
-                        
+
                     case STATUS.IN_GAME:
                     case STATUS.IN_GAME_MISSING_PLAYERS:
                         player.isConnected = false;
@@ -396,7 +423,7 @@ function handleDisconnect(data, Socket) {
                         break;
 
                     default:
-                        log-debug('Player', player.id, 'left the room', room.id,' with status', room.status, 'but nothing handled here !');
+                        log - debug('Player', player.id, 'left the room', room.id, ' with status', room.status, 'but nothing handled here !');
                 }
                 refreshAllRoomsStatus();
             } else {

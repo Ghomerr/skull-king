@@ -79,7 +79,8 @@ Socket.on('connected-player-room-state', (data) => {
 });
 
 function displayPlayerNames(data) {
-    data.playersIds.forEach((playerId, index) => {
+    data.playersIds.forEach((playerData, index) => {
+        const playerId = playerData.id;
         const $playerBet = Global.$playersBets.eq(index);
         $playerBet.removeClass('hidden');
 
@@ -90,6 +91,9 @@ function displayPlayerNames(data) {
         }
 
         let playerName = Player.id === playerId ? 'Moi' : playerId;
+        if (playerData.isRobot) {
+            playerName = '🤖 ' + playerName;
+        }
         $playerBet.find('.player-name').text(playerName);
         $playerBet.attr('player-id', playerId);
     });
@@ -310,7 +314,11 @@ function displayPlayedCards(data) {
     Room.playedCards = data.playedCards;
     displayCurrentPlayer(data);
     displayCards(data.playedCards, Global.$playedCards, (cardData, $cardElement) => {
-        $cardElement.find('span').text(cardData.playedBy === Player.id ? 'Moi' : cardData.playedBy);
+        let playerName = cardData.playedBy === Player.id ? 'Moi' : cardData.playedBy;
+        if (cardData.isRobot) {
+            playerName = '🤖 ' + playerName;
+        }
+        $cardElement.find('span').text(playerName);
     });
 }
 
@@ -363,7 +371,11 @@ Socket.on('player-won-current-fold', (data) => {
 
     // Prepare display fold dialog content
     displayCards(data.fold, Global.$foldCards, (cardData, $cardElement) => {
-        $cardElement.find('span').text(cardData.playedBy === Player.id ? 'Moi' : cardData.playedBy);
+        let playerName = cardData.playedBy === Player.id ? 'Moi' : cardData.playedBy;
+        if (cardData.isRobot) {
+            playerName = '🤖 ' + playerName;
+        }
+        $cardElement.find('span').text(playerName);
     });
 
     if (!Player.isBot) {
@@ -396,8 +408,12 @@ function displayScores(data) {
         const originalIndex = data.playerScores.findIndex(p => p.id === playerScore.id);
         const medal = originalIndex === 0 ? '🥇' : originalIndex === 1 ? '🥈' : originalIndex === 2 ? '🥉' : '';
 
+        let playerName = playerScore.id === Player.id ? 'Moi' : playerScore.id;
+        if (playerScore.isRobot) {
+            playerName = '🤖 ' + playerName;
+        }
         $playerHeader.append($('<div/>').text(
-            (playerScore.id === Player.id ? 'Moi' : playerScore.id) + ' ' + medal
+            playerName + ' ' + medal
         ));
         $tableHeader.append($playerHeader);
     });

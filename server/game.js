@@ -1,4 +1,5 @@
 const Utils = require('./utils.js');
+const GameRobots = require('./game-robots.js');
 
 const CARD_TYPE = {
     BLACK: 'black',
@@ -12,9 +13,9 @@ const CARD_TYPE = {
 const MAX_TURN = 10;
 
 function logDebug(...message) {
-  if (console && SERVER.isDebugEnabled) {
-    console.log.apply(console, message);
-  }
+    if (console && SERVER.isDebugEnabled) {
+        console.log.apply(console, message);
+    }
 }
 
 let SERVER;
@@ -49,7 +50,7 @@ exports.refreshConnectedPlayerRoomState = (Socket, room, player) => {
         currentPlayerId: room.currentPlayerId,
         // Display player names
         playersIds: room.users.map(user => {
-            return user.id;
+            return { id: user.id, isRobot: user.isRobot };
         }),
         // Display players bets
         isWaitingPlayersBets: room.isWaitingPlayersBets,
@@ -59,14 +60,14 @@ exports.refreshConnectedPlayerRoomState = (Socket, room, player) => {
         numberOfReadyPlayers: room.numberOfReadyPlayers,
         totalNumberOfPlayers: room.users.length,
         // Display players cards
-        cards:  getPlayerCards(player, room),
+        cards: getPlayerCards(player, room),
         playedCards: room.playedCards,
         // Display player scores
         endOfGame: !room.isPlaying,
         gameWinner: room.gameWinner,
         playerScores: room.turn > 1 ?
-          getPlayerScoresEvent(room, room.isPlaying ? room.turn - 1 : room.turn, room.turn >= MAX_TURN) :
-          null
+            getPlayerScoresEvent(room, room.isPlaying ? room.turn - 1 : room.turn, room.turn >= MAX_TURN) :
+            null
     });
 }
 
@@ -159,30 +160,291 @@ function initializeNewTurn(room, turn, startPlayerIndex) {
         // For tests only
         if (player.id === "Test1") {
             dispatchCardsOfList(room.cardsById, room.turn, player, room.gameCards,
-              [34]);
+                [34]);
         } else if (player.id === "Test2") {
             dispatchCardsOfList(room.cardsById, room.turn, player, room.gameCards,
-              [1]);
+                [1]);
         } else {
             // DEFAULT CARDS DISPATCH
             dispatchCards(room.turn, player, room.gameCards);
         }
     }
+
+    // Check if robots can start playing (betting)
+    checkAndTriggerRobotActions(room);
+}
+
+function handleSetFoldBet(io, room, player, foldBet) {
+    // Fold bet check
+    const roundedBet = Math.round(foldBet);
+    if (foldBet < 0 || foldBet > room.turn || roundedBet !== foldBet) {
+        // Find socket for this player if it's not a robot
+        if (!player.isRobot) {
+            const socketId = Object.keys(room.sockets || {}).find(id => room.sockets[id] === player.id);
+            if (socketId) {
+                io.to(socketId).emit('player-error', {
+                    type: 'wrong-fold-bet',
+                    data: foldBet
+                });
+            }
+        }
+        return;
+    }
+
+    logDebug('=> set-fold-bet', player.id, roundedBet);
+    player.foldBet = roundedBet;
+
+    const totalNumberOfPlayers = room.users.length;
+    room.numberOfReadyPlayers = room.users.filter(u => u.foldBet !== null).length;
+
+    // If all players have chosen their bet, display the turn start !
+    if (totalNumberOfPlayers === room.numberOfReadyPlayers) {
+        room.isWaitingPlayersBets = false;
+        io.to(room.id).emit('yo-ho-ho', {
+            turn: room.turn,
+            bets: getPlayersBets(room),
+            currentPlayerId: room.currentPlayerId
+        });
+
+        // After yo-ho-ho, check if it's a robot's turn to play a card
+        checkAndTriggerRobotActions(room);
+    } else {
+        // Notifies players of how many players are ready
+        io.to(room.id).emit('waiting-players-bets', {
+            numberOfReadyPlayers: room.numberOfReadyPlayers,
+            totalNumberOfPlayers: totalNumberOfPlayers
+        });
+
+        // Check if more robots should bet
+        checkAndTriggerRobotActions(room);
+    }
+}
+
+function handlePlayCard(io, room, player, cardId, type, playerSocket) {
+    logDebug('=> handlePlayCard', player.id, cardId, type);
+
+    const playedCard = room.cardsById[cardId];
+    if (playedCard.type === CARD_TYPE.CHOICE) {
+        if (type === CARD_TYPE.PIRATE) {
+            playedCard.img = 'tigresse_pirate.jpg';
+            playedCard.value = 100;
+            playedCard.bonus = 30;
+            playedCard.type = type;
+        } else if (type === CARD_TYPE.EVASION) {
+            playedCard.img = 'tigresse_evasion.jpg';
+            playedCard.value = 0;
+            playedCard.bonus = 0;
+            playedCard.type = type;
+        } else {
+            logDebug('wrong choice', type, 'default is pirate');
+        }
+    }
+
+    const cardIndex = Utils.findIndexById(player.cards, playedCard.id);
+
+    logDebug(player.id, 'played the following card:', playedCard);
+
+    // Search the requested type of cards for the current turn
+    let typeOfCards = null;
+    let playerHasRequestedTypeOfCards = false;
+    if (room.playedCards.length > 0) {
+        const firstColorCard = room.playedCards.find(c => !c.isSpecial);
+        if (firstColorCard) {
+            let cardOfTurn = null;
+            let hasBreakingTypeCard = false;
+            for (let i = 0; i < room.playedCards.length; i++) {
+                cardOfTurn = room.playedCards[i];
+                if (cardOfTurn.id === firstColorCard.id) {
+                    break;
+                }
+                // A Special card in first position makes no type of card for this turn
+                if (cardOfTurn.isSpecial && cardOfTurn.type !== CARD_TYPE.EVASION) {
+                    hasBreakingTypeCard = true;
+                    break;
+                }
+            }
+
+            if (!hasBreakingTypeCard) {
+                typeOfCards = firstColorCard.type;
+                // Search if the player has the requested type of cards
+                playerHasRequestedTypeOfCards = player.cards.some(c => c.type === typeOfCards);
+            }
+        }
+    }
+
+    // Check if the player can play its card
+    if (cardIndex >= 0 && room.playedCards.length < room.users.length &&
+        (playedCard.isSpecial || !playerHasRequestedTypeOfCards || playedCard.type === typeOfCards)) {
+
+        // OK Card can be added to the played cards
+        room.playedCards.push(playedCard);
+
+        // Remove the card from the player cards
+        player.cards.splice(cardIndex, 1);
+
+        // Update who played that card
+        playedCard.playedBy = player.id;
+
+        // Notify the player (if not robot) that its card has been removed
+        if (!player.isRobot && playerSocket) {
+            playerSocket.emit('remove-played-card', {
+                playedCardId: playedCard.id
+            });
+        }
+
+        // Update current player turn
+        logDebug('before updating next player', room.currentPlayerId, room.currentPlayerIndex);
+        room.currentPlayerIndex++;
+        if (room.currentPlayerIndex === room.users.length) {
+            room.currentPlayerIndex = 0;
+        }
+        logDebug('new current player is', room.currentPlayerIndex, room.users[room.currentPlayerIndex].id);
+
+        // Check if the last player played its card
+        if (room.playedCards.length === room.users.length) {
+            // Check who wins the fold
+            let bestPlayedCard = null;
+            let hasMermaid = false;
+            let firstMermaid = null;
+            room.playedCards.forEach((card) => {
+                if (!bestPlayedCard || bestPlayedCard.value < card.value &&
+                    (card.isSpecial || !typeOfCards || card.type === typeOfCards
+                        || (bestPlayedCard.value < 20 && card.type === CARD_TYPE.BLACK))) {
+                    bestPlayedCard = card;
+                }
+                if (!hasMermaid && card.type === CARD_TYPE.MERMAID) {
+                    hasMermaid = true;
+                    firstMermaid = card;
+                }
+            });
+
+            if (bestPlayedCard.type === CARD_TYPE.SKULL_KING && hasMermaid) {
+                bestPlayedCard = firstMermaid;
+                bestPlayedCard.value = 1000;
+                room.playedCards.filter(c => c.type === CARD_TYPE.PIRATE).forEach(c => c.bonus = 0);
+            }
+
+            logDebug('best card of round is', bestPlayedCard, 'played by', bestPlayedCard.playedBy);
+
+            const foldWinner = Utils.findElementById(room.users, bestPlayedCard.playedBy);
+            bestPlayedCard.isBestCard = true;
+            const playedCards = [...room.playedCards];
+            foldWinner.folds.push(playedCards);
+
+            let isLastCardPlayed = player.cards.length === 0;
+
+            const startPlayerIndex = Utils.findIndexById(room.users, foldWinner.id);
+            const foldWinnerAmount = foldWinner.folds.length;
+            if (isLastCardPlayed) {
+                if (room.turn < MAX_TURN) {
+                    const previousTurn = room.turn;
+                    room.firstPlayerIndex++;
+                    if (room.firstPlayerIndex === room.users.length) {
+                        room.firstPlayerIndex = 0;
+                    }
+                    initializeNewTurn(room, previousTurn + 1, room.firstPlayerIndex);
+                    io.to(room.id).emit('players-scores', getPlayerScoresEvent(room, previousTurn, false));
+                } else {
+                    room.isPlaying = false;
+                    room.users.forEach(p => computePlayerScore(p, MAX_TURN));
+                    const scoresEvent = getPlayerScoresEvent(room, MAX_TURN, true);
+                    room.gameWinner = scoresEvent.playerScores[0].id;
+                    io.to(room.id).emit('players-scores', scoresEvent);
+                }
+            } else {
+                resetCurrentRound(room, startPlayerIndex);
+            }
+
+            const playerWonCurrentFoldEvent = {
+                endOfGame: !room.isPlaying,
+                hasToGetCards: room.isPlaying && isLastCardPlayed,
+                currentPlayerId: foldWinner.id,
+                gameWinner: room.gameWinner,
+                foldWinnerPosition: startPlayerIndex + 1,
+                foldWinnerAmount: foldWinnerAmount,
+                numberOfReadyPlayers: room.numberOfReadyPlayers,
+                totalNumberOfPlayers: room.users.length,
+                fold: playedCards.map(c => {
+                    const owner = Utils.findElementById(room.users, c.playedBy);
+                    return {
+                        img: c.img,
+                        playedBy: c.playedBy,
+                        isRobot: owner ? owner.isRobot : false
+                    };
+                })
+            };
+            io.to(room.id).emit('player-won-current-fold', playerWonCurrentFoldEvent);
+
+            // After round/turn ends, check if robot starts next
+            checkAndTriggerRobotActions(room);
+
+        } else {
+            // Next player to play
+            room.currentPlayerId = room.users[room.currentPlayerIndex].id;
+            const playedCardEvent = {
+                currentPlayerId: room.currentPlayerId,
+                playedCards: room.playedCards.map(c => {
+                    const owner = Utils.findElementById(room.users, c.playedBy);
+                    return {
+                        id: c.id,
+                        type: c.type,
+                        img: c.img,
+                        playedBy: c.playedBy,
+                        isRobot: owner ? owner.isRobot : false
+                    };
+                })
+            };
+            io.to(room.id).emit('card-has-been-played', playedCardEvent);
+
+            // Check if next player is robot
+            checkAndTriggerRobotActions(room);
+        }
+    } else {
+        // Handle error for human player
+    }
+}
+
+let IO;
+function checkAndTriggerRobotActions(room) {
+    if (!IO) return;
+
+    if (room.isWaitingPlayersBets) {
+        // Robots that haven't bet yet
+        const robotsToBet = room.users.filter(u => u.isRobot && u.foldBet === null);
+        robotsToBet.forEach(robot => {
+            const bet = GameRobots.getRobotBet(robot, room.turn);
+            // Delay robot action slightly to feel more natural
+            setTimeout(() => {
+                handleSetFoldBet(IO, room, robot, bet);
+            }, 1000);
+        });
+    } else if (room.isPlaying) {
+        const currentPlayer = room.users[room.currentPlayerIndex];
+        if (currentPlayer && currentPlayer.isRobot) {
+            const robotAction = GameRobots.getRobotCardToPlay(room, currentPlayer);
+            if (robotAction) {
+                setTimeout(() => {
+                    handlePlayCard(IO, room, currentPlayer, robotAction.cardId, robotAction.type);
+                }, 1500);
+            }
+        }
+    }
 }
 
 function getPlayerScoresEvent(room, previousTurn, endOfGame) {
-  return {
-    endOfGame: endOfGame,
-    turn: previousTurn,
-    playerScores: room.users.map(player => {
-      return {
-        id: player.id,
-        totalScore: player.totalScore,
-        scores: player.scores
-      };
-    })
-    .sort((p1, p2) => p2.totalScore - p1.totalScore)
-  };
+    return {
+        endOfGame: endOfGame,
+        turn: previousTurn,
+        playerScores: room.users.map(player => {
+            return {
+                id: player.id,
+                isRobot: player.isRobot,
+                totalScore: player.totalScore,
+                scores: player.scores
+            };
+        })
+            .sort((p1, p2) => p2.totalScore - p1.totalScore)
+    };
 }
 
 function getPlayerCards(player) {
@@ -197,15 +459,16 @@ function getPlayerCards(player) {
 }
 
 function getPlayersBets(room) {
-  return room.users.map(player => {
-    return {
-      userId: player.id,
-      foldBet: player.foldBet
-    };
-  })
+    return room.users.map(player => {
+        return {
+            userId: player.id,
+            foldBet: player.foldBet
+        };
+    })
 }
 
 exports.setEventListeners = (io, Socket, room) => {
+    IO = io;
 
     // Handle player requesting its cards
     Socket.on('get-my-cards', (data) => {
@@ -214,14 +477,14 @@ exports.setEventListeners = (io, Socket, room) => {
             if (player) {
                 const playerCards = getPlayerCards(player);
                 const playerCardsEvent = {
-                  turn: room.turn,
-                  currentPlayerId: room.currentPlayerId,
-                  cards: playerCards,
-                  numberOfReadyPlayers: room.numberOfReadyPlayers,
-                  totalNumberOfPlayers: room.users.length
+                    turn: room.turn,
+                    currentPlayerId: room.currentPlayerId,
+                    cards: playerCards,
+                    numberOfReadyPlayers: room.numberOfReadyPlayers,
+                    totalNumberOfPlayers: room.users.length
                 }
                 logDebug('player-cards =>', playerCardsEvent);
-                Socket.emit('player-cards',  playerCardsEvent);
+                Socket.emit('player-cards', playerCardsEvent);
             } else {
                 console.error('[get-my-cards] player not found', data);
             }
@@ -233,42 +496,10 @@ exports.setEventListeners = (io, Socket, room) => {
         if (data.roomId === room.id) {
             const player = Utils.findUserByIdAndToken(room.users, data.userId, data.token);
             if (player) {
-
-                // Fold bet check
-                const roundedBet = Math.round(data.foldBet);
-                if (data.foldBet < 0 || data.foldBet > room.turn || roundedBet !== data.foldBet) {
-                    Socket.emit('player-error',  {
-                        type: 'wrong-fold-bet',
-                        data: data.foldBet
-                    });
-                    return;
-                }
-
-                logDebug('=> set-fold-bet', data);
-                player.foldBet = roundedBet;
-
-                const totalNumberOfPlayers = room.users.length;
-                room.numberOfReadyPlayers = room.users.filter(u => u.foldBet !== null).length;
-
-                // If all players have chosen their bet, display the turn start !
-                if (totalNumberOfPlayers === room.numberOfReadyPlayers) {
-                    room.isWaitingPlayersBets = false;
-                    io.to(room.id).emit('yo-ho-ho', {
-                        turn: room.turn,
-                        bets: getPlayersBets(room),
-                        currentPlayerId: room.currentPlayerId
-                    });
-                } else {
-                    // Notifies players of how many players are ready
-                    io.to(room.id).emit('waiting-players-bets', {
-                        numberOfReadyPlayers: room.numberOfReadyPlayers,
-                        totalNumberOfPlayers: totalNumberOfPlayers
-                    });
-                }
-
+                handleSetFoldBet(io, room, player, data.foldBet);
             } else {
                 console.error('[set-fold-bet] player not found', data);
-            }           
+            }
         }
     });
 
@@ -277,219 +508,10 @@ exports.setEventListeners = (io, Socket, room) => {
         if (room.id === data.roomId) {
             const player = Utils.findUserByIdAndToken(room.users, data.playerId, data.token);
             if (player && player.id === room.currentPlayerId) {
-                logDebug('=> play-a-card', data);
-
-                const playedCard = room.cardsById[data.cardId];
-                if (playedCard.type === CARD_TYPE.CHOICE) {
-                    if (data.type === CARD_TYPE.PIRATE) {
-                        playedCard.img = 'tigresse_pirate.jpg';
-                        playedCard.value = 100;
-                        playedCard.bonus = 30;
-                        playedCard.type = data.type;
-                    } else if (data.type === CARD_TYPE.EVASION) {
-                        playedCard.img = 'tigresse_evasion.jpg';
-                        playedCard.value = 0;
-                        playedCard.bonus = 0;
-                        playedCard.type = data.type;
-                    } else {
-                        logDebug('wrong choice', data.type, 'default is pirate');
-                    }
-                }
-                
-                const cardIndex = Utils.findIndexById(player.cards, playedCard.id);
-
-                logDebug(player.id, 'played the following card:', playedCard);
-
-                // Search the requested type of cards for the current turn
-                let typeOfCards = null;
-                let playerHasRequestedTypeOfCards = false;
-                if (room.playedCards.length > 0) {
-                    // Examples : 
-                    // * 0=purple -> purple
-                    // * 0=evasion, 1=purple -> purple
-                    // * 0=pirate, 1=purple -> no type
-                    // * 0=evasion, 1=pirate, 2=purple -> no type
-                    const firstColorCard = room.playedCards.find(c => !c.isSpecial);
-                    if (firstColorCard) {
-                        let cardOfTurn = null;
-                        let hasBreakingTypeCard = false;
-                        for (let i = 0 ; i < room.playedCards.length ; i++) {
-                            cardOfTurn = room.playedCards[i];
-                            if (cardOfTurn.id === firstColorCard.id) {
-                                break;
-                            }
-                            // A Special card in first position makes no type of card for this turn
-                            if (cardOfTurn.isSpecial && cardOfTurn.type !== CARD_TYPE.EVASION) {
-                                hasBreakingTypeCard = true;
-                                break;
-                            }
-                        }
-
-                        if (!hasBreakingTypeCard) {
-                            typeOfCards = firstColorCard.type;
-                            // Search if the player has the requested type of cards
-                            playerHasRequestedTypeOfCards = player.cards.some(c => c.type === typeOfCards);
-                        }
-                    }
-                }
-                
-                // Card has been found (technical, should never happen) AND
-                // Check if it's not the last turn (should never happen)
-                if (cardIndex >= 0 && room.playedCards.length < room.users.length &&           
-                        // Check if the player can play its card : played card is special 
-                        // OR player has no card of the played type 
-                        // OR played card is of the right card type for this turn
-                        (playedCard.isSpecial || !playerHasRequestedTypeOfCards || playedCard.type === typeOfCards)) {
-
-                    // OK Card can be added to the played cards
-                    room.playedCards.push(playedCard);
-
-                    // Remove the card from the player cards
-                    player.cards.splice(cardIndex, 1);
-
-                    // Update who played that card
-                    playedCard.playedBy = player.id;
-
-                    // Notify the current player that its card has been removed
-                    Socket.emit('remove-played-card', {
-                        playedCardId: playedCard.id
-                    });
-
-                    // Update current player turn
-                    logDebug('before updating next player', room.currentPlayerId, room.currentPlayerIndex);
-                    room.currentPlayerIndex++;
-                    if (room.currentPlayerIndex === room.users.length) {
-                        room.currentPlayerIndex = 0;
-                    }
-                    logDebug('new current player is', room.currentPlayerIndex, room.users[room.currentPlayerIndex].id);
-
-                    // Check if the last player played its card, when there is the same amount of cards played than users
-                    if (room.playedCards.length === room.users.length) {
-                        // Check who wins the fold
-                        let bestPlayedCard = null;
-                        let hasMermaid = false;
-                        let firstMermaid = null;
-                        room.playedCards.forEach((card) => {
-                            // Best card is: first and only card or a card of high value AND
-                            if (!bestPlayedCard || bestPlayedCard.value < card.value &&
-                                // it's a special card, OR a type of cards doesn't exist, OR type exists and its the
-                                // same type OR the type of card is numerical card and the played card is a black card
-                                (card.isSpecial || !typeOfCards || card.type === typeOfCards 
-                                    || bestPlayedCard.value < 20 && card.type === CARD_TYPE.BLACK)) {
-                                bestPlayedCard = card;
-                            }
-                            if (!hasMermaid && card.type === CARD_TYPE.MERMAID) {
-                                hasMermaid = true;
-                                firstMermaid = card;
-                            }
-                        });
-
-                        // If a mermaid has been played with the Skull king, the first one wins !
-                        if (bestPlayedCard.type === CARD_TYPE.SKULL_KING && hasMermaid) {
-                            bestPlayedCard = firstMermaid;
-                            bestPlayedCard.value = 1000;
-                            // Pirates won't have bonuses
-                            room.playedCards.filter(c => c.type === CARD_TYPE.PIRATE).forEach(c => c.bonus = 0);
-                        }
-
-                        logDebug('best card of round is', bestPlayedCard, 'played by', bestPlayedCard.playedBy);
-
-                        // Update winner player folds with the current one
-                        const foldWinner = Utils.findElementById(room.users, bestPlayedCard.playedBy);
-                        bestPlayedCard.isBestCard = true;
-                        const playedCards = [...room.playedCards];
-                        foldWinner.folds.push(playedCards);
-
-                        let isLastCardPlayed = player.cards.length === 0;
-
-                        // Prepare the next turn when the last card has been played
-                        const startPlayerIndex = Utils.findIndexById(room.users, foldWinner.id);
-                        const foldWinnerAmount = foldWinner.folds.length;
-                        if (isLastCardPlayed) {
-                            logDebug('last card of the turn', room.turn, 'has been played by', foldWinner.id, 'at index', startPlayerIndex);
-                                                       
-                            if (room.turn < MAX_TURN) {
-                                // Next first player
-                                const previousTurn = room.turn;
-                                logDebug('Before a new turn, last first player index', room.firstPlayerIndex, 'was', room.users[room.firstPlayerIndex].id, 'at turn', previousTurn);                                
-                                room.firstPlayerIndex++;
-                                if (room.firstPlayerIndex === room.users.length) {
-                                    room.firstPlayerIndex = 0;
-                                }
-                                initializeNewTurn(room, previousTurn + 1, room.firstPlayerIndex);
-                                // Dispatch player score
-                                io.to(room.id).emit('players-scores',
-                                  getPlayerScoresEvent(room, previousTurn, false)
-                                );
-
-                            } else {
-                                room.isPlaying = false;
-                                logDebug('END OF THE GAME ! Turn=', room.turn);
-
-                                // Compute final scores for each players
-                                room.users.forEach(player => {
-                                    computePlayerScore(player, MAX_TURN);
-                                })
-                                // Dispatch player score
-                                const scoresEvent = getPlayerScoresEvent(room, MAX_TURN, true);
-                                room.gameWinner = scoresEvent.playerScores[0].id;
-                                io.to(room.id).emit('players-scores', scoresEvent);
-                            }
-                        } else {
-                            resetCurrentRound(room, startPlayerIndex);
-                            logDebug('new round of turn', room.turn, 'starting with winning player', room.currentPlayerId, 'at index', room.currentPlayerIndex);
-                        }
-
-                        // Display the taken fold and go to the next card
-                        const playerWonCurrentFoldEvent = {
-                            endOfGame: !room.isPlaying,
-                            hasToGetCards: room.isPlaying && isLastCardPlayed,
-                            currentPlayerId: foldWinner.id,
-                            gameWinner: room.gameWinner,
-                            foldWinnerPosition: startPlayerIndex + 1, // +1 to handle the position on client side
-                            foldWinnerAmount: foldWinnerAmount,
-                            numberOfReadyPlayers: room.numberOfReadyPlayers,
-                            totalNumberOfPlayers: room.users.length,
-                            fold: playedCards.map(c => {
-                                return {
-                                    img: c.img,
-                                    playedBy: c.playedBy
-                                }
-                            })
-                        };
-                        logDebug('player-won-current-fold =>', playerWonCurrentFoldEvent);
-                        io.to(room.id).emit('player-won-current-fold', playerWonCurrentFoldEvent);
-                                              
-                    } else {
-                        // Next player to play
-                        room.currentPlayerId = room.users[room.currentPlayerIndex].id;
-                        logDebug('A card has been played. Next player to play is', room.currentPlayerId);
-
-                        // Notify players with the played cards
-                        const playedCardEvent = {
-                            currentPlayerId: room.currentPlayerId,
-                            playedCards: room.playedCards.map(c => { 
-                                return {
-                                    id: c.id,
-                                    type: c.type,
-                                    img: c.img,
-                                    playedBy: c.playedBy
-                                }; 
-                            })
-                        };
-                        logDebug('card-has-been-played =>', playedCardEvent);
-                        io.to(room.id).emit('card-has-been-played', playedCardEvent);
-                    }
-                } else {
-                    // Notify the player that its cards cannot be played
-                    Socket.emit('player-error',  {
-                        type: 'cannot-play-this-card',
-                        data: playedCard.name
-                    });
-                }
+                handlePlayCard(io, room, player, data.cardId, data.type, Socket);
             } else {
                 // No player found or not the current player to play
-                Socket.emit('player-error',  {
+                Socket.emit('player-error', {
                     type: 'wrong-player'
                 });
             }
@@ -498,12 +520,12 @@ exports.setEventListeners = (io, Socket, room) => {
 
     // Emoji handling
     Socket.on('send-emoji', (data) => {
-        if (data.roomId === room.id) {          
+        if (data.roomId === room.id) {
             const player = Utils.findUserByIdAndToken(room.users, data.playerId, data.token);
             if (player) {
                 logDebug('=> send-emoji', data);
                 // Check emoji sanity
-                if (data.emojiCode >= 0x1F600 && data.emojiCode <= 0x1F64F || 
+                if (data.emojiCode >= 0x1F600 && data.emojiCode <= 0x1F64F ||
                     data.emojiCode >= 0x1F440 && data.emojiCode <= 0x1F44F ||
                     data.emojiCode >= 0x1F4A0 && data.emojiCode <= 0x1F4AF ||
                     data.emojiCode >= 0x1F910 && data.emojiCode <= 0x1F92F

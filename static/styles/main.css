@@ -249,6 +249,11 @@ footer span {
   }
 }
 
+.players-list button {
+  margin-top: 10px;
+  width: 100%;
+}
+
 .lobby-inputs-title,
 .rooms-list-title {
   margin-bottom: 5px;
@@ -316,4 +321,14 @@ footer span {
 
 #debug-button.active {
   background-color: #219250;
+}
+
+.remove-robot {
+  cursor: pointer;
+  margin-left: 10px;
+  font-size: 80%;
+}
+
+.remove-robot:hover {
+  filter: brightness(1.2);
 }
