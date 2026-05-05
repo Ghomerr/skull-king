@@ -98,7 +98,8 @@ $(document).ready(() => {
     Lobby.$formRoomId = $('#formRoomId');
     Lobby.$formToken = $('#formToken');
     Lobby.$startBtn = $('#start-btn');
-    Lobby.$addRobotBtn = $('#add-robot-btn');
+    Lobby.$addRobotParrotBtn = $('#add-robot-parrot-btn');
+    Lobby.$addRobotIntelligentBtn = $('#add-robot-intelligent-btn');
 
     Lobby.$debugButton = $('#debug-button');
 
@@ -165,12 +166,23 @@ $(document).ready(() => {
         });
     });
 
-    // Add robot
-    Lobby.$addRobotBtn.click(() => {
+    // Add robot parrot
+    Lobby.$addRobotParrotBtn.click(() => {
         Socket.emit('add-robot', {
             roomId: Lobby.inputs.$roomId.val(),
             ownerId: Player.id,
             token: Player.token,
+            robotType: 'parrot'
+        });
+    });
+
+    // Add robot intelligent
+    Lobby.$addRobotIntelligentBtn.click(() => {
+        Socket.emit('add-robot', {
+            roomId: Lobby.inputs.$roomId.val(),
+            ownerId: Player.id,
+            token: Player.token,
+            robotType: 'intelligent'
         });
     });
 
@@ -266,7 +278,8 @@ Socket.on('players-list-changed', (room) => {
             username = '<i class="fas fa-crown"></i>' + username;
         }
         if (user.isRobot) {
-            username = '🤖 ' + username;
+            const robotIcon = user.robotType === 'intelligent' ? '🤖' : '🦜';
+            username = robotIcon + ' ' + username;
             if (Player.id === room.owner) {
                 username += ' <span class="remove-robot" onclick="Lobby.removeRobot(\'' + user.id + '\')" title="Retirer ce robot">❌</span>';
             }
@@ -298,8 +311,10 @@ Socket.on('players-list-changed', (room) => {
         Lobby.$startBtn.show();
         Lobby.$startBtn.prop('disabled', !room.canStartGame);
 
-        Lobby.$addRobotBtn.show();
-        Lobby.$addRobotBtn.prop('disabled', room.users.length >= 7);
+        Lobby.$addRobotParrotBtn.show();
+        Lobby.$addRobotParrotBtn.prop('disabled', room.users.length >= 7);
+        Lobby.$addRobotIntelligentBtn.show();
+        Lobby.$addRobotIntelligentBtn.prop('disabled', room.users.length >= 7);
 
         if (room.password) {
             Lobby.$infoPassword.text('Mot de passe : ' + room.password);
@@ -307,7 +322,8 @@ Socket.on('players-list-changed', (room) => {
         }
     } else {
         Lobby.$startBtn.hide();
-        Lobby.$addRobotBtn.hide();
+        Lobby.$addRobotParrotBtn.hide();
+        Lobby.$addRobotIntelligentBtn.hide();
     }
 });
 

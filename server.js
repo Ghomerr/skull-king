@@ -122,7 +122,7 @@ io.on('connection', (Socket) => {
         if (room) {
             const owner = Utils.findUserByIdAndToken(room.users, data.ownerId, data.token);
             if (owner) {
-                LobbyRobots.addRobot(room, emitPlayerListChangedEvent, getRoomList, io);
+                LobbyRobots.addRobot(room, data.robotType, emitPlayerListChangedEvent, getRoomList, io);
             } else {
                 Socket.emit('lobby-error', { type: 'wrong-owner' });
             }
@@ -237,7 +237,7 @@ io.on('connection', (Socket) => {
             owner: room.owner,
             password: room.password,
             users: [...room.users.map(u => {
-                return { id: u.id, isRobot: u.isRobot };
+                return { id: u.id, isRobot: u.isRobot, robotType: u.robotType };
             })],
             canStartGame: Game.getCanStartGame(room, MIN_PLAYERS, MAX_PLAYERS)
         });

@@ -1,16 +1,18 @@
 const Utils = require('./utils.js');
 
-function addRobot(room, emitPlayerListChangedEvent, getRoomList, io) {
+function addRobot(room, type, emitPlayerListChangedEvent, getRoomList, io) {
     if (room.users.length < 7) {
         const robotNumber = room.users.filter(u => u.isRobot).length + 1;
-        const robotId = 'Robot' + robotNumber;
+        const robotType = type || 'parrot';
+        const robotId = (robotType === 'intelligent' ? 'SmartBot' : 'Robot') + robotNumber;
         const robotToken = 'robot-token-' + robotNumber; // Simple token for robots
 
         const newRobot = {
             id: robotId,
             token: robotToken,
             isConnected: true,
-            isRobot: true
+            isRobot: true,
+            robotType: robotType
         };
 
         room.users.push(newRobot);
@@ -37,7 +39,7 @@ function removeRobot(room, robotId, emitPlayerListChangedEvent, getRoomList, io)
         let robotCount = 1;
         room.users.forEach(u => {
             if (u.isRobot) {
-                u.id = 'Robot' + robotCount;
+                u.id = (u.robotType === 'intelligent' ? 'SmartBot' : 'Robot') + robotCount;
                 u.token = 'robot-token-' + robotCount;
                 robotCount++;
             }

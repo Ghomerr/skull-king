@@ -1,3 +1,5 @@
+const IntelligentRobot = require('./intelligent-robot.js');
+
 const CARD_TYPE = {
     BLACK: 'black',
     EVASION: 'evasion',
@@ -8,11 +10,20 @@ const CARD_TYPE = {
 };
 
 function getRobotBet(robot, turn) {
+    if (robot.robotType === 'intelligent') {
+        return IntelligentRobot.getRobotBet(robot, turn);
+    }
+    // Stupid robot logic
     const betValue = robot.cards.filter(card => card.value >= 30).length;
     return Math.min(betValue, turn);
 }
 
 function getRobotCardToPlay(room, robot) {
+    if (robot.robotType === 'intelligent') {
+        return IntelligentRobot.getRobotCardToPlay(room, robot);
+    }
+
+    // Stupid robot logic
     if (robot.cards.length === 0) return null;
 
     // Find the first played card color to follow suit
