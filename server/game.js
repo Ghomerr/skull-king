@@ -11,18 +11,45 @@ const CARD_TYPE = {
 };
 
 const MAX_TURN = 10;
+const ROBOT_BET_DELAY_MS = 1000;
+const ROBOT_PLAY_DELAY_MS = 1500;
 
 function logDebug(...message) {
-    if (console && SERVER.isDebugEnabled) {
+    if (console && SERVER && SERVER.isDebugEnabled) {
         console.log.apply(console, message);
     }
 }
 
 let SERVER;
+let IO;
+
+// Pending robot timers per room (kept out of the room object so it stays serializable)
+const ROBOT_TIMERS = new Map();
+
+// Must be called once at server startup, before any game starts
+exports.init = (io, serverInstance) => {
+    IO = io;
+    SERVER = serverInstance;
+};
 
 exports.initializeRoomGameData = (room, serverInstance) => {
     room.canStartGame = false;
     SERVER = serverInstance;
+};
+
+// A destroyed room must not be touched anymore by pending robot timers
+exports.disposeRoom = (room) => {
+    room.isClosed = true;
+    clearRobotTimers(room);
+};
+
+exports.isGameOver = (room) => {
+    return !!room.initialCards && !room.isPlaying;
+};
+
+// Safety net used when a player (re)joins: restarts robots if nothing is pending
+exports.wakeUpRobots = (room) => {
+    checkAndTriggerRobotActions(room);
 };
 
 exports.getCanStartGame = (room, minPlayer, maxPlayer) => {
@@ -52,6 +79,9 @@ exports.refreshConnectedPlayerRoomState = (Socket, room, player) => {
         playersIds: room.users.map(user => {
             return { id: user.id, isRobot: user.isRobot };
         }),
+        // Display missing players (nobody has to wait for them once the game is over)
+        missingPlayers: room.isPlaying ? room.missingPlayers || 0 : 0,
+        missingNames: room.isPlaying ? room.users.filter(u => !u.isRobot && !u.isConnected).map(u => u.id) : [],
         // Display players bets
         isWaitingPlayersBets: room.isWaitingPlayersBets,
         hasFoldBet: hasFoldBet,
@@ -61,7 +91,7 @@ exports.refreshConnectedPlayerRoomState = (Socket, room, player) => {
         totalNumberOfPlayers: room.users.length,
         // Display players cards
         cards: getPlayerCards(player, room),
-        playedCards: room.playedCards,
+        playedCards: getPlayedCardsEvent(room),
         // Display player scores
         endOfGame: !room.isPlaying,
         gameWinner: room.gameWinner,
@@ -137,6 +167,8 @@ function computePlayerScore(player, previousTurn) {
 }
 
 function initializeNewTurn(room, turn, startPlayerIndex) {
+    // Robot actions of the previous turn are obsolete
+    clearRobotTimers(room);
     room.turn = turn;
     room.gameCards = Utils.deepCopy(Utils.shuffle([...room.initialCards]));
     room.cardsById = {};
@@ -174,19 +206,20 @@ function initializeNewTurn(room, turn, startPlayerIndex) {
     checkAndTriggerRobotActions(room);
 }
 
-function handleSetFoldBet(io, room, player, foldBet) {
+function handleSetFoldBet(io, room, player, foldBet, playerSocket) {
+    // Bets are only accepted during the bets phase (late or duplicated bets are ignored)
+    if (!room.isPlaying || !room.isWaitingPlayersBets) {
+        return;
+    }
+
     // Fold bet check
     const roundedBet = Math.round(foldBet);
-    if (foldBet < 0 || foldBet > room.turn || roundedBet !== foldBet) {
-        // Find socket for this player if it's not a robot
-        if (!player.isRobot) {
-            const socketId = Object.keys(room.sockets || {}).find(id => room.sockets[id] === player.id);
-            if (socketId) {
-                io.to(socketId).emit('player-error', {
-                    type: 'wrong-fold-bet',
-                    data: foldBet
-                });
-            }
+    if (typeof foldBet !== 'number' || foldBet < 0 || foldBet > room.turn || roundedBet !== foldBet) {
+        if (playerSocket) {
+            playerSocket.emit('player-error', {
+                type: 'wrong-fold-bet',
+                data: foldBet
+            });
         }
         return;
     }
@@ -220,61 +253,71 @@ function handleSetFoldBet(io, room, player, foldBet) {
     }
 }
 
+// Search the requested type of cards for the current fold (null when any card can be played)
+function getRequestedType(playedCards) {
+    const firstColorCard = playedCards.find(c => !c.isSpecial);
+    if (firstColorCard) {
+        for (let i = 0; i < playedCards.length; i++) {
+            const cardOfTurn = playedCards[i];
+            if (cardOfTurn.id === firstColorCard.id) {
+                break;
+            }
+            // A Special card in first position makes no type of card for this turn
+            if (cardOfTurn.isSpecial && cardOfTurn.type !== CARD_TYPE.EVASION) {
+                return null;
+            }
+        }
+        return firstColorCard.type;
+    }
+    return null;
+}
+
+// Cards of the player's hand that respect the requested type of the current fold
+function getPlayableCards(room, player) {
+    const typeOfCards = getRequestedType(room.playedCards);
+    const playerHasRequestedTypeOfCards = !!typeOfCards && player.cards.some(c => c.type === typeOfCards);
+    return player.cards.filter(c => c.isSpecial || !playerHasRequestedTypeOfCards || c.type === typeOfCards);
+}
+
+// Returns true when the card has actually been played
 function handlePlayCard(io, room, player, cardId, type, playerSocket) {
     logDebug('=> handlePlayCard', player.id, cardId, type);
 
-    const playedCard = room.cardsById[cardId];
-    if (playedCard.type === CARD_TYPE.CHOICE) {
-        if (type === CARD_TYPE.PIRATE) {
-            playedCard.img = 'tigresse_pirate.jpg';
-            playedCard.value = 100;
-            playedCard.bonus = 30;
-            playedCard.type = type;
-        } else if (type === CARD_TYPE.EVASION) {
-            playedCard.img = 'tigresse_evasion.jpg';
-            playedCard.value = 0;
-            playedCard.bonus = 0;
-            playedCard.type = type;
-        } else {
-            logDebug('wrong choice', type, 'default is pirate');
-        }
+    // Cards can only be played by the current player, once all bets are done
+    if (!room.isPlaying || room.isWaitingPlayersBets || room.users[room.currentPlayerIndex] !== player) {
+        return false;
     }
 
-    const cardIndex = Utils.findIndexById(player.cards, playedCard.id);
-
-    logDebug(player.id, 'played the following card:', playedCard);
-
-    // Search the requested type of cards for the current turn
-    let typeOfCards = null;
-    let playerHasRequestedTypeOfCards = false;
-    if (room.playedCards.length > 0) {
-        const firstColorCard = room.playedCards.find(c => !c.isSpecial);
-        if (firstColorCard) {
-            let cardOfTurn = null;
-            let hasBreakingTypeCard = false;
-            for (let i = 0; i < room.playedCards.length; i++) {
-                cardOfTurn = room.playedCards[i];
-                if (cardOfTurn.id === firstColorCard.id) {
-                    break;
-                }
-                // A Special card in first position makes no type of card for this turn
-                if (cardOfTurn.isSpecial && cardOfTurn.type !== CARD_TYPE.EVASION) {
-                    hasBreakingTypeCard = true;
-                    break;
-                }
-            }
-
-            if (!hasBreakingTypeCard) {
-                typeOfCards = firstColorCard.type;
-                // Search if the player has the requested type of cards
-                playerHasRequestedTypeOfCards = player.cards.some(c => c.type === typeOfCards);
-            }
-        }
+    const playedCard = room.cardsById[cardId];
+    const cardIndex = playedCard ? Utils.findIndexById(player.cards, playedCard.id) : -1;
+    if (cardIndex < 0) {
+        logDebug(player.id, 'tried to play a card not in its hand', cardId);
+        return false;
     }
 
     // Check if the player can play its card
-    if (cardIndex >= 0 && room.playedCards.length < room.users.length &&
-        (playedCard.isSpecial || !playerHasRequestedTypeOfCards || playedCard.type === typeOfCards)) {
+    if (room.playedCards.length < room.users.length && getPlayableCards(room, player).includes(playedCard)) {
+        if (playedCard.type === CARD_TYPE.CHOICE) {
+            if (type === CARD_TYPE.EVASION) {
+                playedCard.img = 'tigresse_evasion.jpg';
+                playedCard.value = 0;
+                playedCard.bonus = 0;
+                playedCard.type = type;
+            } else {
+                if (type !== CARD_TYPE.PIRATE) {
+                    logDebug('wrong choice', type, 'default is pirate');
+                }
+                playedCard.img = 'tigresse_pirate.jpg';
+                playedCard.value = 100;
+                playedCard.bonus = 30;
+                playedCard.type = CARD_TYPE.PIRATE;
+            }
+        }
+
+        logDebug(player.id, 'played the following card:', playedCard);
+
+        // Requested type of cards, computed before adding the played card
+        const typeOfCards = getRequestedType(room.playedCards);
 
         // OK Card can be added to the played cards
         room.playedCards.push(playedCard);
@@ -383,50 +426,116 @@ function handlePlayCard(io, room, player, cardId, type, playerSocket) {
             room.currentPlayerId = room.users[room.currentPlayerIndex].id;
             const playedCardEvent = {
                 currentPlayerId: room.currentPlayerId,
-                playedCards: room.playedCards.map(c => {
-                    const owner = Utils.findElementById(room.users, c.playedBy);
-                    return {
-                        id: c.id,
-                        type: c.type,
-                        img: c.img,
-                        playedBy: c.playedBy,
-                        isRobot: owner ? owner.isRobot : false
-                    };
-                })
+                playedCards: getPlayedCardsEvent(room)
             };
             io.to(room.id).emit('card-has-been-played', playedCardEvent);
 
             // Check if next player is robot
             checkAndTriggerRobotActions(room);
         }
-    } else {
-        // Handle error for human player
+        return true;
     }
+
+    // The card does not follow the requested type
+    if (playerSocket) {
+        playerSocket.emit('player-error', {
+            type: 'cannot-play-this-card',
+            data: playedCard.name
+        });
+    }
+    return false;
 }
 
-let IO;
+function getPlayedCardsEvent(room) {
+    return (room.playedCards || []).map(c => {
+        const owner = Utils.findElementById(room.users, c.playedBy);
+        return {
+            id: c.id,
+            type: c.type,
+            isSpecial: c.isSpecial,
+            img: c.img,
+            playedBy: c.playedBy,
+            isRobot: owner ? owner.isRobot : false
+        };
+    });
+}
+
+// Schedule a robot action once: an action already pending for the same key is kept
+function scheduleRobotAction(room, key, delay, action) {
+    let timers = ROBOT_TIMERS.get(room);
+    if (!timers) {
+        timers = {};
+        ROBOT_TIMERS.set(room, timers);
+    }
+    if (timers[key]) {
+        return;
+    }
+    timers[key] = setTimeout(() => {
+        delete timers[key];
+        if (room.isClosed) {
+            return;
+        }
+        try {
+            action();
+        } catch (e) {
+            console.error('[robot] action failed in room', room.id, e);
+        }
+    }, delay);
+}
+
+function clearRobotTimers(room) {
+    const timers = ROBOT_TIMERS.get(room);
+    if (timers) {
+        Object.values(timers).forEach(t => clearTimeout(t));
+    }
+    ROBOT_TIMERS.delete(room);
+}
+
+// Robot card choice, always checked against the rules: an illegal choice would block the game
+function getRobotPlayableAction(room, robot) {
+    const playableCards = getPlayableCards(room, robot);
+    if (playableCards.length === 0) {
+        return null;
+    }
+    const robotAction = GameRobots.getRobotCardToPlay(room, robot);
+    if (robotAction && playableCards.some(c => c.id === robotAction.cardId)) {
+        return robotAction;
+    }
+    console.error('[robot]', robot.id, 'chose an illegal card', robotAction, 'in room', room.id);
+    const fallbackCard = playableCards[0];
+    return {
+        cardId: fallbackCard.id,
+        type: fallbackCard.type === CARD_TYPE.CHOICE ? CARD_TYPE.EVASION : null
+    };
+}
+
 function checkAndTriggerRobotActions(room) {
-    if (!IO) return;
+    if (!IO || room.isClosed || !room.isPlaying) return;
 
     if (room.isWaitingPlayersBets) {
         // Robots that haven't bet yet
-        const robotsToBet = room.users.filter(u => u.isRobot && u.foldBet === null);
-        robotsToBet.forEach(robot => {
-            const bet = GameRobots.getRobotBet(robot, room.turn);
+        room.users.filter(u => u.isRobot && u.foldBet === null).forEach(robot => {
             // Delay robot action slightly to feel more natural
-            setTimeout(() => {
-                handleSetFoldBet(IO, room, robot, bet);
-            }, 1000);
+            scheduleRobotAction(room, 'bet-' + robot.id, ROBOT_BET_DELAY_MS, () => {
+                if (room.isWaitingPlayersBets && robot.foldBet === null) {
+                    handleSetFoldBet(IO, room, robot, GameRobots.getRobotBet(robot, room.turn));
+                }
+            });
         });
-    } else if (room.isPlaying) {
+    } else {
         const currentPlayer = room.users[room.currentPlayerIndex];
         if (currentPlayer && currentPlayer.isRobot) {
-            const robotAction = GameRobots.getRobotCardToPlay(room, currentPlayer);
-            if (robotAction) {
-                setTimeout(() => {
+            scheduleRobotAction(room, 'play', ROBOT_PLAY_DELAY_MS, () => {
+                // The game state may have changed since the action was scheduled
+                if (!room.isPlaying || room.isWaitingPlayersBets || room.users[room.currentPlayerIndex] !== currentPlayer) {
+                    checkAndTriggerRobotActions(room);
+                    return;
+                }
+                const robotAction = getRobotPlayableAction(room, currentPlayer);
+                if (robotAction) {
                     handlePlayCard(IO, room, currentPlayer, robotAction.cardId, robotAction.type);
-                }, 1500);
-            }
+                }
+            });
         }
     }
 }
@@ -462,17 +571,24 @@ function getPlayersBets(room) {
     return room.users.map(player => {
         return {
             userId: player.id,
-            foldBet: player.foldBet
+            foldBet: player.foldBet,
+            folds: player.folds ? player.folds.length : 0
         };
     })
 }
 
-exports.setEventListeners = (io, Socket, room) => {
-    IO = io;
+// Game events of a socket, registered once per connection: the room is resolved at each event,
+// so a socket keeps working after a reconnection or a page refresh
+exports.setEventListeners = (io, Socket, getRoom) => {
+    function getGameRoom(data) {
+        const room = data ? getRoom(data.roomId) : null;
+        return room && room.initialCards ? room : null;
+    }
 
     // Handle player requesting its cards
     Socket.on('get-my-cards', (data) => {
-        if (data.roomId === room.id) {
+        const room = getGameRoom(data);
+        if (room) {
             const player = Utils.findUserByIdAndToken(room.users, data.userId, data.token);
             if (player) {
                 const playerCards = getPlayerCards(player);
@@ -493,10 +609,11 @@ exports.setEventListeners = (io, Socket, room) => {
 
     // Handle when a player set its fold bet
     Socket.on('set-fold-bet', (data) => {
-        if (data.roomId === room.id) {
+        const room = getGameRoom(data);
+        if (room) {
             const player = Utils.findUserByIdAndToken(room.users, data.userId, data.token);
             if (player) {
-                handleSetFoldBet(io, room, player, data.foldBet);
+                handleSetFoldBet(io, room, player, data.foldBet, Socket);
             } else {
                 console.error('[set-fold-bet] player not found', data);
             }
@@ -505,9 +622,10 @@ exports.setEventListeners = (io, Socket, room) => {
 
     // Handle when a player plays a card
     Socket.on('play-a-card', (data) => {
-        if (room.id === data.roomId) {
+        const room = getGameRoom(data);
+        if (room) {
             const player = Utils.findUserByIdAndToken(room.users, data.playerId, data.token);
-            if (player && player.id === room.currentPlayerId) {
+            if (player && player.id === room.currentPlayerId && !room.isWaitingPlayersBets) {
                 handlePlayCard(io, room, player, data.cardId, data.type, Socket);
             } else {
                 // No player found or not the current player to play
@@ -520,7 +638,8 @@ exports.setEventListeners = (io, Socket, room) => {
 
     // Emoji handling
     Socket.on('send-emoji', (data) => {
-        if (data.roomId === room.id) {
+        const room = getGameRoom(data);
+        if (room) {
             const player = Utils.findUserByIdAndToken(room.users, data.playerId, data.token);
             if (player) {
                 logDebug('=> send-emoji', data);

@@ -145,6 +145,7 @@ $(document).ready(() => {
         console.log('Sending start lobby event', lobbyData);
 
         // Send lobby event to server
+        Lobby.lobbyData = lobbyData;
         Socket.emit('join-lobby', lobbyData);
     });
 
@@ -214,6 +215,15 @@ Socket.on('connected', (data) => {
     // Socket.emit('get-version');
 });
 
+// After a connection loss, socket.io reconnects with a new socket: join the lobby again
+// with the same name and token to keep the player's place in the room
+Socket.on('connect', () => {
+    if (Lobby.isInRoom && Lobby.lobbyData) {
+        console.log('=> reconnected, joining the lobby again');
+        Socket.emit('join-lobby', Lobby.lobbyData);
+    }
+});
+
 // Handle the user connected event to get the player token
 Socket.on('user-connected', (data) => {
     if (data.userId === Player.id) {
@@ -261,6 +271,7 @@ Socket.on('rooms-status-changed', (data) => {
 Socket.on('players-list-changed', (room) => {
     console.log('User has entered in lobby', room);
     Player.roomId = room.id;
+    Lobby.isInRoom = true;
     Lobby.roomStatus = room.STATUS;
     Lobby.$lobbyInputsContainer.hide();
     Lobby.$roomsList.hide();

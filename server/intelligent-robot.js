@@ -150,8 +150,8 @@ function getRobotCardToPlay(room, robot) {
             }
         }
 
-        // 3. Check black cards (Atout)
-        if (!winningCard && blackCards.length > 0) {
+        // 3. Check black cards (Atout), only allowed when the requested suit cannot be followed
+        if (!winningCard && blackCards.length > 0 && (followSuitCards.length === 0 || requestedType === CARD_TYPE.BLACK)) {
             blackCards.sort((a, b) => b.value - a.value);
             if (!bestCardOnTable || bestCardOnTable.type !== CARD_TYPE.BLACK || blackCards[0].value > bestCardOnTable.value) {
                 winningCard = blackCards[0];

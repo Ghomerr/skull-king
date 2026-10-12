@@ -16,6 +16,30 @@ const Player = {
     isBot: false
 };
 
+function joinGame() {
+    Socket.emit('join-game', {
+        roomId: Room.id,
+        userId: Player.id,
+        token: Player.token
+    });
+}
+
+// After a connection loss, socket.io reconnects with a new socket:
+// the game must be joined again to receive the room events and get its state back
+Socket.on('connect', () => {
+    if (Global.hasJoinedGame) {
+        console.log('=> reconnected, joining the game again');
+        joinGame();
+    }
+});
+
+Socket.on('disconnect', (reason) => {
+    console.log('=> disconnected', reason);
+    if (Global.$headStatus) {
+        Global.$headStatus.text('🔌 Connexion perdue, reconnexion en cours...');
+    }
+});
+
 // Handle when a player is ready to display the waiting modal
 Socket.on('ready-players-amount', (data) => {
     console.log('=> ready-players-amount', data);
@@ -65,7 +89,7 @@ Socket.on('connected-player-room-state', (data) => {
         // Update fold count display if the player has already choosen its bet
         const $currentFoldCountDisplay = Global.$foldCountDisplays.filter(`[id=fold-${data.foldBet}]`);
         if (data.hasFoldBet && !$currentFoldCountDisplay.hasClass('hidden')) {
-            selectFoldCount(Socket, Global, $currentFoldCountDisplay, data.foldBet);
+            markSelectedFoldCount($currentFoldCountDisplay);
         }
     } else {
         displayPlayersBets(data);
@@ -76,7 +100,23 @@ Socket.on('connected-player-room-state', (data) => {
     }
 
     displayEndOfGame(data);
+    displayMissingPlayers(data);
 });
+
+// Display the missing players (data.missingNames is the full list of missing players)
+function displayMissingPlayers(data) {
+    Global.$missingPlayersAmount.text(data.missingPlayers);
+    Global.$playersBets.removeClass('missing-player');
+    (data.missingNames || []).forEach((playerId) => {
+        Global.$playersBets.filter(`[player-id="${playerId}"]`).addClass('missing-player');
+    });
+
+    if (data.missingPlayers > 0) {
+        Dialog.$missingPlayersDialog.dialog('open');
+    } else {
+        Dialog.$missingPlayersDialog.dialog('close');
+    }
+}
 
 function displayPlayerNames(data) {
     data.playersIds.forEach((playerData, index) => {
@@ -155,7 +195,7 @@ function autoPlay() {
             const betValue = Player.cards.filter(card => card.value >= 30).length;
             Global.$foldCountPicker.find('#fold-' + betValue).click();
         } else {
-            if (Player.isCurrentPlayer) {
+            if (Player.isCurrentPlayer && Player.cards.length > 0) {
                 // Find the first played card color
                 const noPlayedCards = Room.playedCards.length === 0;
                 const firstColorCard = noPlayedCards ? null : Room.playedCards.find(c => !c.isSpecial);
@@ -177,7 +217,7 @@ function autoPlay() {
                         playerId: Player.id,
                         token: Player.token,
                         cardId: cardToBePlayed.id,
-                        type: cardToBePlayed.type !== 'choice' ?? 'evasion'
+                        type: cardToBePlayed.type === 'choice' ? 'evasion' : undefined
                     });
                 }
             }
@@ -266,12 +306,16 @@ function displayCurrentPlayer(data) {
 }
 
 function displayPlayersBets(data) {
+    Global.$foldCounterContainer.find('span').text('0');
     data.bets.forEach((playerBet, index) => {
         const $playerBetValue = Global.$playersBetsValues.eq(index);
         $playerBetValue.find('img').attr('src', 'static/assets/score_' + playerBet.foldBet + '.jpg');
         $playerBetValue.removeClass('hidden');
+        // Folds already won in this turn (when the display is rebuilt after a refresh)
+        if (playerBet.folds) {
+            Global.$foldCounterContainer.eq(index).find('span').text(playerBet.folds);
+        }
     });
-    Global.$foldCounterContainer.find('span').text('0');
     Global.$foldCounterContainer.removeClass('hidden');
 
     displayCurrentPlayer(data);
@@ -471,25 +515,23 @@ Socket.on('players-scores', (data) => {
 // Handle event when a player left the room during the game
 Socket.on('player-left-the-room', (data) => {
     console.log('=> player-left-the-room', data);
-
-    Global.$missingPlayersAmount.text(data.missingPlayers);
-    const $playerBetElement = Global.$playersBets.filter(`[player-id="${data.playerId}"]`);
-    $playerBetElement.addClass('missing-player');
-
-    Dialog.$missingPlayersDialog.dialog('open');
+    displayMissingPlayers(data);
 });
 
 // Handle event when a player join the game again
 Socket.on('in-game-player-connected', (data) => {
     console.log('=> in-game-player-connected', data);
+    displayMissingPlayers(data);
+});
 
-    const $playerBetElement = Global.$playersBets.filter(`[player-id="${data.playerId}"]`);
-    $playerBetElement.removeClass('missing-player');
-    Global.$missingPlayersAmount.text(data.missingPlayers);
-
-    if (data.missingPlayers === 0) {
-        Dialog.$missingPlayersDialog.dialog('close');
-    }
+// Handle the game closed by the server (missing players never came back)
+Socket.on('game-aborted', (data) => {
+    console.log('=> game-aborted', data);
+    Dialog.$missingPlayersDialog.dialog('close');
+    Dialog.openSimpleDialog(Dialog.$simpleDialog, '🏁 Partie terminée', 'La partie a été fermée après une trop longue absence des joueurs.');
+    setTimeout(() => {
+        window.location.href = '/';
+    }, 3000);
 });
 
 Socket.on('player-error', (error) => {
@@ -577,10 +619,14 @@ Socket.on('debug-changed', (data) => {
     Global.isDebugEnabled = data.isDebugEnabled;
 });
 
-function selectFoldCount(Socket, Global, $currentFoldCountDisplay, foldBet) {
+function markSelectedFoldCount($currentFoldCountDisplay) {
     Global.$foldCountPicker.addClass('bet-selected');
     Global.$foldCountDisplays.removeClass('selected-bet');
     $currentFoldCountDisplay.addClass('selected-bet');
+}
+
+function selectFoldCount(Socket, Global, $currentFoldCountDisplay, foldBet) {
+    markSelectedFoldCount($currentFoldCountDisplay);
 
     const foldBetEvent = {
         roomId: Room.id,
@@ -617,11 +663,8 @@ $(document).ready(() => {
     });
 
     // Join the current game
-    Socket.emit('join-game', {
-        roomId: Room.id,
-        userId: Player.id,
-        token: Player.token
-    });
+    joinGame();
+    Global.hasJoinedGame = true;
 
     // Fetch and display version
     fetch('static/version.json')
