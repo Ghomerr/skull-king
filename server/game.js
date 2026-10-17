@@ -1,5 +1,6 @@
 const Utils = require('./utils.js');
 const GameRobots = require('./game-robots.js');
+const Analytics = require('./analytics.js');
 
 const CARD_TYPE = {
     BLACK: 'black',
@@ -392,6 +393,7 @@ function handlePlayCard(io, room, player, cardId, type, playerSocket) {
                     room.users.forEach(p => computePlayerScore(p, MAX_TURN));
                     const scoresEvent = getPlayerScoresEvent(room, MAX_TURN, true);
                     room.gameWinner = scoresEvent.playerScores[0].id;
+                    Analytics.gameEnded(room);
                     io.to(room.id).emit('players-scores', scoresEvent);
                 }
             } else {

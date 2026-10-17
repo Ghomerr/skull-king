@@ -8,6 +8,7 @@ const path = require('path');
 const Utils = require('./server/utils.js');
 const Game = require('./server/game.js');
 const LobbyRobots = require('./server/lobby-robots.js');
+const Analytics = require('./server/analytics.js');
 
 // Load data
 const CARDS = require('./server/cards.json');
@@ -56,6 +57,12 @@ app.get('/', (req, res) => {
     } else {
         res.sendFile(path.resolve(__dirname, '.') + '/static/main.html');
     }
+});
+// Browser-side analytics (cookieless). Empty outside of Render, unless POSTHOG_KEY is set.
+app.get('/analytics.js', (req, res) => {
+    res.type('application/javascript');
+    res.set('Cache-Control', 'no-cache');
+    res.send(Analytics.clientScript());
 });
 app.use(express.static(path.resolve(__dirname, '.')));
 
@@ -131,6 +138,7 @@ function endGameByTimeout(roomId) {
     if (room) {
         logDebug('Room', roomId, 'closed after', PAUSE_TIMEOUT_MS, 'ms without its missing players');
         if (!Game.isGameOver(room)) {
+            Analytics.gameAborted(room, 'joueurs_partis');
             io.to(roomId).emit('game-aborted', { reason: 'timeout' });
         }
         destroyRoom(roomId);
@@ -366,6 +374,7 @@ io.on('connection', (Socket) => {
                 room.status = STATUS.IN_GAME;
                 room.missingPlayers = 0;
                 Game.initializeGame(room, [...CARDS]);
+                Analytics.gameStarted(room);
                 io.to(room.id).emit('all-players-ready-to-play', {
                     currentPlayerId: room.currentPlayerId,
                     playersIds: room.users.map(user => {
